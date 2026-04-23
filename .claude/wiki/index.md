@@ -2,13 +2,13 @@
 
 > **用途**：芯片架构设计知识库的结构化索引
 > **维护者**：LLM Agent（每次 ingest 后更新）
-> **总计**：52 个 CBB 模块 + 16 个总线协议 + 14 个网络协议 + 8 个 IO 协议
+> **总计**：130 个实体页面（53 CBB + 16 总线协议 + 14 网络协议 + 7 IO 协议 + 10 芯片设计 + 8 CPU + 8 IP + 6 MMU + 8 验证）
 
 ---
 
 ## 一、实体页面（Entities）
 
-### 1.1 CBB 模块（52 个）
+### 1.1 CBB 模块（53 个）
 
 #### 调度与仲裁（6 个）
 
@@ -96,7 +96,7 @@
 | ptr_alloc | [entities/ptr_alloc.md](entities/ptr_alloc.md) | 指针分配器，bitmap 方式 | cbb/ptr_alloc.md |
 | wide_entry_wr | [entities/wide_entry_wr.md](entities/wide_entry_wr.md) | 宽表项写入器，原子提交 | cbb/wide_entry_wr.md |
 
-#### 基础时序与逻辑（11 个）
+#### 基础时序与逻辑（12 个）
 
 | 模块 | 页面 | 摘要 | 来源 |
 |------|------|------|------|
@@ -176,7 +176,7 @@
 
 ---
 
-### 1.4 IO/存储协议（8 个）
+### 1.4 IO/存储协议（7 个）
 
 | 协议 | 页面 | 摘要 | 来源 |
 |------|------|------|------|
@@ -187,6 +187,144 @@
 | VirtIO | [entities/virtio.md](entities/virtio.md) | 虚拟化 IO 标准 | IO-protocol/virtio.md |
 | SR-IOV | [entities/sr_iov.md](entities/sr_iov.md) | 单根 IO 虚拟化 | IO-protocol/sr_iov.md |
 | MIPS-IO | [entities/mips_io.md](entities/mips_io.md) | MIPS IO 系统 | IO-protocol/mips-io.md |
+
+---
+
+### 1.5 芯片设计（10 个）
+
+#### 设计流程与方法（4 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 设计流程 | [entities/design_flow.md](entities/design_flow.md) | 芯片设计全流程概述 | chip-design/design_flow.md |
+| 前端设计 | [entities/frontend_design.md](entities/frontend_design.md) | RTL 设计与验证流程 | chip-design/frontend_design.md |
+| 物理设计 | [entities/physical_design.md](entities/physical_design.md) | 后端布局布线流程 | chip-design/physical_design.md |
+| 签核验证 | [entities/signoff.md](entities/signoff.md) | 签核检查与交付标准 | chip-design/signoff.md |
+
+#### DFT 可测试性（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| DFT 基础 | [entities/dft_basics.md](entities/dft_basics.md) | 扫描链、BIST、ATPG 基础 | chip-design/dft_basics.md |
+| DFT 高级 | [entities/dft_advanced.md](entities/dft_advanced.md) | 高级 DFT 技术与策略 | chip-design/dft_advanced.md |
+
+#### 低功耗设计（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 低功耗基础 | [entities/low_power_basics.md](entities/low_power_basics.md) | 时钟门控、电源门控基础 | chip-design/low_power_basics.md |
+| 低功耗高级 | [entities/low_power_advanced.md](entities/low_power_advanced.md) | DVFS、多电压域高级技术 | chip-design/low_power_advanced.md |
+
+#### 时序分析（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| STA 基础 | [entities/sta_basics.md](entities/sta_basics.md) | 静态时序分析基础概念 | chip-design/sta_basics.md |
+| STA 高级 | [entities/sta_advanced.md](entities/sta_advanced.md) | 高级时序约束与优化 | chip-design/sta_advanced.md |
+
+---
+
+### 1.6 CPU 与处理器（8 个）
+
+#### 指令集架构（3 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| ARM | [entities/arm.md](entities/arm.md) | ARMv8/v9 架构与生态系统 | cpu/arm.md |
+| RISC-V | [entities/riscv.md](entities/riscv.md) | RISC-V 指令集与扩展 | cpu/riscv.md |
+| MIPS | [entities/mips.md](entities/mips.md) | MIPS 架构与历史 | cpu/mips.md |
+
+#### 微架构组件（3 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 流水线 | [entities/pipeline.md](entities/pipeline.md) | 处理器流水线设计 | cpu/pipeline.md |
+| 缓存 | [entities/cache.md](entities/cache.md) | 缓存层次结构与策略 | cpu/cache.md |
+| 分支预测 | [entities/branch_predictor.md](entities/branch_predictor.md) | 分支预测器设计 | cpu/branch_predictor.md |
+
+#### 系统特性（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 中断 | [entities/interrupt.md](entities/interrupt.md) | 中断机制与控制器 | cpu/interrupt.md |
+| 多核 | [entities/multicore.md](entities/multicore.md) | 多核架构与一致性 | cpu/multicore.md |
+
+---
+
+### 1.7 IP 核（8 个）
+
+#### 处理器 IP（2 个）
+
+| IP | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| ARM Core | [entities/arm_core.md](entities/arm_core.md) | ARM Cortex-A/R/M 核心选型 | IP/arm_core.md |
+| RISC-V Core | [entities/riscv_core.md](entities/riscv_core.md) | RISC-V 开源/商业核心选型 | IP/riscv_core.md |
+
+#### 高速接口 IP（4 个）
+
+| IP | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| PCIe IP | [entities/pcie_ip.md](entities/pcie_ip.md) | PCIe 控制器 IP 选型 | IP/pcie_ip.md |
+| DDR IP | [entities/ddr_ip.md](entities/ddr_ip.md) | DDR 控制器 IP 选型 | IP/ddr_ip.md |
+| Ethernet IP | [entities/ethernet_ip.md](entities/ethernet_ip.md) | 以太网 MAC/PHY IP 选型 | IP/ethernet_ip.md |
+| USB IP | [entities/usb_ip.md](entities/usb_ip.md) | USB 控制器 IP 选型 | IP/usb_ip.md |
+
+#### 低速外设 IP（1 个）
+
+| IP | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| SPI/I2C/UART IP | [entities/spi_i2c_uart_ip.md](entities/spi_i2c_uart_ip.md) | 低速外设接口 IP 选型 | IP/spi_i2c_uart_ip.md |
+
+#### 时钟 IP（1 个）
+
+| IP | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| PLL/DLL | [entities/pll_dll.md](entities/pll_dll.md) | PLL/DLL 时钟生成 IP 选型 | IP/pll_dll.md |
+
+---
+
+### 1.8 MMU 内存管理（6 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 地址空间 | [entities/address_space.md](entities/address_space.md) | 虚拟/物理地址空间管理 | mmu/address_space.md |
+| 页表 | [entities/page_table.md](entities/page_table.md) | 多级页表结构设计 | mmu/page_table.md |
+| TLB | [entities/tlb.md](entities/tlb.md) | TLB 架构与地址转换加速 | mmu/tlb.md |
+| 内存属性 | [entities/memory_attributes.md](entities/memory_attributes.md) | 缓存策略与共享性控制 | mmu/memory_attributes.md |
+| 内存保护 | [entities/memory_protection.md](entities/memory_protection.md) | PMP/MPU/IOMMU 保护机制 | mmu/memory_protection.md |
+| 虚拟化 | [entities/virtualization.md](entities/virtualization.md) | 两阶段地址转换与虚拟机 | mmu/virtualization.md |
+
+---
+
+### 1.9 验证方法（8 个）
+
+#### 仿真（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 仿真基础 | [entities/simulation_basics.md](entities/simulation_basics.md) | 仿真流程与调试技术 | verification/simulation_basics.md |
+| 仿真高级 | [entities/simulation_advanced.md](entities/simulation_advanced.md) | 性能优化与硬件加速 | verification/simulation_advanced.md |
+
+#### 形式验证（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 形式验证基础 | [entities/formal_basics.md](entities/formal_basics.md) | 等价性检查与属性检查 | verification/formal_basics.md |
+| 形式验证高级 | [entities/formal_advanced.md](entities/formal_advanced.md) | 模型检查与收敛策略 | verification/formal_advanced.md |
+
+#### UVM 验证方法学（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| UVM 基础 | [entities/uvm_basics.md](entities/uvm_basics.md) | UVM 框架与组件 | verification/uvm_basics.md |
+| UVM 高级 | [entities/uvm_advanced.md](entities/uvm_advanced.md) | 寄存器模型与高级序列 | verification/uvm_advanced.md |
+
+#### 覆盖率与验证管理（2 个）
+
+| 概念 | 页面 | 摘要 | 来源 |
+|------|------|------|------|
+| 覆盖率分析 | [entities/coverage_analysis.md](entities/coverage_analysis.md) | 代码/功能/断言覆盖率 | verification/coverage_analysis.md |
+| 验证概述 | [entities/verification_overview.md](entities/verification_overview.md) | 验证流程与方法概述 | verification/verification_overview.md |
 
 ---
 
