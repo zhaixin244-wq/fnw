@@ -1,0 +1,4 @@
+# npm dependencies for gen_wavedrom.js
+# Install: npm install playwright-core @wavedrom/cli
+playwright-core>=1.30
+@wavedrom/cli>=3.0

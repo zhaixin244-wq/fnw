@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "description": "位置→接口协议映射表 — 从 requirement-checklist.json 抽取，独立维护。新增协议时在对应 layer 数组中追加。",
+
+  "layers": {
+    "layer_1_basic": [
+      { "position": "SoC内部总线", "protocol": "AXI4/AHB/APB" },
+      { "position": "芯片边缘I/O", "protocol": "SPI/I2C/UART/GPIO" },
+      { "position": "点对点直连", "protocol": "Valid-Ready 自定义" },
+      { "position": "低速外设总线", "protocol": "APB" }
+    ],
+    "layer_2_highspeed": [
+      { "position": "高速串行链路", "protocol": "PCIe/USB/SerDes" },
+      { "position": "存储控制器", "protocol": "DDR4/5/LPDDR/HBM" },
+      { "position": "网络数据面", "protocol": "Ethernet MAC/RDMA" },
+      { "position": "片内高速互联", "protocol": "CHI/ACE/CXS" },
+      { "position": "CXL加速器互连", "protocol": "CXL 2.0/3.0" },
+      { "position": "芯粒互连", "protocol": "UCIe" }
+    ],
+    "layer_3_mixed": [
+      { "position": "总线+点对点混合", "protocol": "APB控制+AXI4数据+自定义流控" },
+      { "position": "多总线域桥接", "protocol": "AXI4↔AHB Bridge" },
+      { "position": "无法推断", "protocol": "标记⬜，阶段B补问" }
+    ]
+  }
+}

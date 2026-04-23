@@ -1,0 +1,132 @@
+{
+  "version": "1.4",
+  "categories": ["POWER", "CONTROL-INTENSIVE", "SECURITY"],
+  "category_names": ["功耗域设计", "控制密集型模块", "安全隔离"],
+  "rules": [
+    {
+      "id": "POWER-01",
+      "category": "POWER",
+      "rule": "多电压域之间必须插入 Isolation Cell，隔离信号在关断域侧钳位",
+      "check": "每个 Power Domain 的关断边界是否有 Isolation Cell？钳位值是否符合协议默认？",
+      "anti_pattern": "无隔离 → 关断域输出浮空 → 上电域采样到 X → 功能错误",
+      "fix": "关断域输出端插入 Isolation Cell，钳位值为协议默认（如 AXI xRESP=OKAY）",
+      "applicability_scope": "低功耗"
+    },
+    {
+      "id": "POWER-02",
+      "category": "POWER",
+      "rule": "跨电压域信号必须经过 Level Shifter，方向由低到高/高到低分别处理",
+      "check": "跨电压域的所有信号是否都有 Level Shifter？方向是否正确？",
+      "anti_pattern": "无 Level Shifter → 电平不匹配 → 时序异常或器件损坏",
+      "fix": "低到高用 LHSx，高到低用 HLSx，布局时确保在电压域边界",
+      "applicability_scope": "低功耗"
+    },
+    {
+      "id": "POWER-03",
+      "category": "POWER",
+      "rule": "需要状态保持的寄存器必须使用 Retention FF，或通过软件保存/恢复",
+      "check": "关断域中哪些寄存器需要保持状态？是否使用了 Retention FF？保存/恢复序列是否定义？",
+      "anti_pattern": "关断丢失状态 → 唤醒后功能异常 → 需要完整重新初始化",
+      "fix": "关键状态寄存器用 Retention FF，其余通过软件在关断前保存/唤醒后恢复",
+      "applicability_scope": "低功耗"
+    },
+    {
+      "id": "CTRL-01",
+      "category": "CONTROL-INTENSIVE",
+      "rule": "DMA控制器的通道状态机必须支持挂起/恢复，不允许丢弃未完成传输",
+      "check": "通道被暂停时，当前burst是否完成？挂起状态是否持久化？",
+      "anti_pattern": "暂停直接截断burst → 数据不一致 → 需要软件重新初始化",
+      "fix": "burst完成后再挂起，或支持context save/restore",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "CTRL-02",
+      "category": "CONTROL-INTENSIVE",
+      "rule": "中断控制器的pending寄存器必须在清除后立即生效，不允许清除延迟",
+      "check": "清除操作是否在同一个周期生效？是否有可能清除后仍然触发中断？",
+      "anti_pattern": "清除需要多周期 → 中断重复触发 → ISR执行混乱",
+      "fix": "写1清除在本周期生效，使用寄存器+组合逻辑路径保证即时清除",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "CTRL-03",
+      "category": "CONTROL-INTENSIVE",
+      "rule": "DMA地址计算必须处理边界对齐，不允许隐式截断低位地址",
+      "check": "突发跨越4KB边界时如何处理？起始地址未对齐时的行为？",
+      "anti_pattern": "忽略4KB边界 → AXI协议违规 → 总线错误",
+      "fix": "突发前检查4KB边界，未对齐时拆分为多个小突发",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "CTRL-04",
+      "category": "CONTROL-INTENSIVE",
+      "rule": "中断优先级仲裁必须支持嵌套，高优先级中断可抢占低优先级ISR",
+      "check": "是否支持中断嵌套？嵌套深度上限？栈空间是否足够？",
+      "anti_pattern": "无嵌套 → 高优先级中断被低优先级阻塞 → 实时性不满足",
+      "fix": "硬件支持优先级比较+嵌套栈，或软件在ISR入口检查更高优先级pending",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "CTRL-05",
+      "category": "CONTROL-INTENSIVE",
+      "rule": "DMA传输描述符链必须支持环形缓冲，不允许线性链表溢出",
+      "check": "描述符链是否有环形回绕检测？最后一个描述符的next指针是否指向链头？",
+      "anti_pattern": "线性链表 → 描述符用尽 → DMA停止 → 需要软件干预",
+      "fix": "描述符链首尾相连形成环形缓冲，硬件自动回绕",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "SEC-01",
+      "category": "SECURITY",
+      "rule": "安全域和非安全域的数据通路必须物理隔离，不允许共享同一buffer",
+      "check": "安全/非安全数据是否使用同一SRAM bank？是否有分时复用？",
+      "anti_pattern": "共享buffer → 非安全域读取残留安全数据 → 信息泄露",
+      "fix": "安全/非安全使用独立SRAM bank，或在切换时强制清零",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "SEC-02",
+      "category": "SECURITY",
+      "rule": "地址防火墙必须在组合路径上检查，不允许流水延迟导致越权访问",
+      "check": "防火墙检查是否在地址译码阶段完成？是否有可能一个周期的越权通过？",
+      "anti_pattern": "流水化防火墙 → 地址变更后旧许可仍有效 → 越权访问",
+      "fix": "防火墙检查在地址译码组合逻辑中完成，与valid信号AND",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "SEC-03",
+      "category": "SECURITY",
+      "rule": "密钥/敏感寄存器的读端口必须有硬件访问控制，不允许非安全域直接读取",
+      "check": "密钥寄存器是否有NS位检查？是否可能通过DMA通道间接读取？",
+      "anti_pattern": "仅软件控制 → 漏洞利用 → 密钥泄露",
+      "fix": "硬件级NS位检查在寄存器读端口，DMA通道也受NS位约束",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "SEC-04",
+      "category": "SECURITY",
+      "rule": "安全关键逻辑必须防止侧信道攻击，恒定时间执行不允许数据依赖分支",
+      "check": "加密/鉴权操作是否有数据依赖的分支或内存访问？执行时间是否与密钥无关？",
+      "anti_pattern": "if(key_bit==1) fast_path else slow_path → 时序侧信道 → 密钥恢复",
+      "fix": "恒定时间实现：无数据依赖分支，无数据依赖内存访问，使用位操作替代条件分支",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "SEC-05",
+      "category": "SECURITY",
+      "rule": "安全关键模块必须有故障注入防护，电压毛刺/时钟毛刺不应导致安全绕过",
+      "check": "关键安全检查是否有冗余校验？单点故障是否可绕过安全机制？",
+      "anti_pattern": "单次NS位检查 → 毛刺跳过检查 → 非安全域访问安全数据",
+      "fix": "关键安全检查双份冗余+结果比对，或添加校验和/签名验证",
+      "applicability_scope": "通用"
+    }
+  ],
+  "check_points": [
+    { "id": "CP-19", "check": "多电压域是否有 Isolation Cell？跨电压域是否有 Level Shifter？关键状态是否用 Retention FF？", "category": "POWER" },
+    { "id": "CP-21", "check": "DMA通道状态机是否支持挂起/恢复？地址计算是否处理4KB边界？", "category": "CONTROL-INTENSIVE" },
+    { "id": "CP-22", "check": "中断pending清除是否即时生效？是否支持优先级嵌套？", "category": "CONTROL-INTENSIVE" },
+    { "id": "CP-23", "check": "安全/非安全数据通路是否物理隔离？地址防火墙是否组合路径检查？", "category": "SECURITY" },
+    { "id": "CP-24", "check": "安全关键逻辑是否恒定时间执行？有无数据依赖分支导致侧信道？", "category": "SECURITY" },
+    { "id": "CP-25", "check": "安全关键模块是否有故障注入防护？关键检查是否双份冗余？", "category": "SECURITY" }
+  ]
+}

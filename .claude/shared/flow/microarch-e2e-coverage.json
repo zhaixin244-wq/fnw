@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "description": "REQ 全生命周期联合覆盖报告 — 合并需求阶段矛盾检测覆盖 + 微架构阶段 MA 规则覆盖，输出端到端覆盖视图",
+
+  "data_sources": {
+    "requirement_coverage": ".claude/shared/flow/coverage-model.json#req_coverage_matrix",
+    "microarch_coverage": ".claude/shared/flow/microarch-coverage-model.json#req_coverage_matrix",
+    "arch_review_coverage": ".claude/shared/flow/end-to-end-coverage-report.json#arch_review_checkpoints"
+  },
+
+  "lifecycle_phases": {
+    "requirement": "stageC0 矛盾检测（29 条规则：17 基础 + 7 条件 + 5 实验）",
+    "solution": "方案设计后架构评审（6 类规则文件，13 REQ 覆盖）",
+    "microarch": "微架构编写（12 条 MA 规则 + 15 项 MC-QC）",
+    "rtl": "RTL 实现（由 chip-code-writer 覆盖）"
+  },
+
+  "req_lifecycle_matrix": [
+    { "req": "REQ-001", "req_phase": ["FREQ-01", "FREQ-02", "POWER-01", "PVT-01", "EXP-04"], "sol_phase": ["CP-15"], "ma_phase": ["MA-02", "MA-09"], "total_phases": 3, "total_rules": 8 },
+    { "req": "REQ-002", "req_phase": ["AREA-01", "IO-01", "IO-02", "IO-03"], "sol_phase": ["CP-18", "CP-01"], "ma_phase": ["MA-07", "MA-12"], "total_phases": 3, "total_rules": 8 },
+    { "req": "REQ-003", "req_phase": ["AREA-02", "IO-01", "IO-02", "PERF-02"], "sol_phase": ["CP-02", "CP-03", "CP-11", "CP-12"], "ma_phase": ["MA-01", "MA-04"], "total_phases": 3, "total_rules": 10 },
+    { "req": "REQ-004", "req_phase": ["FREQ-02", "PERF-01", "POWER-04", "CDC-01"], "sol_phase": ["CP-11", "CP-12"], "ma_phase": ["MA-02", "MA-06"], "total_phases": 3, "total_rules": 8 },
+    { "req": "REQ-005", "req_phase": ["AREA-01", "AREA-02", "AREA-03", "POWER-01", "PVT-01", "MEM-01", "EXP-02"], "sol_phase": ["CP-01", "CP-04"], "ma_phase": ["MA-06"], "total_phases": 3, "total_rules": 10 },
+    { "req": "REQ-006", "req_phase": ["CDC-01", "PERF-02"], "sol_phase": ["CP-13", "CP-14", "CP-26", "CP-27"], "ma_phase": ["MA-08", "MA-11"], "total_phases": 3, "total_rules": 8 },
+    { "req": "REQ-007", "req_phase": ["POWER-02", "POWER-03", "POWER-04", "EXP-05"], "sol_phase": ["CP-19"], "ma_phase": [], "total_phases": 2, "total_rules": 5, "note": "微架构阶段由专项 agent（chip-low-power-architect）覆盖" },
+    { "req": "REQ-008", "req_phase": ["POWER-02", "EXP-01"], "sol_phase": ["CP-16"], "ma_phase": ["MC-13"], "total_phases": 3, "total_rules": 4 },
+    { "req": "REQ-009", "req_phase": ["AREA-03", "EXP-01"], "sol_phase": ["CP-04"], "ma_phase": [], "total_phases": 2, "total_rules": 3, "note": "微架构阶段由专项 agent（chip-reliability-architect）覆盖" },
+    { "req": "REQ-010", "req_phase": ["EXP-03"], "sol_phase": [], "ma_phase": [], "total_phases": 1, "total_rules": 1 },
+    { "req": "REQ-011", "req_phase": ["POWER-03", "CDC-01"], "sol_phase": ["CP-13", "CP-26", "CP-27"], "ma_phase": ["MA-08"], "total_phases": 3, "total_rules": 6 },
+    { "req": "REQ-012", "req_phase": ["IO-02", "MEM-01"], "sol_phase": ["CP-01", "CP-02", "CP-03", "CP-04"], "ma_phase": ["MA-03"], "total_phases": 3, "total_rules": 7 },
+    { "req": "REQ-013", "req_phase": ["PVT-01"], "sol_phase": [], "ma_phase": ["MA-02"], "total_phases": 2, "total_rules": 2 },
+    { "req": "REQ-014", "req_phase": [], "sol_phase": [], "ma_phase": ["MA-07", "MA-12"], "total_phases": 1, "total_rules": 2 },
+    { "req": "REQ-015", "req_phase": [], "sol_phase": [], "ma_phase": ["MA-01", "MA-04"], "total_phases": 1, "total_rules": 2 },
+    { "req": "REQ-016", "req_phase": [], "sol_phase": [], "ma_phase": [], "total_phases": 0, "total_rules": 0 },
+    { "req": "REQ-017", "req_phase": [], "sol_phase": [], "ma_phase": [], "total_phases": 0, "total_rules": 0 },
+    { "req": "REQ-018", "req_phase": ["IO-03", "EXP-05"], "sol_phase": ["CP-23", "CP-24", "CP-25"], "ma_phase": [], "total_phases": 2, "total_rules": 5, "note": "微架构阶段由专项 agent（chip-low-power-architect）交叉覆盖" },
+    { "req": "REQ-019", "req_phase": [], "sol_phase": [], "ma_phase": [], "total_phases": 0, "total_rules": 0 },
+    { "req": "REQ-020", "req_phase": [], "sol_phase": [], "ma_phase": [], "total_phases": 0, "total_rules": 0 },
+    { "req": "REQ-021", "req_phase": ["POWER-04"], "sol_phase": ["CP-19"], "ma_phase": ["MA-05"], "total_phases": 3, "total_rules": 3 }
+  ],
+
+  "coverage_summary": {
+    "total_reqs": 21,
+    "three_phases": 12,
+    "two_phases": 4,
+    "one_phase": 3,
+    "no_coverage": 4,
+    "end_to_end_coverage_rate": "81% (17/21)",
+    "uncovered_reqs": ["REQ-016", "REQ-017", "REQ-019", "REQ-020"],
+    "uncovered_note": "中断/调试/软件接口/系统级 — 通常在 FS 阶段直接确认，微架构继承不需交叉检测",
+    "hotspot_reqs": [
+      { "req": "REQ-003", "total": 10, "note": "数据流 — 三阶段全覆盖" },
+      { "req": "REQ-005", "total": 10, "note": "面积功耗 — 三阶段全覆盖" },
+      { "req": "REQ-001", "total": 8, "note": "工艺频率" },
+      { "req": "REQ-002", "total": 8, "note": "接口" },
+      { "req": "REQ-004", "total": 8, "note": "性能" },
+      { "req": "REQ-006", "total": 8, "note": "时钟" },
+      { "req": "REQ-012", "total": 7, "note": "存储" }
+    ]
+  },
+
+  "usage": "quality_check 完成后自动运行：1) 合并三个数据源的 REQ 覆盖矩阵；2) 输出 lifecycle_phases 覆盖统计；3) 标注 hotspot_reqs 和 uncovered_reqs。供 chip-fs-writer/chip-arch-reviewer 在 RTM 中引用。"
+}

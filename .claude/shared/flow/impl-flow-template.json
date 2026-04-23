@@ -1,0 +1,252 @@
+{
+  "version": "1.0",
+  "description": "RTL 实现流程模板 — stage 化定义，支持输入分类、中间状态持久化、变更处理",
+
+  "context_layers": {
+    "L0_inline": {
+      "description": "常驻上下文 — 内联在 agent 定义中，每个会话自动加载",
+      "contents": ["角色定义", "架构冻结铁律", "编码铁律", "反合理化清单", "Skills 调用契约"]
+    },
+    "L1_startup": {
+      "description": "启动时加载 — 激活后 Read 一次，整个会话复用",
+      "files": [
+        ".claude/shared/quality-checklist-impl.md",
+        ".claude/rules/coding-style.md"
+      ]
+    },
+    "L2_stage": {
+      "description": "阶段加载 — 进入每个 stage 时按需 Read，stage 完成后可压缩",
+      "files": [
+        "微架构文档（input_triage 时 Read）",
+        "CBB 文档（cbb_integration 时 Read）",
+        "协议文档（interface_logic 时 Read）"
+      ]
+    },
+    "L3_temporary": {
+      "description": "临时加载 — RAG 结果/工具输出，用完即弃",
+      "contents": ["RAG 检索结果", "Lint 报告", "综合报告"]
+    }
+  },
+
+  "flow": {
+    "entry": {
+      "description": "激活后第一步：Read todo-mechanism.md 输出代办清单，确认后进入 input_triage",
+      "rules": ["CBB 缺失/架构疑问/范围变更时强制暂停"]
+    },
+
+    "input_triage": {
+      "name": "输入确认",
+      "description": "确认输入完整性，分类后选择执行路径",
+      "required_inputs": [
+        { "id": "microarch_doc", "name": "微架构文档", "priority": "Must", "missing_action": "暂停，列出缺失章节" },
+        { "id": "coding_style", "name": "编码规范", "priority": "Must", "missing_action": "使用默认 .claude/rules/coding-style.md" },
+        { "id": "cbb_list", "name": "CBB 清单", "priority": "Should", "missing_action": "RAG 检索补充" },
+        { "id": "protocol_docs", "name": "接口协议文档", "priority": "Should", "missing_action": "RAG 检索或标注 [待确认]" },
+        { "id": "constraints", "name": "关键约束（频率/复位/DFT）", "priority": "Must", "missing_action": "从微架构文档提取" }
+      ],
+      "input_classification": {
+        "rules": [
+          "微架构完整（§3~§13）+ 编码规范 + CBB 清单 → complete",
+          "微架构存在 + 编码规范，CBB 清单缺失 → partial",
+          "仅微架构概述，无详细接口/状态机/FIFO → vague"
+        ],
+        "paths": {
+          "complete": "rag_retrieval → module_structure → rtl_impl → sdc_sva → quality_check → delivery",
+          "partial": "rag_retrieval（补充 CBB）→ module_structure → rtl_impl → sdc_sva → quality_check → delivery",
+          "vague": "暂停，等待微架构补充 → 重新 input_triage"
+        }
+      }
+    },
+
+    "rag_retrieval": {
+      "name": "RAG 检索",
+      "description": "读取涉及的 CBB 文档和协议文档",
+      "obligations": [
+        "CBB 实例化前必须读取 CBB 文档获取标准示例",
+        "总线接口实现前必须读取协议文档获取信号定义",
+        "检索结果标注来源文档名"
+      ],
+      "output": "CBB/协议文档摘要 + 实例化参考",
+      "transition": "检索完成后进入 module_structure"
+    },
+
+    "module_structure": {
+      "name": "模块结构规划",
+      "description": "从微架构文档提取端口列表、子模块划分、文件清单",
+      "steps": [
+        "从微架构 §4.1 提取端口列表",
+        "从微架构 §5 确定子模块实例化列表",
+        "确定文件清单（.v / _sva.sv / _intf.sv / .sdc / _tb.v）",
+        "创建工作目录结构"
+      ],
+      "output": "端口列表 + 子模块划分 + 文件清单",
+      "transition": "结构确认后进入 rtl_impl"
+    },
+
+    "rtl_impl": {
+      "name": "RTL 代码实现",
+      "description": "逐子模块实现，每个子模块独立完成数据通路+控制逻辑+CBB+接口",
+      "template_source": ".claude/rules/coding-style.md",
+      "quality_checklist": ".claude/shared/quality-checklist-impl.md",
+      "per_submodule_steps": [
+        "数据通路实现（从微架构 §5.1 逐阶段编码）",
+        "控制逻辑 + FSM（从微架构 §5.3 两段式状态机）",
+        "CBB 集成（从 RAG 检索结果实例化，标注 // CBB Ref）",
+        "接口逻辑（valid/ready 握手、背压、异常处理）"
+      ],
+      "architecture_frozen": true,
+      "coding_rules": [
+        "严格按微架构文档实现，疑问暂停标记 [ARCH-QUESTION]",
+        "代码标注架构章节号：// Ref: Arch-Sec-X.Y",
+        "CBB 标注来源：// CBB Ref: {文档名}"
+      ],
+      "intermediate_persistence": {
+        "trigger": "子模块实现完成 > 2 个后自动触发",
+        "target": "{module}_work/rtl/{module}_impl_state_v{ver}.json",
+        "schema": {
+          "schema_version": "string",
+          "module_name": "string",
+          "microarch_version": "string",
+          "current_stage": "rtl_impl/sdc_sva/quality_check",
+          "completed_submodules": [
+            {
+              "name": "string",
+              "status": "done/in_progress/pending",
+              "files": ["string"],
+              "lint_status": "pass/fail/pending"
+            }
+          ],
+          "pending_submodules": ["string"]
+        }
+      },
+      "transition": "所有子模块 RTL 完成后进入 sdc_sva"
+    },
+
+    "sdc_sva": {
+      "name": "SDC/SVA/UPF/TB 编写",
+      "description": "基于微架构时钟策略和验证要点生成约束和断言",
+      "steps": [
+        "SDC 约束：时钟定义、输入/输出延迟、false path",
+        "SVA 断言：握手稳定性、数据稳定性、非法状态检测，放在 ifdef ASSERT_ON 内",
+        "UPF 低功耗（如适用）",
+        "TB testbench（如适用）",
+        "Makefile/Lint/综合脚本"
+      ],
+      "output": ".sdc / _sva.sv / .upf / _tb.v / Makefile",
+      "transition": "SDC/SVA 完成后进入 quality_check"
+    },
+
+    "quality_check": {
+      "name": "质量自检",
+      "description": "工具化 Lint + Synthesis 通过后，按 quality-checklist-impl.md 三阶段自检",
+      "checklist_source": ".claude/shared/quality-checklist-impl.md",
+      "mandatory_gate": true,
+      "gate_policy": {
+        "enforcement": "STRICT",
+        "skip_allowed": false,
+        "degrade_allowed": false,
+        "violation_consequence": "交付物视为无效，chip-arch-reviewer 有权拒绝评审"
+      },
+      "tool_gate": {
+        "lint": {
+          "script": "{module}_work/ds/run/run_lint.sh",
+          "report_dir": "{module}_work/ds/report/lint/",
+          "report_files": ["1_iverilog.log", "2_yosys_lint.log", "3_yosys_synth.log", "lint_summary.log"],
+          "gate": "lint_summary.log 输出 ALL PASS",
+          "mandatory": true,
+          "failure_action": "必须进入自愈循环修复，禁止交付"
+        },
+        "synthesis": {
+          "script": "{module}_work/ds/run/run_synth.sh",
+          "report_dir": "{module}_work/ds/report/syn/",
+          "report_files": ["1_synth_check.log", "2_area_stat.log", "synth_summary.log"],
+          "gate": "synth_summary.log 输出 ALL PASS，面积差异 <50%",
+          "mandatory": true,
+          "failure_action": "必须进入自愈循环优化，禁止交付"
+        }
+      },
+      "stages": [
+        {
+          "name": "第一阶段（自动化）",
+          "checks": ["IC-06", "IC-07", "IC-13", "IC-22", "IC-34", "IC-35", "IC-36"],
+          "gate": "全部通过才进入第二阶段"
+        },
+        {
+          "name": "第二阶段（编码规范）",
+          "checks": ["IC-01~05", "IC-08~12", "IC-14~21"],
+          "gate": "全部通过才进入第三阶段"
+        },
+        {
+          "name": "第三阶段（设计模式+DFT+组织+矛盾检测）",
+          "checks": ["IC-23~33", "IC-37~39", "IM-01~08"],
+          "gate": "全部通过才允许交付"
+        }
+      ],
+      "failure_rule": "工具 gate 失败 → 进入自愈循环：分析报告 → 分类修复（Critical 必须修/Major 修或 waive） → 重跑工具 → 循环直到通过。累计迭代 ≥10 次暂停，输出迭代历史摘要，用户确认后继续。自检阶段失败 → 逐项修复后重新执行对应阶段。",
+      "self_healing_loop": {
+        "description": "Lint/Synthesis 不通过时自动分析→修复→重跑循环",
+        "lint_fix_rules": "按 Critical→Major→Minor 顺序修复，Critical 阻断交付，Major 修复或 waive",
+        "synth_opt_rules": "面积差异 20~50% 分析优化，>50% 暂停确认；时序不满足识别关键路径优化",
+        "architecture_frozen": true,
+        "iteration_limit": 10,
+        "limit_behavior": "暂停输出迭代历史，用户决定继续/停止/改架构"
+      },
+      "transition": "自愈循环收敛 + 工具 gate + 三阶段自检全部通过后进入 delivery"
+    },
+
+    "delivery": {
+      "name": "交付",
+      "description": "输出全部交付物，供 chip-arch-reviewer 消费",
+      "deliverables": [
+        "RTL 源码 .v",
+        "CBB 清单 _cbb_list.md",
+        "SDC .sdc",
+        "SVA _sva.sv",
+        "Interface _intf.sv（如需）",
+        "UPF .upf（如需）",
+        "TB _tb.v（如需）",
+        "Makefile/Lint/综合脚本",
+        "Lint 报告 lint_summary.log（ALL PASS）",
+        "综合报告 synth_summary.log（ALL PASS + 面积达标）"
+      ],
+      "downstream_consumer": "chip-arch-reviewer",
+      "gate": "全部文件写入 {module}_work/ 对应目录",
+      "mandatory_reports": {
+        "lint_report": {
+          "path": "{module}_work/ds/report/lint/lint_summary.log",
+          "required_status": "ALL PASS",
+          "skip_allowed": false
+        },
+        "synth_report": {
+          "path": "{module}_work/ds/report/syn/synth_summary.log",
+          "required_status": "ALL PASS",
+          "area_variance": "<50%",
+          "skip_allowed": false
+        }
+      }
+    }
+  },
+
+  "change_handling": {
+    "rules": [
+      { "trigger": "微架构端口变更", "action": "重新 Read 微架构 → 更新端口 → 级联更新内部信号" },
+      { "trigger": "微架构状态机变更", "action": "重新 Read §5.3 → 重写 FSM → 更新 SVA" },
+      { "trigger": "微架构 FIFO 深度变更", "action": "更新 parameter → 验证指针位宽" },
+      { "trigger": "微架构数据通路变更", "action": "重新 Read §5.1 → 逐阶段更新 → 重新时序分析" },
+      { "trigger": "编码规范更新", "action": "重新 Read coding-style.md → 逐条自检 → 修复违规" }
+    ]
+  },
+
+  "exception_handling": {
+    "rules": [
+      { "scene": "微架构文档缺失关键章节", "behavior": "暂停列出缺失项，等待用户补充" },
+      { "scene": "CBB 文档不可用", "behavior": "标注 [CBB-MISSING]，基于通用知识实现" },
+      { "scene": "架构疑问", "behavior": "暂停标记 [ARCH-QUESTION]，输出矛盾描述" },
+      { "scene": "接口位宽不匹配", "behavior": "暂停输出差异分析，等待确认" },
+      { "scene": "专项 agent 输出矛盾", "behavior": "暂停，输出矛盾描述 + 调和方案" },
+      { "scene": "Lint 不通过", "behavior": "进入自愈循环：逐条分析 → 分类处理（Critical 必须修/Major 修或 waive/Minor 建议修）→ 修复 RTL → 重跑 Lint，迭代 ≥10 次暂停确认" },
+      { "scene": "Synthesis 不通过", "behavior": "进入自愈循环：分析面积/时序差异 → 优化 RTL → 重跑 Lint + Synthesis，面积差异 >50% 暂停确认，迭代 ≥10 次暂停确认" },
+      { "scene": "中间状态 JSON schema 版本不匹配", "behavior": "放弃恢复，从头执行" }
+    ]
+  }
+}

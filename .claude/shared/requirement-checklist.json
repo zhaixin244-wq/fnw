@@ -1,140 +1,63 @@
 {
-  "version": "1.1",
-  "description": "芯片需求约束检查清单 - 阶段B 逐项确认数据",
+  "version": "1.3",
+  "description": "芯片需求约束检查清单（精简版）- 详细执行提示见 flow/execution-hints.json",
 
   "constraint_items": [
-    {
-      "seq": 1,
-      "id": "REQ-001",
-      "name": "工艺与频率",
-      "typical_question": "工艺节点？目标频率？",
-      "relation_to_stage_a": "独立",
-      "category": "independent",
-      "execution_hint": "直接询问工艺节点（如28nm/16nm/7nm）和目标频率（MHz）。用户给确定值则记录；用户不确定时触发单约束探索，给出典型工艺频率范围供选择。"
-    },
-    {
-      "seq": 2,
-      "id": "REQ-002",
-      "name": "接口协议",
-      "typical_question": "上下游总线协议？位宽？",
-      "relation_to_stage_a": "先引用阶段0接口类型定性结论，再追问具体协议；按位置推断，需确认",
-      "category": "infer_from_position",
-      "execution_hint": "先回忆阶段0的初步架构方向中是否涉及接口类型定性判断（如'需要总线接口'/'点对点直连'）。再回忆阶段A第1问的模块位置回答，按position_to_interface_map推断协议类型。推断后向用户确认：'根据模块位置，推断接口为XX，请确认是否正确？'用户给确定值则记录；不确定时触发单约束探索。"
-    },
-    {
-      "seq": 3,
-      "id": "REQ-003",
-      "name": "数据流特征",
-      "typical_question": "数据速率？突发长度？粒度？",
-      "relation_to_stage_a": "阶段A第2问可能已覆盖部分，追问遗漏",
-      "category": "partial_coverage",
-      "execution_hint": "先检查阶段A第2问的回答中是否已包含数据速率、突发长度、粒度等信息。已覆盖的部分直接记录并告知用户'您之前提到XX，我已记录'；未覆盖的部分追问遗漏项。不要重复提问已回答的内容。"
-    },
-    {
-      "seq": 4,
-      "id": "REQ-004",
-      "name": "延迟与吞吐",
-      "typical_question": "输入到输出最大延迟？持续吞吐？",
-      "relation_to_stage_a": "阶段A已定优先级，按分级规则追问",
-      "category": "priority_dependent",
-      "execution_hint": "回忆阶段A第3问的回答。若用户选了'性能最重要'→ 必须追问具体延迟(cycles)和吞吐(ops/cycle或GB/s)数值；若未选但也未说不关心 → 问'有没有大致的延迟或吞吐预算？'，用户说没有则用行业默认值；若明确说不关心 → 直接用行业默认值并标注'用户未指定'。参考priority_inquiry_rules。"
-    },
-    {
-      "seq": 5,
-      "id": "REQ-005",
-      "name": "面积与功耗",
-      "typical_question": "面积上限？功耗预算？",
-      "relation_to_stage_a": "阶段A已定优先级，按分级规则追问",
-      "category": "priority_dependent",
-      "execution_hint": "回忆阶段A第3问的回答。若用户选了'面积最重要'或'功耗最重要'→ 必须追问具体面积(kGates)和功耗(mW)数值；若未选但也未说不关心 → 问'有没有大致的面积或功耗预算？'，用户说没有则用行业默认值；若明确说不关心 → 直接用行业默认值并标注'用户未指定'。参考priority_inquiry_rules。"
-    },
-    {
-      "seq": 6,
-      "id": "REQ-006",
-      "name": "时钟与复位",
-      "typical_question": "时钟域数量？复位策略偏好？",
-      "relation_to_stage_a": "独立",
-      "category": "independent",
-      "execution_hint": "直接询问：1) 时钟域数量（单时钟域/多时钟域，如有多时钟域各频率是多少）；2) 复位策略偏好（异步复位同步释放是行业默认，用户无特殊要求则采用默认值）。用户给确定值则记录；不了解时解释'单时钟域最简单，多时钟域需要CDC处理'，提供默认值。"
-    },
-    {
-      "seq": 7,
-      "id": "REQ-007",
-      "name": "低功耗",
-      "typical_question": "有独立功耗域需求吗？",
-      "relation_to_stage_a": "独立",
-      "category": "independent",
-      "execution_hint": "直接询问是否有独立功耗域需求（Power Domain、Isolation、Retention等）。大多数模块不需要特殊低功耗设计，用户说没有则标注'使用全局Clock Gating方案'。用户说有则追问具体需求（哪些域、休眠/唤醒策略）。不了解时解释'低功耗涉及多电压域、电源门控等，增加设计复杂度'。"
-    },
-    {
-      "seq": 8,
-      "id": "REQ-008",
-      "name": "DFT/可靠性",
-      "typical_question": "ECC/Parity/DFT有特殊要求吗？",
-      "relation_to_stage_a": "独立",
-      "category": "independent",
-      "execution_hint": "直接询问是否有ECC/Parity/DFT特殊要求。大多数模块只需标准扫描链，用户无特殊要求则标注'遵循项目通用DFT规则（扫描链、标准ICG）'。用户有要求则追问具体需求（ECC宽度、扫描链约束等）。不了解时简要解释DFT概念，提供默认值+风险提示。"
-    },
-    {
-      "seq": 9,
-      "id": "REQ-009",
-      "name": "其他约束",
-      "typical_question": "安全/合规/特殊工艺限制？",
-      "relation_to_stage_a": "独立",
-      "category": "independent",
-      "execution_hint": "直接询问是否有安全/合规/特殊工艺限制等额外约束。大多数模块没有，用户说没有则标注'不适用'。用户有则追问具体内容。此为兜底项，阶段0产生的补充约束项也在阶段C汇总时从REQ-010起编号。"
-    }
+    { "seq": 1,  "id": "REQ-001", "name": "工艺与频率",    "q": "工艺节点？目标频率？",                          "cat": "independent",         "hint_ref": "REQ-001", "dep": [] },
+    { "seq": 2,  "id": "REQ-002", "name": "接口协议",      "q": "上下游总线协议？位宽？",                        "cat": "infer_from_position", "hint_ref": "REQ-002", "dep": [] },
+    { "seq": 3,  "id": "REQ-003", "name": "数据流特征",    "q": "数据速率？突发长度？粒度？",                    "cat": "partial_coverage",    "hint_ref": "REQ-003", "dep": [] },
+    { "seq": 4,  "id": "REQ-004", "name": "延迟与吞吐",    "q": "输入到输出最大延迟？持续吞吐？",                "cat": "priority_dependent",  "hint_ref": "REQ-004", "dep": ["REQ-006"] },
+    { "seq": 5,  "id": "REQ-005", "name": "面积与功耗",    "q": "面积上限？功耗预算？",                          "cat": "priority_dependent",  "hint_ref": "REQ-005", "dep": ["REQ-013"] },
+    { "seq": 6,  "id": "REQ-006", "name": "时钟与复位",    "q": "时钟域数量？复位策略偏好？",                    "cat": "independent",         "hint_ref": "REQ-006", "dep": [] },
+    { "seq": 7,  "id": "REQ-007", "name": "低功耗",        "q": "有独立功耗域需求吗？",                          "cat": "independent",         "hint_ref": "REQ-007", "dep": [] },
+    { "seq": 8,  "id": "REQ-008", "name": "DFT",           "q": "扫描链/ICG/Boundary Scan/MBIST有特殊要求吗？",  "cat": "independent",         "hint_ref": "REQ-008", "dep": [] },
+    { "seq": 9,  "id": "REQ-009", "name": "可靠性",        "q": "ECC/Parity/TMR/SEU防护有特殊要求吗？",          "cat": "independent",         "hint_ref": "REQ-009", "dep": ["REQ-012"] },
+    { "seq": 10, "id": "REQ-010", "name": "其他约束",      "q": "安全/合规/特殊工艺限制？",                      "cat": "independent",         "hint_ref": "REQ-010", "dep": [] },
+    { "seq": 11, "id": "REQ-011", "name": "CDC 策略",      "q": "跨时钟域信号如何处理？同步方案偏好？",          "cat": "conditional",         "hint_ref": "REQ-011", "dep": ["REQ-006"] },
+    { "seq": 12, "id": "REQ-012", "name": "存储器选型",    "q": "需要什么类型的存储？SRAM/RegFile/ROM？",        "cat": "infer_from_function", "hint_ref": "REQ-012", "dep": [] },
+    { "seq": 13, "id": "REQ-013", "name": "PVT 操作条件",  "q": "工作温度范围？电压？工艺角要求？",              "cat": "independent",         "hint_ref": "REQ-013", "dep": [] },
+    { "seq": 14, "id": "REQ-014", "name": "接口时序约束",  "q": "输入setup/hold要求？输出delay约束？",           "cat": "conditional",         "hint_ref": "REQ-014", "dep": ["REQ-002"] },
+    { "seq": 15, "id": "REQ-015", "name": "DMA握手接口",   "q": "是否需要DMA引擎？突发长度？地址模式？",        "cat": "infer_from_function", "hint_ref": "REQ-015", "dep": [] },
+    { "seq": 16, "id": "REQ-016", "name": "中断接口",      "q": "中断输出类型？优先级数量？清除方式？",          "cat": "independent",         "hint_ref": "REQ-016", "dep": [] },
+    { "seq": 17, "id": "REQ-017", "name": "调试接口",      "q": "需要JTAG/Trace/性能计数器吗？",                 "cat": "independent",         "hint_ref": "REQ-017", "dep": [] },
+    { "seq": 18, "id": "REQ-018", "name": "安全隔离",      "q": "需要TrustZone/防火墙/地址保护吗？",             "cat": "independent",         "hint_ref": "REQ-018", "dep": [] },
+    { "seq": 19, "id": "REQ-019", "name": "软件接口约束",  "q": "驱动模型？寄存器访问模式？中断vs轮询？",        "cat": "infer_from_position", "hint_ref": "REQ-019", "dep": [] },
+    { "seq": 20, "id": "REQ-020", "name": "系统级约束",    "q": "QoS级别？地址映射空间？Cache属性？",            "cat": "infer_from_position", "hint_ref": "REQ-020", "dep": [] },
+    { "seq": 21, "id": "REQ-021", "name": "功耗状态机",    "q": "需要哪些低功耗状态？唤醒延迟约束？",            "cat": "conditional",         "hint_ref": "REQ-021", "dep": ["REQ-007"] },
+    { "seq": 22, "id": "REQ-022", "name": "PLL/Jitter",    "q": "是否需要片内PLL？Jitter要求？",                 "cat": "conditional_optional", "hint_ref": "REQ-022", "dep": ["REQ-001"] },
+    { "seq": 23, "id": "REQ-023", "name": "SerDes/PHY",    "q": "SerDes速率？通道数？均衡策略？",                "cat": "conditional_optional", "hint_ref": "REQ-023", "dep": ["REQ-002"] },
+    { "seq": 24, "id": "REQ-024", "name": "形式验证",      "q": "是否需要形式验证？覆盖范围？",                  "cat": "conditional_optional", "hint_ref": "REQ-024", "dep": [] },
+    { "seq": 25, "id": "REQ-025", "name": "验证方法学",    "q": "验证方法？覆盖率目标？回归策略？",              "cat": "conditional_optional", "hint_ref": "REQ-025", "dep": ["REQ-003"] },
+    { "seq": 26, "id": "REQ-026", "name": "封装约束",      "q": "IO Pad 数量？封装类型？散热约束？",            "cat": "independent",         "hint_ref": "REQ-026", "dep": [] },
+    { "seq": 27, "id": "REQ-027", "name": "EMC/ESD 合规",  "q": "是否涉及汽车/工业场景？EMC合规要求？",        "cat": "conditional_optional", "hint_ref": "REQ-027", "dep": ["REQ-010"] },
+    { "seq": 28, "id": "REQ-028", "name": "时钟树约束",    "q": "SS覆盖要求？OCV 余量？",                      "cat": "conditional_optional", "hint_ref": "REQ-028", "dep": ["REQ-001"] }
   ],
 
-  "position_to_interface_map": [
-    { "position": "SoC内部总线（上下游模块在总线上）", "protocol_type": "AXI4 / AHB / APB", "example": "CPU通过AXI访问 → AXI4" },
-    { "position": "芯片边缘I/O", "protocol_type": "SPI / I2C / UART / GPIO", "example": "连接外部传感器 → SPI" },
-    { "position": "模块间点对点直连", "protocol_type": "Valid-Ready 自定义接口", "example": "同时钟域相邻模块 → 自定义握手" },
-    { "position": "网络/存储方向", "protocol_type": "按知识库域从RAG索引推断", "example": "网络出口 → Ethernet MAC" },
-    { "position": "无法推断", "protocol_type": "标记⬜，阶段B补问", "example": "-" }
-  ],
+  "hint_usage": "读取 flow/execution-hints.json 的 {hint_ref} 字段获取详细执行提示。hint_ref 与 REQ 编号一一对应。",
+  "protocol_map_usage": "位置→协议推断读取 requirement-template.json flow.stageB.protocol_map_source 引用的 protocol-mapping.json。",
 
   "priority_inquiry_rules": [
-    {
-      "stage_a_status": "选为最高优先级",
-      "stage_b_action": "必须追问具体数值"
-    },
-    {
-      "stage_a_status": "未选为最高优先级但也未说不关心",
-      "stage_b_action": "询问预算参考值（"有没有大致的预算限制？"），用户说没有则使用行业默认值"
-    },
-    {
-      "stage_a_status": "阶段A明确说不关心",
-      "stage_b_action": "直接使用行业默认值并标注"默认值，用户未指定"，不追问数值"
-    }
+    { "status": "选为最高优先级", "action": "追问具体数值" },
+    { "status": "未选但未拒绝", "action": "问预算参考值，无则用默认值" },
+    { "status": "明确不关心", "action": "用行业默认值，标注'用户未指定'" }
   ],
 
   "not_applicable_rules": [
-    {
-      "scenario": "用户明确表示不了解（如"DFT是什么"）",
-      "action": "简要解释概念 → 提供行业典型默认值 + 风险提示 → 用户不反对即确认"
-    },
-    {
-      "scenario": "专家语境说"你看着定"（明确信任，无敷衍语气）",
-      "action": "提供行业默认值 + 可选优化方案 → 用户确认"
-    },
-    {
-      "scenario": "用户含糊敷衍（如反复"随便"/"无所谓"）",
-      "action": "强制追问一次："这个约束对方案设计影响较大，我提供A/B两个默认选项，请确认" → 用户选择后确认"
-    }
+    { "scenario": "用户不了解", "action": "解释概念→默认值+风险提示→确认" },
+    { "scenario": "专家说'你看着定'", "action": "默认值+可选方案→确认" },
+    { "scenario": "含糊敷衍", "action": "追问1次→A/B二选一；追问2次仍敷衍→强制用推荐值" }
   ],
 
-  "trigger_rules": [
-    { "scenario": "用户明确说"不了解"/"不确定"/"不知道"", "trigger": true },
-    { "scenario": "用户给出范围值（如"大概28nm左右"）", "trigger": true },
-    { "scenario": "用户反问Agent（如"你觉得应该用多少？"）", "trigger": true },
-    { "scenario": "用户给出确定值（即使不是最优解）", "trigger": false },
-    { "scenario": "用户说"先按这个来，后面再调"", "trigger": false }
-  ],
+  "trigger_rules": {
+    "keyword_rules": [
+      { "scenario": "不了解/不确定/不知道", "trigger": true },
+      { "scenario": "给出范围值", "trigger": true },
+      { "scenario": "反问Agent", "trigger": true },
+      { "scenario": "给出确定值", "trigger": false },
+      { "scenario": "'先按这个来'", "trigger": false }
+    ],
+    "semantic_judgment": "关键词规则仅作辅助参考。实际判断优先利用 LLM 理解用户意图：对于'大概28nm吧'、'好像是200MHz'、'先按这个来'等灰色地带表达，结合上下文语义判断用户是倾向确定还是不确定。若语义倾向确定但存在犹豫，不触发探索追问，而是记录犹豫点并在 stageC 汇总时标注'待验证'。若语义明确不确定，则触发探索流程。"
+  },
 
-  "exploration_template": {
-    "description": "用户不确定时触发的单约束探索输出格式",
-    "output_format": "> 关于 {约束项名称}，根据 {参考依据}：\n\n**推荐值**：{推荐值} — {推荐理由}\n\n**可选项**：\n| 选项 | 值 | 优势 | 劣势 |\n|------|-----|------|------|\n| A（推荐） | {值} | {优势} | {劣势} |\n| B | {值} | {优势} | {劣势} |\n| C | {值} | {优势} | {劣势} |\n\n如无异议，采用推荐值 A。如有偏好请说明。",
-    "reference_priority": ["阶段0探索结论", "行业经验常识", "RAG索引选型对比表"]
-  }
+  "exploration_template": "> 关于{约束项}：\n\n**推荐值**：{值} — {理由}\n\n| 选项 | 值 | 优势 | 劣势 |\n|------|-----|------|------|\n| A（推荐） | {值} | {优势} | {劣势} |\n| B | {值} | {优势} | {劣势} |"
 }

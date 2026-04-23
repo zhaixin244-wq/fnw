@@ -28,7 +28,10 @@
 | Skill | 用途 | 调用时机 |
 |-------|------|----------|
 | `chip-doc-structurer` | 文档章节结构 + 内容权重 | FS/微架构编写启动时 |
-| `chip-diagram-generator` | Mermaid 模块框图、数据通路图、状态机图 | 需要可视化架构时 |
+| `chip-diagram-generator` | D2 模块框图、数据通路图、状态机图（dagre 布局） | 需要可视化架构时（已被 chip-png-d2-gen 替代） |
+| `chip-png-d2-gen` | D2 架构图/流程图/状态机→PNG（dagre布局） | 需要生成可渲染的架构框图PNG时 |
+| `chip-png-wavedrom-gen` | Wavedrom JSON 时序图→PNG | 需要生成可渲染的时序图PNG时 |
+| `chip-png-interface-gen` | Verilog模块声明→接口端口PNG图 | 需要生成接口端口图PNG时 |
 | `chip-interface-contractor` | 精确接口契约（端口表 + 时序 + SVA） | 定义接口时 |
 | `chip-ppa-formatter` | 结构化 PPA 表（Target/Budget/Estimated） | 输出 PPA 预估时 |
 | `chip-traceability-linker` | RTM 需求追溯矩阵 + 覆盖率统计 | 编写 RTM 或检查追溯时 |

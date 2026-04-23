@@ -1,0 +1,74 @@
+{
+  "version": "1.1",
+  "description": "矛盾检测覆盖率模型 — 统计每个 REQ 被多少规则覆盖、哪些 REQ 组合未被交叉检测，输出覆盖热力图。pairwise_coverage_gap 已自动生成实验性规则草案。",
+
+  "req_coverage_matrix": [
+    { "req": "REQ-001", "rules": ["FREQ-01", "FREQ-02", "POWER-01", "PVT-01", "EXP-04"], "coverage": 5, "category": "工艺/频率" },
+    { "req": "REQ-002", "rules": ["AREA-01", "IO-01", "IO-02", "IO-03"], "coverage": 4, "category": "接口" },
+    { "req": "REQ-003", "rules": ["AREA-02", "IO-01", "IO-02", "PERF-02"], "coverage": 4, "category": "数据流" },
+    { "req": "REQ-004", "rules": ["FREQ-02", "PERF-01", "POWER-04", "CDC-01"], "coverage": 4, "category": "性能" },
+    { "req": "REQ-005", "rules": ["AREA-01", "AREA-02", "AREA-03", "POWER-01", "PVT-01", "MEM-01", "EXP-02"], "coverage": 7, "category": "面积功耗" },
+    { "req": "REQ-006", "rules": ["CDC-01", "PERF-02"], "coverage": 2, "category": "时钟" },
+    { "req": "REQ-007", "rules": ["POWER-02", "POWER-03", "POWER-04", "EXP-05"], "coverage": 4, "category": "低功耗" },
+    { "req": "REQ-008", "rules": ["POWER-02", "EXP-01"], "coverage": 2, "category": "DFT" },
+    { "req": "REQ-009", "rules": ["AREA-03", "EXP-01"], "coverage": 2, "category": "可靠性" },
+    { "req": "REQ-010", "rules": ["EXP-03"], "coverage": 1, "category": "其他约束" },
+    { "req": "REQ-011", "rules": ["POWER-03", "CDC-01"], "coverage": 2, "category": "CDC" },
+    { "req": "REQ-012", "rules": ["IO-02", "MEM-01"], "coverage": 2, "category": "存储" },
+    { "req": "REQ-013", "rules": ["PVT-01"], "coverage": 1, "category": "PVT" },
+    { "req": "REQ-014", "rules": [], "coverage": 0, "category": "接口时序" },
+    { "req": "REQ-015", "rules": [], "coverage": 0, "category": "DMA" },
+    { "req": "REQ-016", "rules": [], "coverage": 0, "category": "中断" },
+    { "req": "REQ-017", "rules": [], "coverage": 0, "category": "调试" },
+    { "req": "REQ-018", "rules": ["IO-03", "EXP-05"], "coverage": 2, "category": "安全隔离" },
+    { "req": "REQ-019", "rules": [], "coverage": 0, "category": "软件接口" },
+    { "req": "REQ-020", "rules": [], "coverage": 0, "category": "系统级" },
+    { "req": "REQ-021", "rules": ["POWER-04"], "coverage": 1, "category": "功耗状态" },
+    { "req": "REQ-022", "rules": ["ANA-01", "ANA-04"], "coverage": 2, "category": "PLL", "conditional": true },
+    { "req": "REQ-023", "rules": ["ANA-02", "ANA-03"], "coverage": 2, "category": "SerDes", "conditional": true },
+    { "req": "REQ-024", "rules": ["VER-01", "VER-03"], "coverage": 2, "category": "形式验证", "conditional": true },
+    { "req": "REQ-025", "rules": ["VER-02"], "coverage": 1, "category": "验证方法", "conditional": true },
+    { "req": "REQ-026", "rules": ["EXP-02"], "coverage": 1, "category": "封装" },
+    { "req": "REQ-027", "rules": ["EXP-03"], "coverage": 1, "category": "EMC/ESD", "conditional": true },
+    { "req": "REQ-028", "rules": ["EXP-04"], "coverage": 1, "category": "时钟树", "conditional": true }
+  ],
+
+  "coverage_statistics": {
+    "total_reqs": 28,
+    "covered_reqs_base_only": 19,
+    "covered_reqs_with_experimental": 24,
+    "uncovered_reqs_base_only": 9,
+    "uncovered_reqs_with_experimental": 4,
+    "coverage_rate_base_only": "68%",
+    "coverage_rate_with_experimental": "86%",
+    "uncovered_with_experimental": ["REQ-014", "REQ-015", "REQ-016", "REQ-017", "REQ-019", "REQ-020"],
+    "high_coverage": ["REQ-005 (7规则含实验)", "REQ-001 (5规则含实验)"],
+    "low_coverage": ["REQ-013/021 (各1规则)", "REQ-025 (1规则)"],
+    "uncovered_note": "未覆盖 REQ 为接口细节/调试/软件接口类（REQ-014~020），通常在 stageB 直接记录不需交叉检测"
+  },
+
+  "pairwise_coverage_gap": {
+    "description": "未被交叉检测的 REQ 组合 → 已自动生成实验性规则草案（conflict-detection-experimental.json）",
+    "resolved_gaps": [
+      { "pair": ["REQ-008", "REQ-009"], "resolved_by": "EXP-01: DFT扫描链 vs TMR可靠性" },
+      { "pair": ["REQ-005", "REQ-026"], "resolved_by": "EXP-02: 芯片面积 vs 封装约束" },
+      { "pair": ["REQ-010", "REQ-027"], "resolved_by": "EXP-03: 合规要求 vs PPA预算" },
+      { "pair": ["REQ-001", "REQ-028"], "resolved_by": "EXP-04: 高频时钟 vs OCV余量" },
+      { "pair": ["REQ-007", "REQ-018"], "resolved_by": "EXP-05: 功耗域隔离 vs 安全隔离" }
+    ],
+    "remaining_gaps": [
+      { "pair": ["REQ-006", "REQ-007"], "note": "已有 POWER-03 覆盖（CDC vs 低功耗），无需额外规则" },
+      { "pair": ["REQ-015", "REQ-016"], "note": "DMA + 中断 → 交互复杂度低，stageB 直接确认即可" }
+    ]
+  },
+
+  "coverage_hotspot_analysis": {
+    "description": "覆盖热力图分析 — 按覆盖密度分级（含实验性规则）",
+    "hot": { "description": "覆盖 ≥ 3 条规则", "reqs": ["REQ-001(5)", "REQ-002(4)", "REQ-003(4)", "REQ-004(4)", "REQ-005(7)", "REQ-007(4)"] },
+    "warm": { "description": "覆盖 2 条规则", "reqs": ["REQ-006(2)", "REQ-008(2)", "REQ-009(2)", "REQ-011(2)", "REQ-012(2)", "REQ-018(2)", "REQ-022(2)", "REQ-023(2)", "REQ-024(2)"] },
+    "cold": { "description": "覆盖 1 条规则", "reqs": ["REQ-010(1)", "REQ-013(1)", "REQ-021(1)", "REQ-025(1)", "REQ-026(1)", "REQ-027(1)", "REQ-028(1)"] },
+    "frozen": { "description": "无覆盖", "reqs": ["REQ-014", "REQ-015", "REQ-016", "REQ-017", "REQ-019", "REQ-020"] }
+  },
+
+  "usage": "stageC0 完成后自动运行覆盖率分析：1) 输出覆盖热力图（hot/warm/cold/frozen）；2) 标注 resolved_gaps 中已由实验性规则覆盖的组合；3) frozen 类 REQ 在 PR 沟通记录中标注'无交叉检测覆盖'；4) 实验性规则输出时标注[EXP]前缀"
+}

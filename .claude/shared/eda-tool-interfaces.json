@@ -1,0 +1,110 @@
+{
+  "version": "1.0",
+  "description": "EDA 工具接口定义 - 芯片架构 Agent 与下游 EDA 工具的接口契约和反馈循环机制",
+
+  "tool_interfaces": [
+    {
+      "tool_name": "综合工具",
+      "tool_examples": ["DC Compiler", "Genus", "Design Compiler"],
+      "input_from_agent": {
+        "file_types": ["RTL (.v/.sv)", "SDC (.tcl)", "UPF (.upf)"],
+        "source_chapter": "FS §8 PPA规格 + 微架构 §6 SDC约束 + 微架构 §7 时钟复位",
+        "mapping": {
+          "PPA规格": "→ 综合约束（时序/面积/功耗目标）",
+          "SDC约束": "→ 时钟定义 + 输入输出延迟 + 例外路径",
+          "关键路径分析": "→ 综合工具的 critical path 报告输入"
+        }
+      },
+      "output_to_agent": {
+        "file_types": ["综合报告（面积/时序/功耗）", "关键路径报告", "约束违例报告"],
+        "consumption_mode": "agent Read 报告 → 对比 FS §8 PPA 规格 → 标注偏差",
+        "feedback_loop": "如果综合结果与 FS PPA 规格偏差 > 20% → 触发方案重新评估（解冻对应 REQ，重走 stageB→stageC）"
+      }
+    },
+    {
+      "tool_name": "形式验证工具",
+      "tool_examples": ["JasperGold", "VC Formal", "Formality"],
+      "input_from_agent": {
+        "file_types": ["SVA (.sv)", "RTL (.v/.sv)", "约束文件"],
+        "source_chapter": "REQ-024 形式验证要求 + 微架构 §10 SVA 断言要点",
+        "mapping": {
+          "REQ-024覆盖范围": "→ 形式验证 scope 定义",
+          "SVA属性": "→ 待证明属性集合",
+          "验证假设": "→ assume property 约束"
+        }
+      },
+      "output_to_agent": {
+        "file_types": ["属性证明报告（proven/vacuous/undetermined）", "反例报告", "覆盖率报告"],
+        "consumption_mode": "agent Read 报告 → 对比 REQ-024 覆盖范围 → 未覆盖项标注",
+        "feedback_loop": "undetermined 属性 > 10% → 标记验证风险，建议增加约束或缩小 scope"
+      }
+    },
+    {
+      "tool_name": "Lint 检查工具",
+      "tool_examples": ["SpyGlass", "LEDA", "VC-LP"],
+      "input_from_agent": {
+        "file_types": ["RTL (.v/.sv)", "Lint 配置"],
+        "source_chapter": "rules/coding-style.md 编码规范",
+        "mapping": {
+          "编码规范": "→ Lint 规则集映射",
+          "可综合性检查清单": "→ 综合性 Lint 规则",
+          "DFT 友好性": "→ DFT Lint 规则"
+        }
+      },
+      "output_to_agent": {
+        "file_types": ["Lint 违例报告（Error/Warning/Info）"],
+        "consumption_mode": "agent Read 报告 → Error 必须修复，Warning 标注评估",
+        "feedback_loop": "Error 数量 > 0 → 标记代码质量问题，需在交付前清零"
+      }
+    },
+    {
+      "tool_name": "CDC 检查工具",
+      "tool_examples": ["SpyGlass CDC", "Conformal CDC"],
+      "input_from_agent": {
+        "file_types": ["RTL (.v/.sv)", "CDC 约束"],
+        "source_chapter": "post_stageB_processing 生成的 CDC 约束模板",
+        "mapping": {
+          "CDC约束模板": "→ 工具 CDC 约束定义",
+          "时钟域定义": "→ set_clock_groups 等约束",
+          "同步策略": "→ 工具识别的同步器类型"
+        }
+      },
+      "output_to_agent": {
+        "file_types": ["CDC 违例报告（重收敛/多bit/脉冲等）"],
+        "consumption_mode": "agent Read 报告 → 按 CDC-01~06 规则逐条核对",
+        "feedback_loop": "CDC Error > 0 → 标记可靠性风险，需在交付前清零"
+      }
+    }
+  ],
+
+  "integration_workflow": {
+    "description": "Agent 与 EDA 工具的协作工作流",
+    "phases": [
+      {
+        "phase": "需求阶段（stage0→stageC）",
+        "agent_output": "REQ 汇总表 + CDC 约束模板",
+        "eda_consumption": "综合约束目标（从 PPA 规格提取）+ CDC 约束定义"
+      },
+      {
+        "phase": "设计阶段（FS→微架构→RTL）",
+        "agent_output": "SDC 约束 + SVA 属性 + UPF 文件",
+        "eda_consumption": "综合/形式验证/CDC/Lint 工具输入"
+      },
+      {
+        "phase": "验证反馈阶段",
+        "eda_output": "综合报告 + 形式验证报告 + CDC/Lint 报告",
+        "agent_consumption": "对比 REQ 规格 → 偏差>20% 触发重新评估"
+      }
+    ]
+  },
+
+  "report_parsing_rules": {
+    "description": "Agent 解析 EDA 工具报告的规则",
+    "area_report": "提取 total cell area / gate count，与 FS §8.3 面积指标对比",
+    "timing_report": "提取 WNS(TNS) / Fmax，与 FS §8.1 性能指标对比",
+    "power_report": "提取 dynamic/static/total power，与 FS §8.2 功耗指标对比",
+    "formal_report": "提取 proven/vacuous/undetermined/counter-example 数量，与 REQ-024 对比",
+    "cdc_report": "按 Error/Warning 分类，Error 必须清零",
+    "lint_report": "按 Error/Warning/Info 分类，Error 必须清零"
+  }
+}

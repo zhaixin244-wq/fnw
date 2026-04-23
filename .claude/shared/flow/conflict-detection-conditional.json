@@ -1,0 +1,74 @@
+{
+  "version": "1.1",
+  "description": "条件矛盾检测规则 — 仅当 REQ-022/023/024/025 激活时加载。reference_values 在 reference-values.json 按规则ID索引。",
+
+  "reference_values_ref": ".claude/shared/flow/reference-values.json",
+  "trigger_condition": "仅当 checklist 中对应 REQ-022/023/024/025 状态为 confirmed 时执行检测",
+  "load_condition": "stageC0 时，若任何 REQ-022~025 激活，则 Read 本文件；否则跳过",
+
+  "detection_rules": [
+    {
+      "id": "ANA-01",
+      "name": "PLL Lock Time vs 唤醒延迟",
+      "logic": "PLL 锁定时间是否超出低功耗状态机的唤醒延迟约束",
+      "ref_values_key": "ANA-01",
+      "example": "唤醒延迟约束≤10us + 使用小数N分频PLL(100us Lock)",
+      "involved_keys": ["REQ-004", "REQ-021", "REQ-022"],
+      "detection_tip": "仅当 REQ-022 激活时检测。将 REQ-022 的 PLL Lock Time 与 REQ-021 的唤醒延迟约束对比：PLL Lock Time > 唤醒延迟 → 标记矛盾。建议使用快速锁定 PLL 或 Always-On 时钟域绕过 PLL。"
+    },
+    {
+      "id": "ANA-02",
+      "name": "SerDes 速率 vs 工艺节点",
+      "logic": "SerDes 单通道速率是否超出该工艺的典型上限",
+      "ref_values_key": "ANA-02",
+      "example": "28nm 要求 25Gbps/lane",
+      "involved_keys": ["REQ-001", "REQ-023"],
+      "detection_tip": "仅当 REQ-023 激活时检测。将 REQ-023 的 SerDes 速率与 REQ-001 的工艺节点对应上限对比：超出 80% 上限 → 标记风险；超出 100% 上限 → 标记矛盾。"
+    },
+    {
+      "id": "ANA-03",
+      "name": "SerDes 通道数 vs 面积/功耗",
+      "logic": "SerDes PHY 的面积和功耗是否超出预算",
+      "ref_values_key": "ANA-03",
+      "example": "4通道 × 0.8mm² = 3.2mm² > 2.0mm² 面积预算@28nm",
+      "involved_keys": ["REQ-005", "REQ-023"],
+      "detection_tip": "仅当 REQ-023 激活时检测。将 REQ-023 的通道数 × 每通道面积/功耗，与 REQ-005 的面积/功耗预算对比。超出则标记矛盾，建议减少通道数或放宽预算。"
+    },
+    {
+      "id": "ANA-04",
+      "name": "模拟接口 Jitter vs 系统时序",
+      "logic": "时钟 Jitter 是否侵蚀系统时序裕量",
+      "ref_values_key": "ANA-04",
+      "example": "1GHz 时钟 + 小数N PLL Jitter 80ps（裕量仅 2%）",
+      "involved_keys": ["REQ-001", "REQ-022"],
+      "detection_tip": "仅当 REQ-022 激活时检测。将 REQ-022 的 Jitter 要求与 REQ-001 的目标频率对比：Jitter/Tclk > 10% → 标记风险；> 15% → 标记矛盾。建议降低频率或使用低 Jitter PLL。"
+    },
+    {
+      "id": "VER-01",
+      "name": "形式验证范围 vs 功能复杂度",
+      "logic": "形式验证的覆盖范围是否与模块功能复杂度匹配",
+      "ref_values_key": "VER-01",
+      "example": "8个功能 + 仅10条SVA属性（应有24-80条）",
+      "involved_keys": ["REQ-003", "REQ-024"],
+      "detection_tip": "仅当 REQ-024 激活时检测。将 REQ-003 的功能数量与 REQ-024 的属性覆盖范围对比：属性数 < 功能点数×2 → 标记覆盖不足风险。"
+    },
+    {
+      "id": "VER-02",
+      "name": "覆盖率目标 vs 验证周期",
+      "logic": "覆盖率目标是否在给定验证周期内可达成",
+      "ref_values_key": "VER-02",
+      "example": "功能覆盖率100% + 验证周期仅4周（复杂模块需要8-16周）",
+      "involved_keys": ["REQ-004", "REQ-025"],
+      "detection_tip": "仅当 REQ-025 激活时检测。将 REQ-025 的覆盖率目标与 REQ-004 的交付时间约束对比：100%功能覆盖率 + 周期≤4周 + 中等以上复杂度 → 标记矛盾。建议降低目标至95%或增加验证资源。"
+    },
+    {
+      "id": "VER-03",
+      "name": "形式验证 vs CDC 复杂度",
+      "logic": "形式验证工具对 CDC 路径的支持是否充足",
+      "ref_values_key": "VER-03",
+      "example": "多时钟域模块 + 仅依赖形式验证覆盖 CDC（形式工具无法覆盖）",
+      "involved_keys": ["REQ-006", "REQ-011", "REQ-024"],
+      "detection_tip": "仅当 REQ-024 激活且 REQ-006 为多时钟域时检测。若用户期望形式验证覆盖 CDC 正确性 → 标记矛盾，建议 CDC 使用专用工具，形式验证仅覆盖单时钟域逻辑。"
+    }
+  ]
+}

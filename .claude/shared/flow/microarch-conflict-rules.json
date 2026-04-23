@@ -1,0 +1,147 @@
+{
+  "version": "1.0",
+  "description": "微架构文档矛盾检测规则 — 自动化检查微架构文档中的常见设计错误和不一致性。在 integration_check 和 quality_check 阶段执行。",
+
+  "detection_rules": [
+    {
+      "id": "MA-01",
+      "name": "数据通路断点",
+      "logic": "数据流图中是否存在无输入或无输出的中间阶段",
+      "detection_tip": "遍历 §5.1 数据流表，检查每个阶段的输入来源和输出目标。任一阶段缺少输入或输出 → 标记断点。",
+      "check_method": "提取 §5.1 数据流表，构建信号有向图，检查连通性",
+      "severity": "Critical"
+    },
+    {
+      "id": "MA-02",
+      "name": "关键路径 Tslack 不满足",
+      "logic": "§6 关键路径分析中 Tslack < 0",
+      "detection_tip": "检查 §6 时序裕量表中所有路径的 Tslack 值。Tslack < 0 → 标记时序违规；0 < Tslack < 0.1ns → 标记风险。",
+      "check_method": "提取 §6 Tslack 列，检查 < 0 或 < 0.1ns",
+      "severity": "Critical"
+    },
+    {
+      "id": "MA-03",
+      "name": "FIFO 深度与速率不匹配",
+      "logic": "§5.5 FIFO 深度计算中，生产者速率 > 消费者速率但深度不足以缓冲最大突发",
+      "detection_tip": "验证 FIFO 深度 ≥ B_max + D_fb × R_prod / R_cons。不满足 → 标记矛盾，建议增大深度。",
+      "check_method": "提取 §5.5 深度计算公式，代入参数验证",
+      "severity": "Critical"
+    },
+    {
+      "id": "MA-04",
+      "name": "背压链路不完整",
+      "logic": "§5.2 流控机制中，从输出到输入的反压路径存在断点",
+      "detection_tip": "检查背压路径表是否从最终消费者回溯到最初生产者。任一环节缺少 ready 信号描述 → 标记断点。",
+      "check_method": "提取 §5.2 背压路径，验证端到端完整性",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-05",
+      "name": "FSM 缺少 default 分支",
+      "logic": "§5.3 状态转移条件表中存在无 default 的状态",
+      "detection_tip": "检查每个状态的转移条件是否有 default 行。无 default → 标记违规。",
+      "check_method": "提取 §5.3 状态转移表，检查 default 覆盖",
+      "severity": "Critical"
+    },
+    {
+      "id": "MA-06",
+      "name": "PPA 子模块超总预算",
+      "logic": "§8.4 子模块 PPA 合计 > FS §8.1~8.3 顶层预算",
+      "detection_tip": "对比 §8.4 合计行与 FS §8 PPA 预算。任一维度（面积/功耗/延迟）超预算 → 标记矛盾。",
+      "check_method": "提取 §8.4 合计值与 FS §8 预算值比较",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-07",
+      "name": "子模块端口与顶层不一致",
+      "logic": "§4.1 端口列表中的顶层接口映射表存在未映射端口或映射信号名不匹配",
+      "detection_tip": "检查 §4.1 与顶层接口映射表，每个端口必须有对应的顶层信号。未映射 → 标记遗漏；信号名不匹配 → 标记不一致。",
+      "check_method": "交叉比对 §4.1 端口列表与顶层接口映射表",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-08",
+      "name": "时钟域归属矛盾",
+      "logic": "§7 时钟域归属表中，同一信号在不同子模块中声明不同时钟域",
+      "detection_tip": "跨子模块比对时钟域声明。同一信号不同时钟域 → 标记 CDC 风险。",
+      "check_method": "合并所有子模块 §7 时钟域表，按信号名检查一致性",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-09",
+      "name": "SDC 约束缺失",
+      "logic": "§6 缺少 create_clock / set_input_delay / set_output_delay / set_false_path 中任一项",
+      "detection_tip": "检查 §6 SDC 约束块是否包含四项基本约束。缺失 → 标记遗漏。",
+      "check_method": "grep §6 中 create_clock/set_input_delay/set_output_delay/set_false_path",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-10",
+      "name": "RTM 覆盖不足",
+      "logic": "§13 RTM 覆盖率 < 95%",
+      "detection_tip": "统计 §13 已覆盖 REQ 数 vs FS §14 REQ 总数。覆盖率 < 95% → 标记缺口，列出未覆盖 REQ。",
+      "check_method": "统计 §13 REQ 行数 vs FS §14 REQ 总数",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-11",
+      "name": "复位策略不一致",
+      "logic": "子模块 §7 复位策略与顶层 §9 不一致（如同为异步复位 vs 同步复位）",
+      "detection_tip": "跨子模块比对复位策略声明。不一致 → 标记矛盾。",
+      "check_method": "合并所有子模块 §7 复位策略，检查一致性",
+      "severity": "Important"
+    },
+    {
+      "id": "MA-12",
+      "name": "接口协议不匹配",
+      "logic": "子模块间内部接口的源协议与目标协议不一致",
+      "detection_tip": "检查 §5.N 内部接口表中，源子模块的输出协议与目标子模块的输入协议是否一致。不一致 → 标记矛盾。",
+      "check_method": "交叉比对内部接口表的源/目标协议声明",
+      "severity": "Important"
+    }
+  ],
+
+  "severity_rules": {
+    "Critical": "integration_check 阶段强制检查，不通过项阻断质量自检",
+    "Important": "quality_check 阶段检查，不通过项在风险章节标注",
+    "Advisory": "按需检查，记录供参考"
+  },
+
+  "usage": "integration_check 阶段执行 Critical 规则（MA-01/02/03/05），quality_check 阶段执行全部规则。检测结果输出到微架构文档 §11 风险与缓解章节。",
+
+  "feedback_schema": {
+    "description": "微架构矛盾检测规则反馈收集机制 — 每个子模块编写完成后对触发的 MA 规则进行反馈标注",
+    "rule_feedback_template": {
+      "project_id": "string — 项目标识",
+      "submodule": "string — 子模块名称",
+      "hit": "boolean — 该规则是否触发",
+      "true_contradiction": "boolean — 触发后人工确认为真矛盾",
+      "false_positive": "boolean — 触发后人工确认为误报",
+      "notes": "string — 补充说明（可选）"
+    },
+    "per_rule_feedback": {
+      "MA-01": [],
+      "MA-02": [],
+      "MA-03": [],
+      "MA-04": [],
+      "MA-05": [],
+      "MA-06": [],
+      "MA-07": [],
+      "MA-08": [],
+      "MA-09": [],
+      "MA-10": [],
+      "MA-11": [],
+      "MA-12": []
+    },
+    "auto_review_trigger": {
+      "description": "当任一规则累计反馈项目数 ≥ 3 时自动触发评审",
+      "condition": "per_rule_feedback[rule_id].length >= 3",
+      "review_output": {
+        "hit_rate": "hit=true 数 / 总项目数",
+        "precision": "true_contradiction 数 / hit=true 数",
+        "recommendation": "hit_rate > 30% 且 precision > 50% → 建议保留；hit_rate < 10% → 建议删除；其余 → 标注待观察"
+      }
+    },
+    "usage": "quality_check 执行后，对每条触发的 MA 规则要求用户反馈 hit/true_contradiction/false_positive，追加到 per_rule_feedback 对应数组。累计 ≥3 条时输出自动评审报告。"
+  }
+}

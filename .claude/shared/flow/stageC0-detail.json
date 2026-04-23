@@ -1,0 +1,36 @@
+{
+  "version": "1.3",
+  "description": "stageC0 矛盾检测 + post_stageB 后处理 - 详细规则",
+
+  "post_stageB_processing": {
+    "steps": [
+      "1. 检查 REQ-011（CDC 策略）是否已确认且为多时钟域",
+      "2. 若多时钟域 → 自动生成 CDC 约束模板，写入 PR 沟通记录"
+    ],
+    "cdc_template": {
+      "trigger": "REQ-006 确认为多时钟域 且 REQ-011 已确认",
+      "output": "## CDC 约束模板（自动生成）\n\n| 信号/信号组 | 源时钟域 | 目标时钟域 | 位宽 | 同步策略 | 依据 |\n|-------------|----------|------------|------|----------|------|\n| {signal} | clk_{src} | clk_{dst} | {W} | 策略 | REQ-011 |\n\n同步器配置：双触发器(2级)/异步FIFO(深度≥4)/握手(四拍)/Gray码(计数器用)\n复位CDC：每个时钟域独立复位同步器，禁止跨域共享。",
+      "signal_sources": ["REQ-003 数据流", "REQ-002 接口控制信号", "REQ-007 跨功耗域信号"]
+    }
+  },
+
+  "stageC0": {
+    "triggers": {
+      "active": "stageB全部完成后自动执行全部14项基础检测 + 按需加载条件检测",
+      "conditional_load": "检查 REQ-022/023/024/025 状态，任一 confirmed → Read conflict-detection-conditional.json 执行额外7条检测",
+      "passive": "stageB中用户发现矛盾 → 立即暂停输出调和方案"
+    },
+    "data_source": ".claude/shared/conflict-detection-rules.json",
+    "conditional_rules_source": ".claude/shared/flow/conflict-detection-conditional.json",
+    "conditional_rules_note": "仅当 REQ-022/023/024/025 中任一状态为 confirmed 时加载",
+    "output_conflict": "## 矛盾检测结果\n| 矛盾编号 | 涉及REQ | 矛盾描述 |\n|----------|---------|----------|\n| {id} | {req_ids} | {description} |\n\n**调和方案**：\n| 方案 | 调整 | 影响 |\n|------|------|------|\n| A | {adjustment_a} | {impact_a} |\n| B | {adjustment_b} | {impact_b} |",
+    "output_no_conflict": "直接进入stageC。",
+    "experimental_feedback": {
+      "description": "实验性规则（EXP-01~05）触发后的反馈收集步骤",
+      "trigger": "stageC0 执行完 experimental_rules 后，对每条触发的 EXP 规则要求用户反馈",
+      "feedback_prompt": "EXP-{id} [{name}] 已触发。请确认：\n1. 是否为真矛盾？（是/否）\n2. 如否，是否为误报？\n3. 补充说明（可选）",
+      "feedback_storage": "追加到 conflict-detection-experimental.json feedback_schema.per_rule_feedback[EXP-{id}]",
+      "auto_review": "当任一 EXP 规则累计反馈 ≥3 个项目时，输出自动评审报告（hit_rate/precision/recommendation）"
+    }
+  }
+}

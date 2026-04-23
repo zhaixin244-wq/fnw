@@ -26,3 +26,9 @@ description: 生成模块框图、时序图、状态机图（Mermaid/Wavedrom）
 
 ## 外部 Skill 推荐
 若需要更丰富的通用 Mermaid 图表支持（流程图、序列图、架构图自动验证），可额外安装 Marketplace 中的 `mermaid-diagrams` 或 `beautiful-mermaid` Skill。
+
+## PNG 生成专项 Skills
+需要生成可渲染的 PNG 图片时，使用以下专项 Skill：
+- **架构图/流程图/状态机**：`chip-png-d2-gen`（D2→PNG，dagre布局）
+- **时序图**：`chip-png-wavedrom-gen`（Wavedrom JSON→PNG）
+- **接口端口图**：`chip-png-interface-gen`（Verilog声明→PNG）

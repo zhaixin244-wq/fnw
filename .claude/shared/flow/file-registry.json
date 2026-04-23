@@ -1,0 +1,216 @@
+{
+  "version": "1.0",
+  "description": "配置文件注册表 — 热加载和变更追踪用。记录所有共享配置文件的路径、版本、依赖关系。",
+
+  "registry": [
+    {
+      "id": "requirement-template",
+      "path": ".claude/shared/requirement-template.json",
+      "category": "core",
+      "dependents": ["requirement-checklist", "stageB-detail", "stageC-detail", "stageC0-detail"],
+      "hot_reload": true
+    },
+    {
+      "id": "requirement-checklist",
+      "path": ".claude/shared/requirement-checklist.json",
+      "category": "core",
+      "dependents": ["execution-hints", "protocol-mapping"],
+      "hot_reload": true
+    },
+    {
+      "id": "conflict-detection-rules",
+      "path": ".claude/shared/conflict-detection-rules.json",
+      "category": "detection",
+      "dependents": ["reference-values", "req-to-rules-mapping", "coverage-model", "conflict-detection-conditional", "conflict-detection-experimental"],
+      "hot_reload": true
+    },
+    {
+      "id": "conflict-detection-conditional",
+      "path": ".claude/shared/flow/conflict-detection-conditional.json",
+      "category": "detection",
+      "dependents": ["reference-values"],
+      "hot_reload": true
+    },
+    {
+      "id": "reference-values",
+      "path": ".claude/shared/flow/reference-values.json",
+      "category": "data",
+      "dependents": ["conflict-detection-rules", "conflict-detection-conditional", "conflict-detection-experimental"],
+      "hot_reload": true
+    },
+    {
+      "id": "execution-hints",
+      "path": ".claude/shared/flow/execution-hints.json",
+      "category": "data",
+      "dependents": ["requirement-checklist"],
+      "hot_reload": true
+    },
+    {
+      "id": "protocol-mapping",
+      "path": ".claude/shared/flow/protocol-mapping.json",
+      "category": "data",
+      "dependents": ["requirement-checklist", "requirement-template"],
+      "hot_reload": true
+    },
+    {
+      "id": "area-estimation",
+      "path": ".claude/shared/flow/area-estimation.json",
+      "category": "data",
+      "dependents": ["solution-template"],
+      "hot_reload": true
+    },
+    {
+      "id": "req-to-rules-mapping",
+      "path": ".claude/shared/flow/req-to-rules-mapping.json",
+      "category": "data",
+      "dependents": ["requirement-template"],
+      "hot_reload": true
+    },
+    {
+      "id": "stageB-detail",
+      "path": ".claude/shared/flow/stageB-detail.json",
+      "category": "flow",
+      "dependents": [],
+      "hot_reload": true
+    },
+    {
+      "id": "stageC-detail",
+      "path": ".claude/shared/flow/stageC-detail.json",
+      "category": "flow",
+      "dependents": [],
+      "hot_reload": true
+    },
+    {
+      "id": "stageC0-detail",
+      "path": ".claude/shared/flow/stageC0-detail.json",
+      "category": "flow",
+      "dependents": ["conflict-detection-rules", "conflict-detection-conditional", "conflict-detection-experimental"],
+      "hot_reload": true
+    },
+    {
+      "id": "solution-template",
+      "path": ".claude/shared/solution-template.json",
+      "category": "flow",
+      "dependents": ["area-estimation"],
+      "hot_reload": true
+    },
+    {
+      "id": "arch-review-rules",
+      "path": ".claude/shared/arch-review-rules.json",
+      "category": "review",
+      "dependents": ["arch-review-files", "end-to-end-coverage-report"],
+      "hot_reload": true
+    },
+    {
+      "id": "arch-review-files",
+      "path": ".claude/shared/arch-review/*.json",
+      "category": "review",
+      "dependents": ["arch-review-rules"],
+      "hot_reload": true
+    },
+    {
+      "id": "context-layers",
+      "path": ".claude/shared/context-layers.json",
+      "category": "core",
+      "dependents": [],
+      "hot_reload": false
+    },
+    {
+      "id": "conflict-detection-experimental",
+      "path": ".claude/shared/flow/conflict-detection-experimental.json",
+      "category": "detection",
+      "dependents": ["reference-values"],
+      "hot_reload": true
+    },
+    {
+      "id": "end-to-end-coverage-report",
+      "path": ".claude/shared/flow/end-to-end-coverage-report.json",
+      "category": "coverage",
+      "dependents": ["coverage-model", "arch-review-rules"],
+      "hot_reload": true
+    },
+    {
+      "id": "coverage-model",
+      "path": ".claude/shared/flow/coverage-model.json",
+      "category": "coverage",
+      "dependents": ["conflict-detection-rules", "conflict-detection-conditional", "conflict-detection-experimental", "end-to-end-coverage-report"],
+      "hot_reload": true
+    },
+    {
+      "id": "specialist-orchestration",
+      "path": ".claude/shared/flow/specialist-orchestration.json",
+      "category": "flow",
+      "dependents": ["requirement-template"],
+      "hot_reload": true
+    },
+    {
+      "id": "context-layers-microarch",
+      "path": ".claude/shared/context-layers-microarch.json",
+      "category": "core",
+      "dependents": [],
+      "hot_reload": false
+    },
+    {
+      "id": "microarch-flow-template",
+      "path": ".claude/shared/flow/microarch-flow-template.json",
+      "category": "flow",
+      "dependents": ["quality-checklist-microarch", "microarch-conflict-rules", "fs-microarch-mapping"],
+      "hot_reload": true
+    },
+    {
+      "id": "quality-checklist-microarch",
+      "path": ".claude/shared/quality-checklist-microarch.md",
+      "category": "quality",
+      "dependents": ["quality-checklist-fs"],
+      "hot_reload": true
+    },
+    {
+      "id": "microarch-conflict-rules",
+      "path": ".claude/shared/flow/microarch-conflict-rules.json",
+      "category": "detection",
+      "dependents": ["microarch-flow-template", "microarch-coverage-model"],
+      "hot_reload": true
+    },
+    {
+      "id": "microarch-coverage-model",
+      "path": ".claude/shared/flow/microarch-coverage-model.json",
+      "category": "coverage",
+      "dependents": ["microarch-conflict-rules", "microarch-flow-template"],
+      "hot_reload": true
+    },
+    {
+      "id": "quality-checklist-fs",
+      "path": ".claude/shared/quality-checklist-fs.md",
+      "category": "quality",
+      "dependents": ["quality-checklist-microarch"],
+      "hot_reload": true
+    },
+    {
+      "id": "fs-microarch-mapping",
+      "path": ".claude/shared/fs-microarch-mapping.md",
+      "category": "mapping",
+      "dependents": ["microarch-flow-template"],
+      "hot_reload": true
+    },
+    {
+      "id": "microarch-e2e-coverage",
+      "path": ".claude/shared/flow/microarch-e2e-coverage.json",
+      "category": "coverage",
+      "dependents": ["microarch-coverage-model", "end-to-end-coverage-report"],
+      "hot_reload": true
+    }
+  ],
+
+  "hot_reload_protocol": {
+    "description": "文件变更后仅重载该文件及其反向依赖，无需重启会话",
+    "steps": [
+      "1. 检测到某文件变更（用户通知或 version 字段变化）",
+      "2. 查 registry 获取该文件的 dependents（直接依赖它的文件）",
+      "3. 重载变更文件",
+      "4. 校验 dependents 中的引用是否仍然有效",
+      "5. 若 dependents 引用断裂 → 列出断裂项，暂停等待修复",
+      "6. 若无断裂 → 热加载完成，继续当前阶段"
+    ],
+    "no_reload_needed": ["stage 间切换时自动 Read 对应 L2 文件，无需主动热加载", "L3 临时文件用完即弃，不参与热加载"]
+  }
+}

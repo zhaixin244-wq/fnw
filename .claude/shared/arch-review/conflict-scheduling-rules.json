@@ -1,0 +1,94 @@
+{
+  "version": "1.4",
+  "categories": ["CONFLICT", "SCHEDULING", "ISOLATION"],
+  "category_names": ["冲突处理", "调度处理", "通道隔离"],
+  "rules": [
+    {
+      "id": "CONFLICT-01",
+      "category": "CONFLICT",
+      "rule": "写端口竞争时高优先级请求优先，低优先级暂停而非丢弃",
+      "check": "每个写源的反压能力如何？不能反压的源优先级是否最高？",
+      "anti_pattern": "公平仲裁 → 实时数据被迫丢弃",
+      "fix": "按反压能力排序仲裁优先级",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "CONFLICT-02",
+      "category": "CONFLICT",
+      "rule": "读写不同时刻访问同一地址，利用时序分离",
+      "check": "是否有状态机确保读写不重叠？（如 fly 状态追踪）",
+      "anti_pattern": "同拍同地址读写 → 需要双端口 SRAM 或额外仲裁",
+      "fix": "用状态机（fly 位）确保读写时序分离",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "CONFLICT-03",
+      "category": "CONFLICT",
+      "rule": "RR 仲裁按包级（非拍级）更新，避免包内乱序",
+      "check": "仲裁指针更新时机是包边界（sop/eop）还是每拍？",
+      "anti_pattern": "拍级 RR → 同包读请求分散 → 乱序",
+      "fix": "仲裁指针在包边界更新",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "SCHED-01",
+      "category": "SCHEDULING",
+      "rule": "调度器按事件触发，而非固定时隙",
+      "check": "调度条件是\"资源就绪\"还是\"时间到达\"？",
+      "anti_pattern": "固定 TDM → 负载不均时浪费带宽",
+      "fix": "事件驱动：哪个通道先满足条件先处理",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "SCHED-02",
+      "category": "SCHEDULING",
+      "rule": "RR 指针全局共享，按事务级更新，跳过满/忙通道",
+      "check": "RR 指针是否全局共享？跳过条件是否定义？全跳过如何处理？",
+      "anti_pattern": "独立指针 → 饥饿；无跳过 → 阻塞",
+      "fix": "全局指针 + 跳过策略 + 全跳过处理",
+      "applicability_scope": "控制密集"
+    },
+    {
+      "id": "SCHED-03",
+      "category": "SCHEDULING",
+      "rule": "无 QoS 需求时默认 FIFO 就绪队列",
+      "check": "是否有明确 QoS 需求？没有则用 FIFO",
+      "anti_pattern": "优先级调度 → 低优先级饿死 + 复杂度增加",
+      "fix": "FIFO 就绪队列，read/write 统一排队",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "ISO-01",
+      "category": "ISOLATION",
+      "rule": "关键资源按通道静态划分，通道间不共享/不借用",
+      "check": "每个资源是否按通道划分？共享资源是否有通道级上限？",
+      "anti_pattern": "通道间共享 → 异常流量影响全局 → 头阻",
+      "fix": "静态分配 / 至少按通道设上限",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "ISO-02",
+      "category": "ISOLATION",
+      "rule": "不同通道数据在物理路径上分离",
+      "check": "数据路径图中每段是否按通道分离？汇聚点写入时序是否有竞争？",
+      "anti_pattern": "混存 FIFO → 通道干扰",
+      "fix": "独立 SRAM bank / 独立 buffer / 汇聚点分析写入时序",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "ISO-03",
+      "category": "ISOLATION",
+      "rule": "反压信号按通道独立传递，不跨通道传播",
+      "check": "是否区分局部反压（按通道）和全局反压（所有通道）？",
+      "anti_pattern": "跨通道反压 → 拥塞扩散 → 系统级性能下降",
+      "fix": "局部反压不跨通道，全局反压才影响所有",
+      "applicability_scope": "数据通路"
+    }
+  ],
+  "check_points": [
+    { "id": "CP-05", "check": "写端口仲裁优先级是否按反压能力排序？", "category": "CONFLICT" },
+    { "id": "CP-06", "check": "读写冲突是否有状态机/时序分离？", "category": "CONFLICT" },
+    { "id": "CP-07", "check": "调度器是否事件驱动？RR 指针是否全局共享？", "category": "SCHEDULING" },
+    { "id": "CP-08", "check": "资源是否按通道静态分配？数据路径是否物理分离？", "category": "ISOLATION" }
+  ]
+}

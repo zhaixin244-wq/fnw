@@ -1,0 +1,130 @@
+{
+  "version": "1.4",
+  "categories": ["BACKPRESSURE", "CREDIT", "PERFORMANCE"],
+  "category_names": ["反压分析", "Credit 设计", "性能分析"],
+  "rules": [
+    {
+      "id": "BP-01",
+      "category": "BACKPRESSURE",
+      "rule": "反压信号必须有明确传播路径和过充分析",
+      "check": "每条反压路径的传递延迟和数据延迟是多少？过充量是否 ≥ 两者之和？",
+      "anti_pattern": "无过充 → 反压传递期间数据仍在传输 → buffer 溢出",
+      "fix": "过充量 ≥ 反压传递延迟 + 数据路径延迟",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "BP-02",
+      "category": "BACKPRESSURE",
+      "rule": "反压链路必须端到端完整，不允许中间断链",
+      "check": "是否画了反压传播图？从最终输出到最上游每一级都有反压吗？",
+      "anti_pattern": "反压断链 → 数据丢失/buffer 溢出",
+      "fix": "画反压传播图，标注每级信号名",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "BP-03",
+      "category": "BACKPRESSURE",
+      "rule": "credit 维度要覆盖数据的所有占用资源",
+      "check": "数据有几个变化维度（拍数/字节数）？credit 维度数是否 ≥ 变化维度数？",
+      "anti_pattern": "单维度 credit → 无法同时约束拍数和字节数",
+      "fix": "双维度 credit（拍 credit + 字节 credit）",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "BP-04",
+      "category": "BACKPRESSURE",
+      "rule": "反压解除后必须自动恢复，不需要软件干预",
+      "check": "credit 归还时机是何时？是否需要软件参与？",
+      "anti_pattern": "软件恢复 → 复杂度+延迟+死锁风险",
+      "fix": "硬件自动归还 credit，数据消耗时归还",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CREDIT-01",
+      "category": "CREDIT",
+      "rule": "credit 数量 = 数据通路最大在途量，必须逐级计算",
+      "check": "是否画了数据通路图并标注每段 buffer 深度和传输延迟？",
+      "anti_pattern": "拍脑袋定 credit → 过少频繁反压/过多浪费面积",
+      "fix": "credit ≥ 所有段 buffer + 延迟对应的在途量",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "CREDIT-02",
+      "category": "CREDIT",
+      "rule": "数据有多个变化维度时需要多维度 credit",
+      "check": "最小/最大包长差异？每拍字节数是否可变？",
+      "anti_pattern": "单维度 → 大拍/小拍场景超出约束",
+      "fix": "维度数 ≥ 数据特征变化维度数",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "CREDIT-03",
+      "category": "CREDIT",
+      "rule": "credit 归还时机 = 下游实际消耗时刻，非到达时刻",
+      "check": "归还触发事件是什么？到达即消耗还是缓冲后再消耗？",
+      "anti_pattern": "归还过早 → 上游发超量 → buffer 溢出",
+      "fix": "到达即消耗时到达归还，缓冲时消耗归还",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CREDIT-04",
+      "category": "CREDIT",
+      "rule": "credit 按通道静态分配，通道间不借用",
+      "check": "每通道 credit 是否独立计数？是否有下限？",
+      "anti_pattern": "通道间借用 → 突发流量饿死其他通道",
+      "fix": "总 credit / 通道数 = 每通道 credit，每通道有下限",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "PERF-01",
+      "category": "PERFORMANCE",
+      "rule": "从最慢路径开始定位瓶颈，再针对性优化",
+      "check": "每个环节的理论吞吐是多少？最小值在哪个环节？",
+      "anti_pattern": "优化非瓶颈环节 → 浪费时间",
+      "fix": "计算每个环节吞吐，找到最小值",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "PERF-02",
+      "category": "PERFORMANCE",
+      "rule": "量化每个环节的气泡，逐个消除",
+      "check": "气泡率 = 气泡 cycle / (数据 cycle + 气泡 cycle)，各环节分别是多少？",
+      "anti_pattern": "不量化气泡 → 吞吐达不到目标",
+      "fix": "按气泡大小排序，从大到小消除（pipeline/预读/FIFO/并行）",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "PERF-03",
+      "category": "PERFORMANCE",
+      "rule": "SRAM 读延迟（通常 3cycle）必须通过 pipeline 预读消除",
+      "check": "下一个读地址是否在当前拍可知？如果不可知需要重新设计数据结构",
+      "anti_pattern": "按序等待 3cycle → 吞吐仅 1/3",
+      "fix": "连续发 N 个读请求（N≥3），pipeline 填充后每 cycle 返回 1 拍",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "PERF-04",
+      "category": "PERFORMANCE",
+      "rule": "利用率计算必须覆盖最差包长，不能只看典型包长",
+      "check": "从最小包长到最大包长的利用率表是否列出？最差是否满足目标？",
+      "anti_pattern": "只算 4KB 利用率 → 掩盖小包性能问题",
+      "fix": "列出全包长利用率表，覆盖最差情况",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "PERF-05",
+      "category": "PERFORMANCE",
+      "rule": "不同 SRAM 端口的读操作可并行，利用端口独立性消除串行等待",
+      "check": "输出路径是否有多个独立 SRAM 端口？是否允许不同包的不同阶段并行？",
+      "anti_pattern": "串行执行 → 每包等前包完全输出",
+      "fix": "BD 链和 payload 并行输出，包间重叠",
+      "applicability_scope": "数据通路"
+    }
+  ],
+  "check_points": [
+    { "id": "CP-09", "check": "反压链路是否端到端完整？每级是否有过充分析？", "category": "BACKPRESSURE" },
+    { "id": "CP-10", "check": "credit 数量是否逐级计算？维度是否覆盖所有变化？", "category": "CREDIT" },
+    { "id": "CP-11", "check": "瓶颈环节是哪个？气泡是否已量化？SRAM 读延迟是否已处理？", "category": "PERFORMANCE" },
+    { "id": "CP-12", "check": "利用率是否覆盖最差包长？流水线并行是否充分利用？", "category": "PERFORMANCE" }
+  ]
+}

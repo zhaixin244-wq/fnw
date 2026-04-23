@@ -1,0 +1,50 @@
+{
+  "version": "1.1",
+  "description": "端到端覆盖自动化报告 — 合并矛盾检测覆盖（stageC0）和架构评审覆盖（方案设计后），输出单一 REQ 全生命周期覆盖视图。detection_rules 从 coverage-model.json 实时读取，本文件仅维护 arch_checkpoints 增量数据。",
+  "data_sources": {
+    "detection_coverage": ".claude/shared/flow/coverage-model.json#req_coverage_matrix",
+    "arch_review_coverage": ".claude/shared/arch-review-rules.json#req_to_checkpoints_mapping",
+    "experimental_rules": ".claude/shared/flow/conflict-detection-experimental.json"
+  },
+
+  "arch_review_checkpoints": {
+    "description": "架构评审覆盖映射 — 从 arch-review-rules.json req_to_checkpoints_mapping 提取，与 coverage-model 的 detection_rules 合并后生成完整视图",
+    "REQ-001": { "checkpoints": ["CP-15 (TIM-01/02 关键路径/Fmax)"] },
+    "REQ-002": { "checkpoints": ["CP-18 (IF-01/02/03 接口合规/valid稳定性/位宽)", "CP-01 (RAM-02 SRAM端口矩阵)"] },
+    "REQ-003": { "checkpoints": ["CP-02 (RAM-01 避免RMW)", "CP-03 (RAM-03 buffer管理粒度)", "CP-11 (PERF-02/03 气泡/SRAM延迟)", "CP-12 (PERF-04/05 最差包长/流水并行)"] },
+    "REQ-004": { "checkpoints": ["CP-11 (PERF-01 瓶颈分析)", "CP-12 (PERF-04 利用率)"] },
+    "REQ-005": { "checkpoints": ["CP-01 (RAM-02 端口矩阵)", "CP-04 (RAM-04 ECC位宽)"] },
+    "REQ-006": { "checkpoints": ["CP-13 (CDC-01/02 同步策略/数据一致)", "CP-14 (RST-01/02/03 复位策略)", "CP-26 (CDC-04 级联)", "CP-27 (CDC-06 格雷码指针)"] },
+    "REQ-007": { "checkpoints": ["CP-19 (POWER-01/02/03 Isolation/LS/Retention)"] },
+    "REQ-008": { "checkpoints": ["CP-16 (DFT-01/02/03 扫描链/ICG/异步置位)"] },
+    "REQ-009": { "checkpoints": ["CP-04 (RAM-04 ECC位宽)"] },
+    "REQ-011": { "checkpoints": ["CP-13 (CDC-01/02/03)", "CP-26 (CDC-04)", "CP-27 (CDC-06)"] },
+    "REQ-012": { "checkpoints": ["CP-01 (RAM-01/02/03/04)", "CP-02 (RAM-01)", "CP-03 (RAM-03)", "CP-04 (RAM-04)"] },
+    "REQ-018": { "checkpoints": ["CP-23 (SEC-01/02 安全隔离/防火墙)", "CP-24 (SEC-03/04 恒定时间)", "CP-25 (SEC-05 故障注入)"] },
+    "REQ-021": { "checkpoints": ["CP-19 (POWER-01/02/03 低功耗设计)"] }
+  },
+
+  "merge_algorithm": {
+    "description": "合并 coverage-model.req_coverage_matrix + arch_review_checkpoints → 生成完整视图",
+    "steps": [
+      "1. Read coverage-model.json 获取 req_coverage_matrix（含 detection_rules 和 conditional/experimental 标记）",
+      "2. Read 本文件 arch_review_checkpoints 获取每个 REQ 的架构评审 CP",
+      "3. 对每个 REQ：detection_rules（来自 coverage-model）+ arch_checkpoints（来自本文件）→ coverage_phase + total_coverage",
+      "4. coverage_phase 判定：both / detection_only / arch_review_only / none",
+      "5. total_coverage = detection_rules.length + arch_checkpoints.length"
+    ]
+  },
+
+  "coverage_summary_template": {
+    "description": "merge_algorithm 执行后填充的汇总模板",
+    "total_reqs": 28,
+    "both_phases": "detection_rules 非空 且 arch_checkpoints 非空",
+    "detection_only": "detection_rules 非空 且 arch_checkpoints 为空",
+    "arch_review_only": "detection_rules 为空 且 arch_checkpoints 非空",
+    "no_coverage": "两者均为空",
+    "end_to_end_coverage_rate": "(both + detection_only + arch_review_only) / 28",
+    "uncovered_note": "未覆盖 REQ 为接口细节/调试/软件接口类，通常在 stageB 直接记录不需交叉检测"
+  },
+
+  "usage": "stageC0 全部检测完成后自动运行：1) Read coverage-model 获取 detection_rules；2) 合并 arch_review_checkpoints 为单一视图；3) 输出 coverage_summary 统计；4) 标注 hotspot_reqs 高覆盖项；5) 无覆盖 REQ 标注原因。下游 agent（chip-fs-writer）可在 FS RTM 中引用 total_coverage 列。"
+}

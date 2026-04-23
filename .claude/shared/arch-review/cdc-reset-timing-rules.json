@@ -1,0 +1,121 @@
+{
+  "version": "1.5",
+  "categories": ["CDC", "RESET", "TIMING"],
+  "category_names": ["CDC 跨时钟域", "复位策略", "时序分析"],
+  "cross_references": {
+    "description": "本文件 CDC 规则与 conflict-detection-rules.json 的 CDC-01 存在互补关系。CDC-01 检测 CDC 延迟 vs 时序裕量矛盾（需求阶段），本文件检测 CDC 实现正确性（方案阶段）。",
+    "conflict_detection_rules": ".claude/shared/conflict-detection-rules.json",
+    "mapping": {
+      "CDC-01 (conflict)": "需求阶段检测：CDC 延迟是否侵蚀时序裕量",
+      "CDC-01~06 (arch-review)": "方案阶段检测：同步策略是否正确实现（裸跨域/数据撕裂/级联/复位共享）"
+    }
+  },
+  "rules": [
+    {
+      "id": "CDC-01",
+      "category": "CDC",
+      "rule": "跨时钟域信号必须有明确同步策略，禁止裸跨域",
+      "check": "每个跨域信号是否标注了同步方案（双触发器/异步FIFO/握手/Gray码）？",
+      "anti_pattern": "信号直接跨域 → 亚稳态 → 随机故障",
+      "fix": "单bit用双触发器，多bit用异步FIFO或Gray码，脉冲用脉冲同步器",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CDC-02",
+      "category": "CDC",
+      "rule": "多bit信号跨域必须保证数据一致性，禁止逐bit同步",
+      "check": "多bit信号是否使用异步FIFO或Gray码编码？是否有可能出现部分bit更新？",
+      "anti_pattern": "多bit逐bit双触发器 → 每bit延迟不同 → 数据撕裂",
+      "fix": "异步FIFO（数据+指针）或Gray码（仅适用于计数器/指针）",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CDC-03",
+      "category": "CDC",
+      "rule": "跨域确认信号必须从目标域反馈回源域",
+      "check": "是否有反馈同步器确认数据已被目标域采样？",
+      "anti_pattern": "无反馈 → 源域连续发数据 → 目标域来不及处理 → 数据丢失",
+      "fix": "目标域采样后通过双触发器反馈ack到源域",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CDC-04",
+      "category": "CDC",
+      "rule": "跨域同步器的亚稳态传播深度必须≤2级，禁止级联同步器",
+      "check": "同步器输出是否直接驱动组合逻辑？是否有级联跨域（域A→域B→域C）？",
+      "anti_pattern": "级联同步 → 每级增加亚稳态窗口 → 累积故障率上升",
+      "fix": "同步器输出直接采样，级联跨域在每级边界独立同步",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CDC-05",
+      "category": "CDC",
+      "rule": "异步复位释放必须在每个时钟域独立同步，禁止跨域共享复位同步器",
+      "check": "每个时钟域是否有独立的复位同步器？是否存在一个同步器输出跨域使用？",
+      "anti_pattern": "单域复位同步器输出 → 跨域使用 → 另一域采样时刻不确定",
+      "fix": "每个时钟域独立实例化复位同步器（2级触发器）",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "CDC-06",
+      "category": "CDC",
+      "rule": "异步FIFO的格雷码指针必须比地址位宽多1位",
+      "check": "FIFO深度N，指针是否为log2(N)+1位？满判断是否使用多出的MSB？",
+      "anti_pattern": "指针位宽不足 → 满/空判断错误 → 数据丢失或覆盖",
+      "fix": "指针位宽 = log2(深度) + 1，满判断：wr_ptr[MSB]!=rd_ptr[MSB] && wr_ptr[LSB:0]==rd_ptr[LSB:0]",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "RST-01",
+      "category": "RESET",
+      "rule": "统一使用低有效异步复位，复位释放必须同步",
+      "check": "是否所有寄存器使用 always @(posedge clk or negedge rst_n)？是否有同步释放电路？",
+      "anti_pattern": "同步复位 → 复位信号本身需要时钟 → 上电不可靠；异步释放 → 恢复时刻不确定",
+      "fix": "异步复位同步释放：2级同步器，rst_n_d1/rst_n_d2",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "RST-02",
+      "category": "RESET",
+      "rule": "复位释放顺序：先下游，后上游",
+      "check": "上下游模块的复位释放顺序是否明确？上游是否可能在下游未就绪时发数据？",
+      "anti_pattern": "上游先释放 → 发数据 → 下游还在复位 → 数据丢失",
+      "fix": "下游复位同步器级数 < 上游，或增加握手确认",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "RST-03",
+      "category": "RESET",
+      "rule": "多时钟域时每个域独立复位同步器",
+      "check": "每个时钟域是否各有自己的复位同步器？是否存在用一个同步器输出跨域复位？",
+      "anti_pattern": "单域同步器输出 → 跨域使用 → 另一个域的采样时刻不确定",
+      "fix": "每个时钟域独立实例化复位同步器",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "TIM-01",
+      "category": "TIMING",
+      "rule": "关键路径必须在架构阶段识别并标注组合逻辑级数",
+      "check": "是否列出了关键路径表（起点→终点→组合逻辑级数→预估延迟）？",
+      "anti_pattern": "架构时不分析 → 综合后发现不满足 → 被动加流水线/重定时",
+      "fix": "列出所有数据路径，计算组合逻辑级数，标注最差路径",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "TIM-02",
+      "category": "TIMING",
+      "rule": "Fmax 估算必须基于最差路径延迟，留 10% 裕量",
+      "check": "Tclk ≥ Tcq + Tlogic + Tsetup + Tskew？Tslack > 0？",
+      "anti_pattern": "按典型路径估算 → 最差路径不满足 → 后端返工",
+      "fix": "Tslack = Tclk - Tcq - Tlogic - Tsetup - Tskew > 0.1ns",
+      "applicability_scope": "通用"
+    }
+  ],
+  "check_points": [
+    { "id": "CP-13", "check": "跨时钟域信号是否全部标注同步策略？多bit信号是否避免逐bit同步？", "category": "CDC" },
+    { "id": "CP-14", "check": "复位策略是否异步复位同步释放？复位释放顺序是否先下游后上游？", "category": "RESET" },
+    { "id": "CP-15", "check": "关键路径是否已识别？组合逻辑级数和预估延迟是否满足 Fmax？", "category": "TIMING" },
+    { "id": "CP-26", "check": "跨域同步器是否避免级联？亚稳态传播深度是否≤2级？", "category": "CDC" },
+    { "id": "CP-27", "check": "异步FIFO格雷码指针位宽是否多1位？满空判断逻辑是否正确？", "category": "CDC" }
+  ]
+}

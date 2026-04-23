@@ -1,0 +1,103 @@
+{
+  "version": "1.4",
+  "categories": ["DFT", "FSM", "INTERFACE", "SYNTH"],
+  "category_names": ["DFT 友好性", "状态机健壮性", "接口协议合规", "可综合性"],
+  "rules": [
+    {
+      "id": "DFT-01",
+      "category": "DFT",
+      "rule": "所有寄存器必须可接入扫描链，禁止不可扫描结构",
+      "check": "是否存在异步置位、门控时钟、组合反馈环？",
+      "anti_pattern": "异步置位 → 无法插入扫描链；门控时钟 → 扫描时需要旁路",
+      "fix": "禁止异步置位，使用标准ICG替代门控时钟",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "DFT-02",
+      "category": "DFT",
+      "rule": "时钟必须通过标准 ICG cell 控制，禁止门控时钟",
+      "check": "是否有直接的 assign gated_clk = clk & en？是否使用标准ICG？",
+      "anti_pattern": "门控时钟 → 毛刺 → 功能错误 + DFT困难",
+      "fix": "使用 CKLNQD1 等标准ICG cell：.CP(clk), .E(en), .TE(scan_en), .Q(gated_clk)",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "DFT-03",
+      "category": "DFT",
+      "rule": "禁止异步置位寄存器，所有寄存器仅异步复位",
+      "check": "是否存在 always @(posedge clk or posedge set_n)？",
+      "anti_pattern": "异步置位 → 扫描链插入失败 + 时序不可控",
+      "fix": "所有寄存器使用异步复位（低有效），复位值通过初始化实现",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "FSM-01",
+      "category": "FSM",
+      "rule": "FSM 必须可从任意非法状态恢复到 IDLE",
+      "check": "状态转移是否有 default 分支？非法状态是否能回到 IDLE？",
+      "anti_pattern": "无default → 非法状态锁死 → 系统挂起",
+      "fix": "组合逻辑 always 块中 case 必须有 default: state_nxt = S_IDLE",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "FSM-02",
+      "category": "FSM",
+      "rule": "状态编码：≤16状态用独热码，>16用二进制编码",
+      "check": "状态数是否≤16？编码方式是否合理？",
+      "anti_pattern": "16状态用二进制 → 每次仅1bit变化 → 但解码逻辑复杂；独热码 >16 → 寄存器浪费",
+      "fix": "状态数 ≤16 → localparam 独热码；>16 → 二进制编码",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "IF-01",
+      "category": "INTERFACE",
+      "rule": "标准总线协议（AXI/AHB/APB）必须逐条核对协议合规性",
+      "check": "接口信号是否完整（AXI需含VALID/READY/ADDR/DATA/RESP等）？握手时序是否符合协议规范？",
+      "anti_pattern": "自定义裁剪协议信号 → 下游IP不兼容 → 集成失败",
+      "fix": "按协议规范逐条核对信号列表和时序，不允许自定义裁剪",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "IF-02",
+      "category": "INTERFACE",
+      "rule": "Valid-Ready 接口必须满足 valid 稳定性（valid 不依赖 ready 组合逻辑）",
+      "check": "valid 信号是否在拉高后保持稳定直到握手？是否有可能因 ready 变化而撤回 valid？",
+      "anti_pattern": "valid 依赖 ready 组合逻辑 → 组合环路 → 时序违规",
+      "fix": "valid 拉高后保持不变，直到 valid && ready 握手完成",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "IF-03",
+      "category": "INTERFACE",
+      "rule": "接口信号位宽必须与数据通路一致，禁止截断/填充隐式发生",
+      "check": "上下游接口位宽是否匹配？不匹配时是否有显式的位宽适配逻辑？",
+      "anti_pattern": "隐式截断 → 高位数据丢失；隐式填充 → 符号扩展错误",
+      "fix": "位宽不匹配时插入显式的位宽适配模块（截断/扩展/FIFO）",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "SYNTH-01",
+      "category": "SYNTH",
+      "rule": "组合逻辑 always 块内所有输出必须赋默认值，case 必须有 default 分支",
+      "check": "每个组合 always 块是否有默认赋值？case 语句是否有 default？if-else 分支是否补全？",
+      "anti_pattern": "遗漏默认值 → 综合出 latch → 时序异常 + 面积增加",
+      "fix": "always 块开头给所有输出赋默认值，case 加 default，if 补全 else",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "SYNTH-02",
+      "category": "SYNTH",
+      "rule": "禁止不可综合结构：initial、delay、casex、门控时钟、组合反馈环",
+      "check": "代码中是否有 initial/#delay/casex/assign gated_clk = clk & en/组合反馈？",
+      "anti_pattern": "initial → 仿真与综合不一致；casex → x 传播；门控时钟 → 毛刺",
+      "fix": "删除 initial/delay，用 case 替代 casex，用标准 ICG 替代门控时钟",
+      "applicability_scope": "通用"
+    }
+  ],
+  "check_points": [
+    { "id": "CP-16", "check": "是否使用标准ICG？有无异步置位？所有寄存器是否可接入扫描链？", "category": "DFT" },
+    { "id": "CP-17", "check": "FSM 是否有 default 分支可回到 IDLE？编码方式是否合理？", "category": "FSM" },
+    { "id": "CP-18", "check": "接口协议是否合规？valid 稳定性是否满足？位宽是否一致？", "category": "INTERFACE" },
+    { "id": "CP-20", "check": "组合逻辑是否有默认赋值和 case default？是否避免了不可综合结构？", "category": "SYNTH" }
+  ]
+}

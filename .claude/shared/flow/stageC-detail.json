@@ -1,0 +1,76 @@
+{
+  "version": "1.3",
+  "description": "stageC 需求确认汇总 - 详细规则",
+
+  "confirmation_rules": {
+    "confirm": ["确认", "正确", "没问题", "对", "OK"],
+    "reject_with_turn": ["好的，但是...", "行，不过..."],
+    "reject_hesitant": ["嗯...好吧", "行吧", "先这样吧"],
+    "reject_partial": ["大部分没问题，XX有点疑问"],
+    "rule": "正向确认词后紧跟转折词/省略号/疑问 → 不确认。仅纯正向确认词 → 确认。",
+    "semantic_judgment": "关键词列表仅作辅助参考。实际判断优先利用 LLM 理解用户意图：对于'大概可以'、'先这样'、'还行吧'等灰色地带表达，结合上下文语义判断是否真正确认。若语义倾向确认但存在犹豫，标注为'部分确认'并记录犹豫点。"
+  },
+
+  "priority_grading": {
+    "grades": {
+      "Must": "方案必须满足，不满足则方案不可行",
+      "Should": "方案应尽量满足，不满足需明确理由",
+      "Could": "方案可选优化，不影响方案可行性"
+    },
+    "default_rules": [
+      "REQ-001/002/006 → Must",
+      "REQ-004/005/009/011/018 → 按stageA优先级：最高→Must，其余→Should",
+      "REQ-003/010/012/013/014/015/016/019/020 → Should",
+      "REQ-021 → 依赖REQ-007：有独立功耗域→Should，无→Could",
+      "REQ-022/023 → conditional_optional，仅模拟/高速模块激活",
+      "REQ-024/025 → conditional_optional，仅安全关键模块激活",
+      "REQ-026 → Should（封装约束在芯片级项目中重要）",
+      "REQ-027 → conditional_optional，仅汽车/工业场景激活",
+      "REQ-028 → conditional_optional，仅高频模块激活"
+    ],
+    "dynamic_overrides": [
+      { "req": "REQ-007", "default": "Could", "tag": "low_power_critical", "override": "Must", "condition": "场景 tag 含 low_power_critical（如 IoT/穿戴设备）" },
+      { "req": "REQ-008", "default": "Could", "tag": "dft_critical", "override": "Should", "condition": "场景 tag 含 dft_critical（如车规/高可靠性芯片）" },
+      { "req": "REQ-009", "default": "Should", "tag": "reliability_critical", "override": "Must", "condition": "场景 tag 含 reliability_critical（如航天/医疗/汽车）" },
+      { "req": "REQ-026", "default": "Should", "tag": "chip_level", "override": "Must", "condition": "芯片级项目（非 IP 级），封装约束必须确认" }
+    ]
+  },
+
+  "change_cooldown": {
+    "description": "变更冷却机制 — 防止同一 REQ 无限循环修改",
+    "max_changes_per_req": 3,
+    "rules": [
+      "同一 REQ 变更次数 < 3 → 正常记录变更日志，重走 stageB 对应项",
+      "同一 REQ 变更次数 = 3 → 强制暂停，提示'该约束项已变更3次，请给出最终决策'",
+      "同一 REQ 变更次数 > 3 → 标记为'已冻结待定'，要求用户提供书面确认或跳过"
+    ],
+    "tracking": "变更次数在 PR 沟通记录的 change_log 中累加计数，按 req_id 统计"
+  },
+
+  "freeze": {
+    "condition": "stageC汇总表确认通过后自动冻结",
+    "scope": "已确认的REQ-001~REQ-028 + 阶段0补充项",
+    "unfreeze_rules": [
+      "用户主动变更 → 解冻对应项，走change_handling（受 change_cooldown 约束）",
+      "方案阶段发现矛盾 → 暂停方案，解冻矛盾项，重走stageB→stageC"
+    ]
+  },
+
+  "team_collaboration": {
+    "trigger": "用户消息中出现多人身份标识或不同意见",
+    "roles": [
+      { "role": "架构师", "weight": "high" },
+      { "role": "设计工程师", "weight": "high" },
+      { "role": "验证工程师", "weight": "medium" },
+      { "role": "后端工程师", "weight": "medium" },
+      { "role": "产品经理", "weight": "low" }
+    ],
+    "conflict_resolution": [
+      "同一REQ两人意见不同 → 列出双方意见，请双方协商",
+      "架构师 vs 设计工程师 → 可行性优先（设计说实现不了则以设计为准）",
+      "低权重被高权重否决 → 记录低权重意见，以高权重为准"
+    ]
+  },
+
+  "intermediate_persistence_ref": "已迁移至 requirement-template.json flow.stageB.intermediate_persistence，此处不再重复定义"
+}

@@ -1,0 +1,185 @@
+{
+  "version": "1.0",
+  "description": "微架构编写流程模板 — stage 化定义，支持输入分类、分支逻辑、中间状态持久化、变更处理",
+
+  "context_layers": {
+    "definition": ".claude/shared/context-layers-microarch.json"
+  },
+
+  "flow": {
+    "entry": {
+      "description": "激活后第一步：Read todo-mechanism.md 输出代办清单，确认后进入 input_triage",
+      "rules": ["输入缺失/架构疑问/范围变更时强制暂停"]
+    },
+
+    "input_triage": {
+      "name": "输入确认",
+      "description": "确认输入完整性，分类后选择执行路径",
+      "required_inputs": [
+        { "id": "fs_doc", "name": "FS 文档", "priority": "Must", "missing_action": "暂停，等待用户提供" },
+        { "id": "microarch_template", "name": "微架构模板", "priority": "Should", "missing_action": "使用默认模板 .claude/rules/microarchitecture-template.md" },
+        { "id": "ip_cbb_docs", "name": "IP/CBB 文档", "priority": "Should", "missing_action": "按需通过 RAG 检索" },
+        { "id": "submodule_list", "name": "子模块划分", "priority": "Must", "missing_action": "从 FS §3.3 提取，缺失时暂停" },
+        { "id": "constraints", "name": "关键约束（PPA/时序/功耗）", "priority": "Should", "missing_action": "从 FS §8 + REQ 汇总表提取" }
+      ],
+      "input_classification": {
+        "rules": [
+          "FS 完整（§3~§14 全部章节）+ 子模块划分明确 + 约束清晰 → complete",
+          "FS 存在但部分章节缺失（如 §10-12 跳过）+ 子模块划分明确 → partial",
+          "仅 FS 概述 + 功能描述，无详细接口/PPA → vague"
+        ],
+        "paths": {
+          "complete": "submodule_split → microarch_write（直接编写）→ integration_check → quality_check",
+          "partial": "submodule_split → microarch_write（标注缺失项）→ integration_check → quality_check",
+          "vague": "补充 FS 缺失项 → submodule_split → microarch_write → integration_check → quality_check"
+        }
+      }
+    },
+
+    "submodule_split": {
+      "name": "子模块拆分",
+      "description": "从 FS §3.3 + §5 提取子模块列表，按拆分原则验证",
+      "split_principles": [
+        "功能独立性：每个子模块有明确的职责边界",
+        "接口完整性：子模块间接口可独立定义",
+        "时钟域对齐：同子模块内仅一个时钟域",
+        "IP/CBB 独立性：IP 集成模块独立拆分"
+      ],
+      "output": "子模块列表 + 接口拓扑",
+      "transition": "子模块列表确认后进入 microarch_write，逐个编写"
+    },
+
+    "microarch_write": {
+      "name": "微架构编写",
+      "description": "逐子模块编写，每个子模块独立完成 §3~§13",
+      "template_source": ".claude/rules/microarchitecture-template.md",
+      "per_submodule_steps": [
+        "§3 概述（功能定位、需求继承、与上级模块关系）",
+        "§4 接口定义（端口列表、协议、时序）",
+        "§5 微架构设计（数据通路、控制逻辑、状态机、流水线、FIFO、IP/CBB 集成）",
+        "§6 关键时序分析（关键路径、Tslack、SDC 约束）",
+        "§7-8 时钟复位 + PPA 预估",
+        "§9 RTL 实现指导 + 反合理化清单",
+        "§10-11 验证要点 + 风险分析",
+        "§12-13 ADR + RTM"
+      ],
+      "rag_obligation": "每个子模块涉及协议/接口/CBB/选型前，必须先完成 RAG 检索",
+      "chart_generation": "图表规范详见 .claude/shared/chart-generation-spec.md。架构图/状态机/数据通路 → D2（chip-png-d2-gen），时序图 → Wavedrom（chip-png-wavedrom-gen），接口端口图 → Interface（chip-png-interface-gen）。质量门禁：quality_check 阶段执行编译验证。",
+      "intermediate_persistence": {
+        "trigger": "子模块编写完成 > 2 个后自动触发",
+        "target": "<module>_work/ds/doc/ua/{module}_intermediate_state_v{版本号}.json",
+        "schema": {
+          "module_name": "string",
+          "current_stage": "microarch_write/integration_check/quality_check",
+          "completed_submodules": [
+            {
+              "name": "string",
+              "status": "draft/reviewed/approved",
+              "file_path": "string",
+              "sections_completed": ["§3", "§4", "§5", "..."]
+            }
+          ],
+          "pending_submodules": ["string"],
+          "fs_version": "string",
+          "change_log": [{ "version": "vX.Y", "submodule": "string", "reason": "string" }],
+          "schema_version": "1.0"
+        },
+        "restore_rules": "会话恢复时 Read 中间状态文件，从 current_stage 继续。completed_submodules 中 status=draft/reviewed 的子模块跳过，仅处理 pending_submodules。"
+      }
+    },
+
+    "integration_check": {
+      "name": "集成一致性检查",
+      "description": "全部子模块完成后执行",
+      "checks": [
+        "子模块间接口对齐：源端口与目标端口位宽/协议一致",
+        "数据通路连通：从顶层输入到顶层输出的完整路径无断点",
+        "PPA 闭合：各子模块 PPA 预估之和 ≤ 顶层 PPA 预算",
+        "时钟域一致：子模块时钟域声明与顶层 §9 一致",
+        "复位策略一致：子模块复位策略与顶层 §9 一致"
+      ],
+      "conflict_detection": {
+        "description": "集成检查阶段执行 Critical 级矛盾检测规则",
+        "rules_source": ".claude/shared/flow/microarch-conflict-rules.json",
+        "critical_rules": ["MA-01", "MA-02", "MA-03", "MA-05"],
+        "execution": "Critical 规则全部通过后才进入 quality_check"
+      },
+      "output": "集成检查报告（通过/不通过项列表）"
+    },
+
+    "quality_check": {
+      "name": "质量自检",
+      "description": "三阶段自检：自动化 → 数据通路 → 人工",
+      "checklist_source": ".claude/shared/quality-checklist-microarch.md",
+      "conflict_detection": {
+        "description": "质量自检阶段执行全部矛盾检测规则",
+        "rules_source": ".claude/shared/flow/microarch-conflict-rules.json",
+        "important_rules": ["MA-04", "MA-06", "MA-07", "MA-08", "MA-09", "MA-10", "MA-11", "MA-12"]
+      },
+      "output": "自检报告"
+    },
+
+    "specialist_collaboration": {
+      "description": "专项架构 Agent 输出到微架构文档的映射 — 当 requirement-arch 阶段的专项 agent 已执行时，其输出自动流入微架构对应章节",
+      "mappings": [
+        {
+          "agent": "chip-cdc-architect",
+          "source_section": "方案文档 §7 时钟与复位 / CDC",
+          "target_section": "§7 时钟与复位 / CDC 处理",
+          "target_content": "CDC 信号表（信号/位宽/源域/目标域/同步策略/风险）",
+          "merge_rule": "CDC 输出直接继承为 §7 CDC 处理子节，补充子模块级 CDC 细节"
+        },
+        {
+          "agent": "chip-low-power-architect",
+          "source_section": "方案文档 §10 低功耗设计",
+          "target_section": "§5.6 IP/CBB 集成（如涉及功耗域）或独立 §10 低功耗设计",
+          "target_content": "功耗域划分/隔离与电平转换/功耗状态机/功耗预算分配",
+          "merge_rule": "LP 输出作为 §10 低功耗设计的基础框架，子模块级细化电源域边界"
+        },
+        {
+          "agent": "chip-reliability-architect",
+          "source_section": "方案文档 §12 可靠性设计",
+          "target_section": "§5.6 IP/CBB 集成（如涉及 ECC）或独立 §12 可靠性设计",
+          "target_content": "ECC/Parity 方案/SEU 防护/可靠性预算",
+          "merge_rule": "可靠性输出作为 §12 可靠性设计的基础，子模块级细化 ECC 编码和 TMR 策略"
+        }
+      ],
+      "merge_rule_general": "专项 agent 已完成 → 直接继承其输出到微架构对应章节，补充子模块级细节；专项 agent 未完成 → 微架构 agent 独立编写对应章节，标注[待专项 agent 确认]"
+    },
+
+    "change_handling": {
+      "description": "FS 变更后的微架构更新流程",
+      "trigger": "FS 版本号变更或用户通知 FS 更新",
+      "steps": [
+        "1. 读取 fs-microarch-mapping.md 版本同步规则",
+        "2. 评估 FS 变更影响范围（逐章对照映射表）",
+        "3. 仅重写受影响的子模块/章节",
+        "4. 更新微架构 §2 修订历史，记录 FS 版本变更引用",
+        "5. 重新执行 integration_check + quality_check"
+      ],
+      "incremental_update": {
+        "description": "FS 小版本变更时仅更新受影响章节，非变更章节继承",
+        "mapping_source": ".claude/shared/fs-microarch-mapping.md"
+      }
+    },
+
+    "exception_handling": [
+      { "scenario": "FS 文档缺失关键章节", "action": "暂停列出缺失项，等待补充" },
+      { "scenario": "IP 文档不可用", "action": "RAG 无结果→标注'基于通用知识'，关键参数标注待确认" },
+      { "scenario": "子模块间接口矛盾", "action": "暂停输出调和方案" },
+      { "scenario": "时序分析无法完成（无工艺库）", "action": "标注'预估值，待综合验证'，给出定性分析" },
+      { "scenario": "用户跳过确认直接写", "action": "警告后执行，未确认项标注[未确认]" }
+    ]
+  },
+
+  "skill_contracts": [
+    { "skill": "rag-query", "input": "协议/CBB 关键词", "output": "协议摘要+选型数据", "fallback": "使用行业默认值" },
+    { "skill": "chip-png-d2-gen", "input": "D2 源文件", "output": "架构框图/状态机 PNG", "fallback": "文本描述" },
+    { "skill": "chip-png-wavedrom-gen", "input": "Wavedrom JSON", "output": "时序图 PNG", "fallback": "文本描述" },
+    { "skill": "chip-interface-contractor", "input": "接口信号列表", "output": "精确接口契约", "fallback": "手动生成" },
+    { "skill": "chip-ppa-formatter", "input": "原始 PPA 数据", "output": "结构化 PPA 表", "fallback": "直接输出原始数据" },
+    { "skill": "chip-cdc-architect", "input": "CDC 信号列表", "output": "CDC 同步策略表", "fallback": "内化执行" },
+    { "skill": "chip-low-power-architect", "input": "功耗域需求", "output": "低功耗设计方案", "fallback": "内化执行" },
+    { "skill": "chip-reliability-architect", "input": "可靠性需求", "output": "ECC/TMR 方案", "fallback": "内化执行" }
+  ]
+}

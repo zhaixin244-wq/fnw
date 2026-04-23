@@ -1,0 +1,28 @@
+# ============================================================================
+# Project Dependency Requirements
+# ============================================================================
+# Generated from .claude/ skills, tools, and scripts analysis.
+# Install: pip install -r requirements.txt && npm install (see Node section)
+# ============================================================================
+
+# --- Python (pip) ---
+Pillow>=9.0                       # chip-png-interface-gen: image generation
+pyyaml>=6.0                       # skill-comply: YAML parsing
+pytest>=7.0                       # continuous-learning-v2, skill-comply: testing
+python-dotenv>=1.0                # videodb: env loading
+videodb>=0.2                      # videodb: video DB SDK
+manim>=0.18                       # manim-video: math animation
+pytest-django>=4.0                # django-verification: Django test integration (optional)
+pytest-cov>=4.0                   # django-verification: coverage (optional)
+
+# --- Node.js (npm) ---
+# Install in respective skill dirs or globally:
+#   npm install -g @wavedrom/cli playwright-core
+@wavedrom/cli>=3.0                # chip-png-wavedrom-gen: WaveDrom JSON→SVG
+playwright-core>=1.30             # chip-png-wavedrom-gen: headless Chrome rendering
+defuddle                          # defuddle: content extraction (optional)
+
+# --- Binary Tools (not pip/npm) ---
+# d2 v0.7.1        → .claude/tools/d2/d2.exe
+#   Download: https://github.com/terrastruct/d2/releases
+# chromium (playwright) → symlinked from ms-playwright install

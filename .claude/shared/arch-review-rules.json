@@ -1,0 +1,129 @@
+{
+  "version": "1.5",
+  "description": "芯片架构评审经验准则索引。按类别拆分为独立文件，每个阶段只加载需要的类别文件。方案设计阶段按模块类型筛选适用的 check_points（通过 applicability_scope 字段）。每条规则含 priority 标记，Critical 优先级的规则在方案设计后强制检查。",
+
+  "data_source_note": "提炼自高速数据通路模块设计经验（TSMC 4nm / 1GHz / 800Gbps），部分规则对低速控制类模块适用性有限，通过 applicability_scope 标注适用范围",
+
+  "file_index": {
+    "description": "按类别拆分的规则文件，agent 根据当前阶段和模块类型按需 Read",
+    "files": [
+      {
+        "path": ".claude/shared/arch-review/ram-rules.json",
+        "categories": ["RAM"],
+        "check_points": ["CP-01", "CP-02", "CP-03", "CP-04"],
+        "description": "SRAM 使用、端口矩阵、buffer 管理、ECC 位宽",
+        "applicability_scope": "通用（CP-01/04）、数据通路（CP-02/03）",
+        "priority": "Critical"
+      },
+      {
+        "path": ".claude/shared/arch-review/conflict-scheduling-rules.json",
+        "categories": ["CONFLICT", "SCHEDULING", "ISOLATION"],
+        "check_points": ["CP-05", "CP-06", "CP-07", "CP-08"],
+        "description": "仲裁策略、调度处理、通道隔离",
+        "applicability_scope": "数据通路为主，控制密集模块也适用",
+        "priority": "Important"
+      },
+      {
+        "path": ".claude/shared/arch-review/backpressure-performance-rules.json",
+        "categories": ["BACKPRESSURE", "CREDIT", "PERFORMANCE"],
+        "check_points": ["CP-09", "CP-10", "CP-11", "CP-12"],
+        "description": "反压分析、Credit 设计、性能分析",
+        "applicability_scope": "数据通路为主",
+        "priority": "Important"
+      },
+      {
+        "path": ".claude/shared/arch-review/cdc-reset-timing-rules.json",
+        "categories": ["CDC", "RESET", "TIMING"],
+        "check_points": ["CP-13", "CP-14", "CP-15", "CP-26", "CP-27"],
+        "description": "CDC 跨时钟域、复位策略、时序分析",
+        "applicability_scope": "通用",
+        "priority": "Critical"
+      },
+      {
+        "path": ".claude/shared/arch-review/dft-fsm-interface-rules.json",
+        "categories": ["DFT", "FSM", "INTERFACE", "SYNTH"],
+        "check_points": ["CP-16", "CP-17", "CP-18", "CP-20"],
+        "description": "DFT 友好性、状态机、接口合规、可综合性",
+        "applicability_scope": "通用",
+        "priority": "Critical"
+      },
+      {
+        "path": ".claude/shared/arch-review/power-control-security-rules.json",
+        "categories": ["POWER", "CONTROL-INTENSIVE", "SECURITY"],
+        "check_points": ["CP-19", "CP-21", "CP-22", "CP-23", "CP-24", "CP-25"],
+        "description": "功耗域设计、控制密集型模块、安全隔离",
+        "applicability_scope": "低功耗/控制密集/通用",
+        "priority": "Important"
+      }
+    ]
+  },
+
+  "priority_rules": {
+    "description": "优先级决定检查强度",
+    "Critical": "方案设计后强制逐条检查，不通过项阻断方案推进",
+    "Important": "方案设计后检查，不通过项在 risk 章节标注",
+    "Advisory": "按需检查，不通过项记录供参考"
+  },
+
+  "anti_rationalization": {
+    "description": "反合理化清单 - 方案评审时对照检查",
+    "items": [
+      { "excuse": "SRAM 端口够用就行", "response": "端口不足是性能瓶颈主要来源，必须按矩阵表验证", "applicability_scope": "数据通路" },
+      { "excuse": "credit 随便定个数", "response": "credit = 数据通路计算结果，不是拍脑袋", "applicability_scope": "数据通路" },
+      { "excuse": "反压加个信号就行", "response": "反压链路必须端到端完整，每级有过充分析", "applicability_scope": "数据通路" },
+      { "excuse": "通道间共享 buffer 省面积", "response": "共享=干扰，隔离=稳定。面积省了，性能没了", "applicability_scope": "数据通路" },
+      { "excuse": "SRAM 读延迟后面再处理", "response": "3cycle 延迟不处理=吞吐腰斩，必须在架构阶段解决", "applicability_scope": "数据通路" },
+      { "excuse": "小包场景应该很少", "response": "必须覆盖最差包长，不能只看典型包长", "applicability_scope": "数据通路" },
+      { "excuse": "先不加 ECC", "response": "ECC 位宽必须在 SRAM 选型时预留", "applicability_scope": "通用" },
+      { "excuse": "调度按固定顺序轮转", "response": "固定时隙在负载不均时浪费带宽，事件驱动更高效", "applicability_scope": "控制密集" },
+      { "excuse": "credit 归还什么时候都行", "response": "归还过早=buffer 溢出，必须精确到消耗时刻", "applicability_scope": "数据通路" },
+      { "excuse": "写端口竞争加个仲裁就行", "response": "仲裁策略影响性能和公平性，需按优先级和反压能力设计", "applicability_scope": "数据通路" },
+      { "excuse": "关断域不用加隔离", "response": "无 Isolation → 输出浮空 → 上电域采样 X，必须在架构阶段定义隔离策略", "applicability_scope": "低功耗" },
+      { "excuse": "Level Shifter 后面后端会加", "response": "后端加 Level Shifter 可能影响布局和时序，架构阶段必须规划电压域边界", "applicability_scope": "低功耗" },
+      { "excuse": "默认值设 0 就行", "response": "组合逻辑遗漏默认值 = latch，case 无 default = 不可预测行为", "applicability_scope": "通用" },
+      { "excuse": "casex 省事", "response": "casex 有 x 传播风险，必须用 case 替代", "applicability_scope": "通用" },
+      { "excuse": "DMA暂停直接截断就行", "response": "截断burst导致数据不一致，必须完成burst或支持context save", "applicability_scope": "控制密集" },
+      { "excuse": "中断清除慢一拍没关系", "response": "清除延迟导致重复触发中断，ISR执行混乱，必须即时生效", "applicability_scope": "控制密集" },
+      { "excuse": "安全隔离靠软件就够了", "response": "软件控制可被绕过，密钥/敏感数据必须硬件级访问控制", "applicability_scope": "通用" },
+      { "excuse": "加密实现不用管时序", "response": "数据依赖的时序差异可被侧信道攻击恢复密钥，必须恒定时间实现", "applicability_scope": "通用" },
+      { "excuse": "故障注入防护太偏门", "response": "电压/时钟毛刺可跳过安全检查，关键逻辑必须双份冗余+结果比对", "applicability_scope": "通用" }
+    ]
+  },
+
+  "scope_filtering_guide": {
+    "description": "方案设计阶段按模块类型筛选适用规则的指引",
+    "module_types": {
+      "数据通路": "加载全部文件，重点关注 ram-rules / conflict-scheduling / backpressure-performance",
+      "控制密集": "重点关注 conflict-scheduling (SCHED-*) / power-control-security (CTRL-*) / dft-fsm-interface",
+      "低功耗": "重点关注 power-control-security (POWER-*) / cdc-reset-timing (CDC-* 与低功耗交叉)",
+      "通用": "加载 cdc-reset-timing + dft-fsm-interface（全部适用），其余按需"
+    }
+  },
+
+  "req_to_checkpoints_mapping": {
+    "description": "架构评审 check_point → REQ 覆盖映射。与 coverage-model.json 配合形成端到端覆盖视图：矛盾检测覆盖需求阶段，架构评审覆盖方案阶段。",
+    "mappings": [
+      { "req": "REQ-001", "checkpoints": ["CP-15 (TIM-01/02 关键路径/Fmax)"], "phase": "方案" },
+      { "req": "REQ-002", "checkpoints": ["CP-18 (IF-01/02/03 接口合规/valid稳定性/位宽)", "CP-01 (RAM-02 SRAM端口矩阵)"], "phase": "方案" },
+      { "req": "REQ-003", "checkpoints": ["CP-02 (RAM-01 避免RMW)", "CP-03 (RAM-03 buffer管理粒度)", "CP-11 (PERF-02/03 气泡/SRAM延迟)", "CP-12 (PERF-04/05 最差包长/流水并行)"], "phase": "方案" },
+      { "req": "REQ-004", "checkpoints": ["CP-11 (PERF-01 瓶颈分析)", "CP-12 (PERF-04 利用率)"], "phase": "方案" },
+      { "req": "REQ-005", "checkpoints": ["CP-01 (RAM-02 端口矩阵)", "CP-04 (RAM-04 ECC位宽)"], "phase": "方案" },
+      { "req": "REQ-006", "checkpoints": ["CP-13 (CDC-01/02 同步策略/数据一致)", "CP-14 (RST-01/02/03 复位策略)", "CP-26 (CDC-04 级联)", "CP-27 (CDC-06 格雷码指针)"], "phase": "方案" },
+      { "req": "REQ-007", "checkpoints": ["CP-19 (POWER-01/02/03 Isolation/LS/Retention)"], "phase": "方案" },
+      { "req": "REQ-008", "checkpoints": ["CP-16 (DFT-01/02/03 扫描链/ICG/异步置位)"], "phase": "方案" },
+      { "req": "REQ-009", "checkpoints": ["CP-04 (RAM-04 ECC位宽)"], "phase": "方案" },
+      { "req": "REQ-011", "checkpoints": ["CP-13 (CDC-01/02/03)", "CP-26 (CDC-04)", "CP-27 (CDC-06)"], "phase": "方案" },
+      { "req": "REQ-012", "checkpoints": ["CP-01 (RAM-01/02/03/04)", "CP-02 (RAM-01)", "CP-03 (RAM-03)", "CP-04 (RAM-04)"], "phase": "方案" },
+      { "req": "REQ-018", "checkpoints": ["CP-23 (SEC-01/02 安全隔离/防火墙)", "CP-24 (SEC-03/04 恒定时间)", "CP-25 (SEC-05 故障注入)"], "phase": "方案" },
+      { "req": "REQ-021", "checkpoints": ["CP-19 (POWER-01/02/03 低功耗设计)"], "phase": "方案" }
+    ],
+    "coverage_statistics": {
+      "total_reqs": 28,
+      "reqs_with_arch_review": 13,
+      "reqs_without_arch_review": 15,
+      "end_to_end_coverage": "矛盾检测覆盖 24/28 REQ（含实验性）+ 架构评审覆盖 13/28 REQ → 端到端覆盖 25/28 REQ（取并集）",
+      "uncovered_end_to_end": ["REQ-014 (接口时序)", "REQ-015 (DMA)", "REQ-016 (中断)", "REQ-017 (调试)", "REQ-019 (软件接口)", "REQ-020 (系统级)"]
+    },
+    "usage": "stageC0 覆盖率分析 + 方案设计后架构评审，合并输出端到端覆盖视图：哪些 REQ 在需求阶段被矛盾检测覆盖，哪些在方案阶段被架构评审覆盖，哪些两端均无覆盖"
+  }
+}

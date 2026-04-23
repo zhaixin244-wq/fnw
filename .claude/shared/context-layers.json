@@ -1,0 +1,129 @@
+{
+  "version": "1.0",
+  "description": "分层上下文架构定义 - 控制 agent 在不同阶段加载哪些文件，最小化 token 消耗",
+
+  "layers": {
+    "L0_resident": {
+      "description": "常驻层 — agent 定义文件中直接内联的内容，始终加载。目标 < 2K tokens",
+      "contents": [
+        "角色定义 + 认知框架（~300 tokens）",
+        "铁律（~50 tokens）",
+        "关键规则速查（精简版，~200 tokens）",
+        "Skill 调用契约（~200 tokens）",
+        "输出契约 Schema（~300 tokens）",
+        "共享协议（降级策略/交互风格，~200 tokens）"
+      ],
+      "budget": "2K tokens"
+    },
+    "L1_startup": {
+      "description": "启动层 — 激活后首次 Read，整个会话期间只加载一次",
+      "files": [
+        { "path": ".claude/shared/todo-mechanism.md", "tokens": "~1.2K" },
+        { "path": ".claude/shared/context-layers.json", "tokens": "~0.5K（本文件）" }
+      ],
+      "budget": "2K tokens（一次性）"
+    },
+    "L2_stage": {
+      "description": "阶段层 — 进入每个 stage 时按需注入，进入下一 stage 后可被压缩/替换",
+      "stages": {
+        "stage0": {
+          "description": "前置探索，无需外部数据文件",
+          "files": [],
+          "budget": "0 tokens"
+        },
+        "stageA": {
+          "description": "最小信息集，规则内联在 requirement-template 的 stageA 章节",
+          "files": [
+            { "path": ".claude/shared/requirement-template.json", "note": "整个文件已精简至 ~1.4K tokens", "tokens": "~1.4K" }
+          ],
+          "budget": "~1.4K（精简后）"
+        },
+        "stageB": {
+          "description": "约束检查清单（已精简：hint→hint_ref 引用）",
+          "files": [
+            { "path": ".claude/shared/requirement-checklist.json", "tokens": "~1.9K（精简后）" },
+            { "path": ".claude/shared/flow/stageB-detail.json", "tokens": "~0.6K" },
+            { "path": ".claude/shared/flow/execution-hints.json", "tokens": "~0.2K（按 hint_ref 按需，约5条）" }
+          ],
+          "budget": "~2.7K tokens（精简前 ~7K）"
+        },
+        "stageC0": {
+          "description": "矛盾检测 + post_stageB 后处理（条件规则按需加载，实验性规则反馈收集）",
+          "files": [
+            { "path": ".claude/shared/flow/stageC0-detail.json", "tokens": "~0.5K" },
+            { "path": ".claude/shared/conflict-detection-rules.json", "tokens": "~3.5K（14条基础规则）" },
+            { "path": ".claude/shared/flow/conflict-detection-conditional.json", "tokens": "~1.7K（7条条件规则，按需）" },
+            { "path": ".claude/shared/flow/conflict-detection-experimental.json", "tokens": "~1.5K（5条实验规则+feedback_schema，按需）" }
+          ],
+          "budget": "~4.0K tokens（典型）/ ~5.5K tokens（条件+实验规则激活时）"
+        },
+        "stageC": {
+          "description": "需求汇总，确认/优先级/冻结规则",
+          "files": [
+            { "path": ".claude/shared/flow/stageC-detail.json", "tokens": "~0.7K" }
+          ],
+          "budget": "~0.7K tokens"
+        },
+        "solution_design": {
+          "description": "方案设计（面积估算按需加载）",
+          "files": [
+            { "path": ".claude/shared/solution-template.json", "tokens": "~1.5K（精简后）" },
+            { "path": ".claude/shared/flow/area-estimation.json", "tokens": "~1.0K（按需）" }
+          ],
+          "budget": "~1.5K tokens（典型）/ ~2.5K tokens（含面积估算时）"
+        },
+        "arch_review": {
+          "description": "架构评审（按模块类型筛选 1-2 个文件）",
+          "files": [
+            { "path": ".claude/shared/arch-review-rules.json", "tokens": "~1.8K（索引）" },
+            { "path": ".claude/shared/arch-review/{类别}.json", "tokens": "~1-2K（1-2个文件）" }
+          ],
+          "budget": "~3-4K tokens"
+        }
+      }
+    },
+    "L3_ephemeral": {
+      "description": "临时层 — 用完即弃，不在上下文中持久保留",
+      "contents": [
+        "EDA 工具报告解析结果（仅读取一次，结论写入 PR 记录后不再引用）",
+        "RAG 检索结果（摘要写入 PR 记录后不再引用）",
+        "中间状态持久化 JSON（写入文件后不再 Read）"
+      ],
+      "budget": "0 tokens（不持久保留）"
+    }
+  },
+
+  "optimization_strategies": {
+    "stage_scoped_loading": {
+      "description": "requirement-template.json 拆分为 stage 级文件，每个 stage 只加载自己的规则",
+      "status": "completed",
+      "result": "已通过 detail_source 引用实现 stage 级拆分：stageB-detail / stageC0-detail / stageC-detail / solution-template 独立文件，requirement-template.json 仅保留骨架（~1.4K tokens）。file-registry.json 追踪全部依赖。"
+    },
+    "checklist_compression": {
+      "description": "requirement-checklist.json 中 execution_hint 字段平均 300-500 字符/项，25项约 10K 字符，是最大 token 消耗源",
+      "status": "completed",
+      "result": "已抽取至 flow/execution-hints.json（hint_ref 机制），checklist 仅保留精简摘要 + hint_ref 引用。token 消耗从 ~7K 降至 ~2.7K（-61%）。"
+    },
+    "conflict_rules_compression": {
+      "description": "conflict-detection-rules.json 中 reference_values 和 detection_tip 占大量空间",
+      "status": "completed",
+      "result": "已拆分为 3 个文件：conflict-detection-rules.json（17条基础）、conflict-detection-conditional.json（7条条件）、conflict-detection-experimental.json（5条实验）。reference_values 独立为 flow/reference-values.json，条件/实验规则按需加载。stageC0 典型预算 ~4.0K（vs 原 ~5.6K，-29%）。"
+    }
+  },
+
+  "loading_sequence": {
+    "description": "agent 激活后的文件加载顺序，按阶段推进",
+    "sequence": [
+      { "step": "激活", "action": "L0 常驻（内联） + L1 启动层 Read" },
+      { "step": "进入 stage0", "action": "无需额外 Read" },
+      { "step": "进入 stageA", "action": "Read requirement-template.json stageA 章节" },
+      { "step": "进入 stageB", "action": "Read requirement-checklist.json" },
+      { "step": "进入 stageC0", "action": "Read conflict-detection-rules.json + stageC0-detail.json → 基础检测 → 按需 Read conflict-detection-conditional.json（REQ-022~025 激活时）→ 按需 Read conflict-detection-experimental.json（实验检测+反馈收集）" },
+      { "step": "stageC0 完成", "action": "Read coverage-model.json → 运行覆盖率分析 → Read end-to-end-coverage-report.json → 生成端到端覆盖视图" },
+      { "step": "进入 stageC", "action": "无需额外 Read（规则内联）" },
+      { "step": "进入方案设计", "action": "Read solution-template.json" },
+      { "step": "架构评审", "action": "Read arch-review-rules.json（索引） → 按需 Read 1-2 个类别文件" },
+      { "step": "EDA 反馈", "action": "Read eda-tool-interfaces.json（仅首次），后续按 report_parsing_rules 解析" }
+    ]
+  }
+}

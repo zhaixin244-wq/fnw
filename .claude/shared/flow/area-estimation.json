@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "description": "系统化面积估算框架 — 从 solution-template.json 抽取，方案设计时按需加载。",
+
+  "estimation_framework": {
+    "logic_area": {
+      "description": "可综合逻辑面积，单位 kGates（1 Gate Equivalent = 1个2输入NAND）",
+      "sub_components": [
+        { "component": "数据通路逻辑", "estimation_method": "按数据路径宽度和处理步骤估算：每bit每步骤约 2-5 GE", "example": "64bit × 4步骤 = 256-640 GE ≈ 0.3-0.6kGates" },
+        { "component": "控制逻辑（FSM/仲裁/译码）", "estimation_method": "按状态数和输入数估算：每状态约 20-50 GE + 每输入位 3-5 GE", "example": "8状态FSM + 12bit输入 = 200-400 + 36-60 ≈ 0.2-0.5kGates" },
+        { "component": "寄存器", "estimation_method": "每bit 6 GE（含复位逻辑）", "example": "256bit 寄存器 = 1536 GE ≈ 1.5kGates" },
+        { "component": "FIFO", "estimation_method": "同步FIFO: 深度×位宽×1.2 GE; 异步FIFO: 深度×位宽×1.5 GE（含格雷码指针+同步器）", "example": "深度16×32bit 同步FIFO = 16×32×1.2 = 614 GE ≈ 0.6kGates" },
+        { "component": "乘法器/除法器", "estimation_method": "N×N乘法器: ~N² GE; 除法器: ~N²×1.5 GE", "example": "16×16乘法器 ≈ 256 GE ≈ 0.3kGates" },
+        { "component": "仲裁器", "estimation_method": "固定优先级: N端口×5-10 GE; RR: N端口×15-25 GE（含指针）", "example": "4端口RR仲裁器 = 60-100 GE ≈ 0.1kGates" },
+        { "component": "ECC 编解码", "estimation_method": "SECDED: 数据位宽×15-25%（编码器）+ 数据位宽×20-30%（解码器+纠错）", "example": "64bit SECDED = 10-16 + 13-19 ≈ 23-35 GE ≈ 0.03kGates" }
+      ]
+    },
+    "storage_area": {
+      "description": "SRAM/RegFile/ROM 面积，单位 mm²（工艺相关）",
+      "reference_values": {
+        "28nm_sram_dp_64kbit": "0.010-0.020 mm²",
+        "28nm_sram_sp_64kbit": "0.006-0.012 mm²",
+        "16nm_sram_dp_64kbit": "0.004-0.008 mm²",
+        "7nm_sram_dp_64kbit": "0.001-0.003 mm²",
+        "regfile_32x32b": "1-2 kGates (可归入逻辑面积)",
+        "scaling_rule": "同容量 SRAM 面积约按工艺节点平方缩放（28nm→16nm 面积 ≈ 原×0.3-0.4）"
+      },
+      "estimation_method": "按 REQ-012 的存储需求（类型、容量、端口数）查表估算，ECC 位宽需额外预留 15-25% 容量"
+    },
+    "io_area": {
+      "description": "IO Pad、PHY、PLL 等模拟/接口面积，单位 mm²",
+      "sub_components": [
+        { "component": "IO Pad", "estimation_method": "标准 Pad: 0.001-0.005 mm²/pad; 高速 Pad: 0.01-0.05 mm²/pad", "example": "32个标准Pad ≈ 0.03-0.16 mm²" },
+        { "component": "PLL", "estimation_method": "整数N PLL: 0.05-0.2 mm²@28nm; LC-PLL: 0.2-1.0 mm²@28nm", "example": "1个整数N PLL ≈ 0.1 mm²@28nm" },
+        { "component": "SerDes PHY (每通道)", "estimation_method": "28nm: 0.5-1.0 mm²/lane; 7nm: 0.1-0.3 mm²/lane", "example": "4通道@28nm ≈ 2.0-4.0 mm²" }
+      ]
+    },
+    "total_formula": "模块总面积 = 逻辑面积(kGates→mm²按工艺换算) + 存储面积(mm²) + IO面积(mm²)",
+    "kGates_to_mm2": {
+      "28nm": "1kGates ≈ 0.003-0.005 mm²",
+      "16nm": "1kGates ≈ 0.001-0.002 mm²",
+      "7nm": "1kGates ≈ 0.0003-0.0007 mm²"
+    }
+  },
+  "output_format": "在方案 PPA 预估章节中，面积估算应按三部分列出：\n\n| 组成 | 预估 | 计算依据 |\n|------|------|----------|\n| 逻辑面积 | X kGates (= Y mm²) | {各子组件之和} |\n| 存储面积 | Z mm² | {SRAM类型+容量+端口} |\n| IO/PHY 面积 | W mm² | {Pad/PLL/SerDes} |\n| **合计** | **总面积 mm²** | |"
+}

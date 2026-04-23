@@ -1,0 +1,4 @@
+# D2 CLI (standalone binary)
+# Already installed at: .claude/tools/d2/d2.exe (v0.7.1)
+# If missing, download from: https://github.com/terrastruct/d2/releases
+# Place d2.exe at: .claude/tools/d2/d2.exe

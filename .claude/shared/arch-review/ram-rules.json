@@ -1,0 +1,45 @@
+{
+  "version": "1.4",
+  "category": "RAM",
+  "category_name": "RAM 使用",
+  "rules": [
+    {
+      "id": "RAM-01",
+      "rule": "按功能分离 SRAM，避免 read-modify-write",
+      "check": "不同写源的数据是否混存在同一 SRAM？是否有字段由不同源在不同时刻写入？",
+      "anti_pattern": "合并 SRAM 省面积 → RMW 占读端口 → 性能瓶颈",
+      "fix": "拆分 SRAM，写操作变为纯覆盖写",
+      "applicability_scope": "通用"
+    },
+    {
+      "id": "RAM-02",
+      "rule": "SRAM 读写端口必须可并行，不允许同拍同端口竞争",
+      "check": "是否画了端口矩阵表（读源×SRAM）？端口不足时如何处理？",
+      "anti_pattern": "端口够用就行 → 端口竞争 → 气泡 → 吞吐下降",
+      "fix": "复制 SRAM / 增加数量 / 调整数据组织",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "RAM-03",
+      "rule": "buffer 管理粒度影响流水效率，粒度越细流水越平滑",
+      "check": "按块管理 vs 按拍管理的利用率分别是多少？最差包长是否满足目标？",
+      "anti_pattern": "块间切换气泡在小包场景利用率急剧下降",
+      "fix": "细化管理粒度（如 512B 块 → 128B 拍）",
+      "applicability_scope": "数据通路"
+    },
+    {
+      "id": "RAM-04",
+      "rule": "关键存储必须带 ECC，ECC 位宽纳入 SRAM 位宽预算",
+      "check": "SRAM 选型时是否计算了 ECC 位宽？",
+      "anti_pattern": "先不加 ECC → 后期加需要重新设计 SRAM 深度/位宽",
+      "fix": "SRAM 选型时立即计算 ECC 位宽（如 1024bit+14bit=1038bit）",
+      "applicability_scope": "通用"
+    }
+  ],
+  "check_points": [
+    { "id": "CP-01", "check": "SRAM 端口矩阵是否画出？端口是否可并行？" },
+    { "id": "CP-02", "check": "SRAM 数据结构是否避免 read-modify-write？" },
+    { "id": "CP-03", "check": "buffer 管理粒度和利用率是否满足目标？" },
+    { "id": "CP-04", "check": "ECC 位宽是否已纳入 SRAM 预算？" }
+  ]
+}

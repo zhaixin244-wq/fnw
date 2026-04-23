@@ -1,0 +1,222 @@
+{
+  "version": "1.1",
+  "description": "矛盾检测参考值 — 按规则ID索引，支持按工艺节点/场景/foundry 定制。从 conflict-detection-rules.json 和 conflict-detection-conditional.json 抽取。",
+
+  "metadata": {
+    "foundry_coverage": "FREQ-01 和 POWER-01 支持 foundry 差异化（TSMC/GF/SMIC）。其余规则使用行业通用值。",
+    "usage_note": "检测时先查 foundry 专属值（如有），命中则使用；未命中则回退到通用值。用户未指定 foundry 时使用通用值。"
+  },
+
+  "FREQ-01": {
+    "generic": {
+      "65nm": "200-300MHz",
+      "55nm": "250-350MHz",
+      "40nm": "300-400MHz",
+      "28nm": "400-500MHz，极限约600MHz",
+      "22nm": "500-700MHz",
+      "16nm": "800MHz-1.2GHz",
+      "12nm": "1.0-1.5GHz",
+      "7nm": "1.5-2.5GHz",
+      "5nm": "2.0-3.5GHz"
+    },
+    "TSMC": {
+      "28nm": "450-550MHz（HPC+可达600MHz）",
+      "16nm": "900MHz-1.3GHz（FF+性能更优）",
+      "7nm": "1.8-2.8GHz",
+      "5nm": "2.5-3.5GHz"
+    },
+    "GF": {
+      "28nm": "350-450MHz（SLP偏低）",
+      "14nm": "700MHz-1.0GHz",
+      "12nm": "800MHz-1.2GHz",
+      "7nm": "1.5-2.2GHz"
+    },
+    "SMIC": {
+      "28nm": "350-450MHz",
+      "14nm": "600MHz-900MHz",
+      "7nm": "待验证（受限工艺成熟度）"
+    }
+  },
+
+  "FREQ-02": {
+    "pure_combinational": "≤2cycles",
+    "multi_step_compute": "每步至少1cycle，总延迟=步骤数",
+    "memory_access": "1-2cycles",
+    "complex_pipeline": "级数+1cycles"
+  },
+
+  "AREA-01": {
+    "basic_reg": "2-5kGates（<10个RW寄存器）",
+    "simple_fsm": "1-3kGates（<8状态）",
+    "fifo_sync": "1-2kGates（深度16，宽度32bit）",
+    "axi_lite_slave": "3-5kGates",
+    "axi4_full_master": "8-15kGates（128bit）"
+  },
+
+  "AREA-02": {
+    "parallel_overhead": "每路增加60-80%面积",
+    "area_budget_check_formula": "单路面积 × 并行路数 > 面积预算 → 矛盾",
+    "mitigation": "时分复用降低并行度，或放宽面积约束"
+  },
+
+  "AREA-03": {
+    "ecc_overhead": "15-25%（SECDED for SRAM）",
+    "tmr_overhead": "200%（三模冗余）",
+    "parity_overhead": "5-10%",
+    "budget_check_formula": "基础面积 × (1 + 开销率) > 面积预算 → 标记矛盾"
+  },
+
+  "POWER-01": {
+    "generic": {
+      "28nm_200mhz_typical": "5-15mW动态功耗",
+      "28nm_500mhz_typical": "15-40mW动态功耗",
+      "16nm_500mhz_typical": "8-20mW动态功耗",
+      "7nm_1ghz_typical": "10-30mW动态功耗",
+      "65nm_200mhz_typical": "10-25mW动态功耗",
+      "55nm_250mhz_typical": "15-30mW动态功耗",
+      "40nm_300mhz_typical": "20-40mW动态功耗"
+    },
+    "TSMC": {
+      "28nm_500mhz_typical": "12-35mW（HPC+优化后偏低）",
+      "16nm_500mhz_typical": "7-18mW",
+      "7nm_1ghz_typical": "8-25mW"
+    },
+    "GF": {
+      "28nm_500mhz_typical": "18-45mW（SLP偏高）",
+      "14nm_500mhz_typical": "10-25mW"
+    },
+    "SMIC": {
+      "28nm_500mhz_typical": "20-48mW"
+    }
+  },
+
+  "POWER-02": {
+    "conflict_pattern": "多电压域 + 全局扫描链 = 冲突",
+    "safe_pattern": "单电压域 + 标准扫描链 = 无冲突",
+    "mitigation": "分域扫描链 + 隔离单元 + 保持触发器"
+  },
+
+  "POWER-03": {
+    "async_fifo_conflict": "异步FIFO在关断域内 → 唤醒后指针状态未知 → 需要清空或Retain",
+    "dual_flop_conflict": "双触发器同步器在关断域边界 → 关断后输出浮空 → 需要Isolation Cell",
+    "handshake_conflict": "握手同步器跨功耗域 → ack信号在关断期间不确定 → 需要隔离+钳位",
+    "mitigation": "CDC同步器放在始终上电域，或关断前清空跨域FIFO+隔离信号"
+  },
+
+  "POWER-04": {
+    "sleep_wakeup": "Sleep→Active: 5-20 cycles",
+    "deep_sleep_wakeup": "Deep-Sleep→Active: 50-200 cycles",
+    "hibernate_wakeup": "Hibernate→Active: 1000-10000 cycles (ms级)",
+    "realtime_threshold": "实时性要求≤100cycles的模块，Deep-Sleep唤醒延迟可能超标"
+  },
+
+  "PERF-01": {
+    "low_latency_pattern": "≤2cycles → 无流水线，吞吐受限",
+    "high_throughput_pattern": "N拍/cycle → N级流水线，延迟+N cycles",
+    "conflict_threshold": "延迟≤2cycles 且 吞吐≥2ops/cycle → 矛盾"
+  },
+
+  "PERF-02": {
+    "simple_module": "1-3个功能 + 1个接口 → 2-4周验证",
+    "medium_module": "4-8个功能 + 2个接口 → 4-8周验证",
+    "complex_module": ">8个功能 + 多接口 + 跨时钟域 → 8-16周验证",
+    "verification_ratio": "验证工作量 ≈ 功能数 × 接口数 × CDC复杂度系数(单域1.0/多域1.5)"
+  },
+
+  "IO-01": {
+    "efficiency_threshold": "有效数据位宽/接口位宽 < 50% → 效率警告",
+    "alignment_issue": "数据粒度不能整除接口位宽 → 对齐/拆分开销",
+    "safe_pattern": "接口位宽 = 数据粒度整数倍，利用率≥50%"
+  },
+
+  "IO-02": {
+    "shared_sram_conflict": "N个写源共享SRAM端口 → 需要N:1仲裁，吞吐降至1/N",
+    "shared_bus_conflict": "M个master共享总线 → 仲裁开销增加延迟2-5cycles",
+    "safe_pattern": "每个模块独占资源，或仲裁带宽≥所有模块峰值之和",
+    "mitigation": "独占SRAM bank/增加仲裁端口/降低峰值带宽需求"
+  },
+
+  "IO-03": {
+    "address_overhead": "每个隔离域需要独立地址范围+防火墙规则，增加地址译码复杂度",
+    "fragmentation_threshold": "≥4个隔离域 → 地址空间利用率<50% → 标记风险",
+    "firewall_complexity": "N个域 → N×(N-1)/2条防火墙规则",
+    "mitigation": "减少隔离域数量/使用动态地址映射/合并低安全等级域"
+  },
+
+  "PVT-01": {
+    "temp_coefficient": "温度每升高50°C，漏电功耗增加约2-3倍",
+    "ss_corner_power": "SS工艺角动态功耗比TT高约10-20%",
+    "automotive_temp": "-40~125°C，漏电变化范围约10倍",
+    "industrial_temp": "-40~85°C，漏电变化范围约5倍",
+    "commercial_temp": "0~70°C，漏电变化范围约2倍"
+  },
+
+  "MEM-01": {
+    "generic": {
+      "sram_area_28nm": "28nm: 64Kbit双端口SRAM约0.01-0.02mm²",
+      "sram_area_16nm": "16nm: 64Kbit双端口SRAM约0.004-0.008mm²",
+      "sram_area_7nm": "7nm: 64Kbit双端口SRAM约0.001-0.003mm²",
+      "regfile_area": "32x32bit RegFile约1-2kGates",
+      "area_budget_check_formula": "所需SRAM容量(各实例之和) 对应的面积 > 面积预算 → 矛盾"
+    },
+    "TSMC": {
+      "sram_area_28nm": "0.008-0.016mm²（HD SRAM偏紧凑）",
+      "sram_area_16nm": "0.003-0.006mm²",
+      "sram_area_7nm": "0.0008-0.002mm²"
+    }
+  },
+
+  "CDC-01": {
+    "dual_flop_latency": "双触发器同步器增加2 cycles延迟（源域1拍+同步2拍，可视为2拍有效延迟）",
+    "async_fifo_latency": "异步FIFO增加3-5 cycles延迟（写指针同步+读指针同步+内部流水）",
+    "handshake_latency": "四拍握手同步器增加4-8 cycles延迟",
+    "timing_margin_check": "功能延迟 + CDC延迟 > 目标延迟 → 标记矛盾"
+  },
+
+  "ANA-01": {
+    "pll_lock_typical": "整数N分频 PLL: 10-50us; 小数N分频 PLL: 50-200us; LC-PLL: 100-500us",
+    "sleep_wakeup": "Sleep→Active: 5-20 cycles (不含PLL)",
+    "deep_sleep_wakeup": "Deep-Sleep→Active: 50-200 cycles (不含PLL)",
+    "conflict_threshold": "PLL Lock Time > 唤醒延迟约束 → 矛盾"
+  },
+
+  "ANA-02": {
+    "28nm_serdes_max": "6-10 Gbps/lane",
+    "16nm_serdes_max": "16-28 Gbps/lane",
+    "7nm_serdes_max": "28-56 Gbps/lane",
+    "5nm_serdes_max": "56-112 Gbps/lane",
+    "margin_recommendation": "目标速率 ≤ 80% 工艺上限"
+  },
+
+  "ANA-03": {
+    "phy_area_per_lane_28nm": "0.5-1.0 mm²/lane（含 PLL）",
+    "phy_area_per_lane_7nm": "0.1-0.3 mm²/lane（含 PLL）",
+    "phy_power_per_lane_28nm": "50-150 mW/lane（动态）",
+    "phy_power_per_lane_7nm": "20-80 mW/lane（动态）",
+    "budget_check": "通道数 × 每通道面积/功耗 > 面积/功耗预算 → 矛盾"
+  },
+
+  "ANA-04": {
+    "pll_jitter_typical": "整数N PLL: 5-20ps pp; 小数N PLL: 20-80ps pp",
+    "timing_budget_rule": "Tjitter ≤ 10% × Tclk（Jitter 不超过时钟周期的 10%）",
+    "conflict_example": "200MHz时钟(5ns周期) + PLL Jitter 80ps = 1.6% → OK; 1GHz时钟(1ns周期) + PLL Jitter 80ps = 8% → 边界"
+  },
+
+  "VER-01": {
+    "sva_property_count": "每功能点约 3-10 条属性；关键路径需 10-20 条",
+    "formal_runtime": "简单模块(<50属性): 数分钟; 中等(50-200): 数小时; 复杂(>200): 数天",
+    "coverage_gap_risk": "属性数 < 功能点数×2 → 覆盖不足风险"
+  },
+
+  "VER-02": {
+    "fc_95_in_4weeks": "简单模块可达，中等模块需 6-8 周",
+    "fc_100_cost": "从95%到100%的功能覆盖率通常需要额外50-100%的验证时间",
+    "cc_bottleneck": "条件覆盖和FSM覆盖最难达成，通常占用最后20%的验证时间"
+  },
+
+  "VER-03": {
+    "cdc_formal_gap": "大多数形式验证工具不直接验证 CDC 正确性，需要专用 CDC 工具",
+    "multi_clock_complexity": "多时钟域模块的形式验证状态空间爆炸风险高",
+    "mitigation": "CDC 使用专用工具（SpyGlass CDC/Cadence Conformal CDC），形式验证聚焦单时钟域属性"
+  }
+}

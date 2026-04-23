@@ -1,0 +1,69 @@
+---
+name: chip-png-interface-gen
+description: 从Verilog模块声明批量生成module_snapshot风格的接口端口PNG图片（左侧输入、右侧输出、信号名+位宽+方向箭头）。
+---
+
+# Chip PNG Interface Generator
+
+## 任务
+为芯片模块的每组接口生成 module_snapshot 风格的端口图 PNG。左侧放置 input 信号，右侧放置 output 信号，中间为模块名方框，信号旁标注位宽和方向箭头。
+
+## 依赖
+- python 3.8+
+- 依赖包：见 `requirements.txt`（`pip install -r requirements.txt`）
+
+## 脚本位置
+`.claude/skills/chip-png-interface-gen/gen_module_snapshot.py`
+
+## 执行步骤
+
+### 1. 准备接口定义
+
+两种方式定义接口：
+
+**方式 A：修改脚本内 `INTERFACES` 字典**（适合单项目）
+
+在脚本的 `INTERFACES` 字典中直接定义。
+
+**方式 B：外部 JSON 配置**（适合多项目复用）
+
+创建 `interfaces.json`：
+```json
+{
+    "my_if": {
+        "verilog": "module my_if (\n    input        clk,\n    input [7:0]  data_in,\n\n</right>\n    output       valid,\n    output [7:0] data_out\n);"
+    }
+}
+```
+
+接口定义格式：
+- 使用 `</left>` 和 `</right>` 分隔输入/输出（左侧=input，右侧=output）
+- 每个信号需包含 `input`/`output` 方向、可选位宽 `[H:L]`、信号名
+- 没有 `</left>`/`</right>` 标记时，默认全部在左侧（输入）
+- 信号之间用空行分隔会形成视觉分组
+
+### 2. 运行生成
+
+```bash
+# 使用脚本内嵌的 INTERFACES（输出到当前目录）
+python .claude/skills/chip-png-interface-gen/gen_module_snapshot.py
+
+# 使用外部 JSON 配置，指定输出目录
+python .claude/skills/chip-png-interface-gen/gen_module_snapshot.py <json_file> <output_dir>
+```
+
+`<json_file>` 为接口定义 JSON 文件路径，`<output_dir>` 为 PNG 输出目录。
+
+### 3. 输出文件
+文件名格式：`wd_intf_{接口名}.png`，默认输出到当前工作目录。
+
+### 4. 在文档中引用
+```markdown
+![{接口名} 端口图](wd_intf_{接口名}.png)
+```
+
+## 绘制规则
+- 输入信号箭头朝右（→，指向模块），在线段起端
+- 输出信号箭头朝右（→，指向外部），在线段末端
+- 总线信号（位宽>1）绘制对角斜线标记并标注位宽数字
+- 信号名使用等宽字体，位宽标注使用较小字号

@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "description": "实验性矛盾检测规则 — 从 coverage-model pairwise_coverage_gap 自动生成，标记为 experimental。需人工评审后升级为基础/条件规则。",
+  "status": "experimental",
+
+  "reference_values_ref": ".claude/shared/flow/reference-values.json",
+
+  "detection_rules": [
+    {
+      "id": "EXP-01",
+      "name": "DFT 扫描链 vs TMR 可靠性",
+      "logic": "TMR 的三份冗余寄存器是否都正确接入扫描链",
+      "ref_values_key": "AREA-03",
+      "example": "TMR 三份寄存器仅一份接入扫描链 → 另两份无法测试",
+      "involved_keys": ["REQ-008", "REQ-009"],
+      "detection_tip": "仅当 REQ-008 和 REQ-009 同时激活时检测。检查 TMR 三份寄存器是否全部接入扫描链。如果仅一份接入 → 标记矛盾，建议 TMR 子模块独立扫描链分段。",
+      "source_gap": "pairwise_coverage_gap: REQ-008 ↔ REQ-009",
+      "proposed_priority": "Important"
+    },
+    {
+      "id": "EXP-02",
+      "name": "芯片面积 vs 封装约束",
+      "logic": "模块面积预算是否与封装类型和 Pad 数量匹配",
+      "ref_values_key": "AREA-01",
+      "example": "模块面积 5mm² + 仅 48 个 Pad → 封装利用率低 → 成本浪费",
+      "involved_keys": ["REQ-005", "REQ-026"],
+      "detection_tip": "仅当 REQ-026 激活时检测。将 REQ-005 的面积预算与 REQ-026 的封装类型对比：面积 < 封装可用面积 30% → 标记效率警告；面积 > 封装可用面积 → 标记矛盾。",
+      "source_gap": "pairwise_coverage_gap: REQ-005 ↔ REQ-026",
+      "proposed_priority": "Important"
+    },
+    {
+      "id": "EXP-03",
+      "name": "合规要求 vs PPA 预算",
+      "logic": "EMC/ESD 合规要求是否对面积/功耗有额外约束",
+      "ref_values_key": "POWER-01",
+      "example": "汽车级 EMC 要求 → 需要额外滤波电路 → 面积增加 5-10%",
+      "involved_keys": ["REQ-010", "REQ-027"],
+      "detection_tip": "仅当 REQ-027 激活时检测。EMC 合规（汽车/工业）通常需要额外 ESD 保护和滤波，增加面积 5-10%。检查 REQ-005 面积预算是否已预留合规开销。",
+      "source_gap": "pairwise_coverage_gap: REQ-010 ↔ REQ-027",
+      "proposed_priority": "Advisory"
+    },
+    {
+      "id": "EXP-04",
+      "name": "高频时钟 vs OCV 余量",
+      "logic": "高频目标下 OCV（片上偏差）余量是否充足",
+      "ref_values_key": "FREQ-01",
+      "example": "28nm @ 500MHz + 仅 2% OCV 余量 → 工艺偏差可能导致时序违规",
+      "involved_keys": ["REQ-001", "REQ-028"],
+      "detection_tip": "仅当 REQ-028 激活时检测。将 REQ-001 的目标频率与 REQ-028 的 OCV 余量对比：频率 > 该工艺 80% Fmax 且 OCV 余量 < 3% → 标记风险，建议增加余量至 3-5%。",
+      "source_gap": "pairwise_coverage_gap: REQ-001 ↔ REQ-028",
+      "proposed_priority": "Important"
+    },
+    {
+      "id": "EXP-05",
+      "name": "功耗域隔离 vs 安全隔离",
+      "logic": "功耗域的 Isolation Cell 是否满足安全隔离要求",
+      "ref_values_key": "POWER-02",
+      "example": "关断域输出经 Isolation Cell 钳位到协议默认值 → 但安全域要求零值 → 钳位值不匹配",
+      "involved_keys": ["REQ-007", "REQ-018"],
+      "detection_tip": "仅当 REQ-007 和 REQ-018 同时激活时检测。检查功耗域 Isolation Cell 的钳位值是否满足安全隔离要求。协议默认值 ≠ 安全域要求值 → 标记矛盾。",
+      "source_gap": "pairwise_coverage_gap: REQ-007 ↔ REQ-018",
+      "proposed_priority": "Important"
+    }
+  ],
+
+  "promotion_rules": {
+    "description": "实验性规则升级为基础/条件规则的条件",
+    "criteria": [
+      "经过 3+ 个实际项目验证，命中率 > 30%",
+      "人工评审确认逻辑正确且无歧义",
+      "reference_values 可从现有数据推算或需新建条目"
+    ],
+    "process": "标记为 experimental → 项目使用中收集反馈 → 评审通过 → 移入 conflict-detection-rules.json（基础）或 conflict-detection-conditional.json（条件）"
+  },
+
+  "feedback_schema": {
+    "description": "实验性规则反馈收集机制 — 每个项目运行 stageC0 后对 EXP 规则结果进行反馈标注",
+    "rule_feedback_template": {
+      "project_id": "string — 项目标识",
+      "hit": "boolean — 该规则是否触发",
+      "true_contradiction": "boolean — 触发后人工确认为真矛盾",
+      "false_positive": "boolean — 触发后人工确认为误报",
+      "notes": "string — 补充说明（可选）"
+    },
+    "per_rule_feedback": {
+      "EXP-01": [],
+      "EXP-02": [],
+      "EXP-03": [],
+      "EXP-04": [],
+      "EXP-05": []
+    },
+    "auto_review_trigger": {
+      "description": "当任一规则累计反馈项目数 ≥ 3 时自动触发评审",
+      "condition": "per_rule_feedback[rule_id].length >= 3",
+      "review_output": {
+        "hit_rate": "hit=true 数 / 总项目数",
+        "precision": "true_contradiction 数 / hit=true 数",
+        "recommendation": "hit_rate > 30% 且 precision > 50% → 建议升级；hit_rate < 10% → 建议删除；其余 → 保持 experimental"
+      }
+    },
+    "usage": "stageC0 执行后，agent 对每条触发的 EXP 规则要求用户反馈 hit/true_contradiction/false_positive，追加到 per_rule_feedback 对应数组。累计 ≥3 条时输出自动评审报告。"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "description": "REQ → 矛盾检测规则映射表 — 变更传播增量 diff 用。变更某 REQ 时仅重检关联规则。",
+
+  "mappings": [
+    { "req": "REQ-001", "rules": ["FREQ-01", "FREQ-02", "POWER-01", "PVT-01"], "note": "工艺+频率影响频率检测、功耗检测、PVT检测" },
+    { "req": "REQ-002", "rules": ["AREA-01", "IO-01", "IO-02", "IO-03"], "note": "接口协议影响面积估算、位宽效率、资源共享、地址碎片化" },
+    { "req": "REQ-003", "rules": ["AREA-02", "IO-01", "IO-02", "PERF-02"], "note": "数据流特征影响并行度面积、位宽效率、资源共享、验证周期" },
+    { "req": "REQ-004", "rules": ["FREQ-02", "PERF-01", "POWER-04", "CDC-01"], "note": "延迟与吞吐影响频率-延迟匹配、延迟-吞吐矛盾、唤醒延迟、CDC延迟" },
+    { "req": "REQ-005", "rules": ["AREA-01", "AREA-02", "AREA-03", "POWER-01", "PVT-01", "MEM-01"], "note": "面积功耗预算影响所有面积/功耗类检测" },
+    { "req": "REQ-006", "rules": ["CDC-01", "PERF-02"], "note": "时钟域数量影响CDC检测和验证周期" },
+    { "req": "REQ-007", "rules": ["POWER-02", "POWER-03", "POWER-04"], "note": "低功耗影响DFT冲突、CDC-低功耗交叉、唤醒延迟" },
+    { "req": "REQ-008", "rules": ["POWER-02"], "note": "DFT影响低功耗-DFT冲突检测" },
+    { "req": "REQ-009", "rules": ["AREA-03"], "note": "可靠性影响面积开销" },
+    { "req": "REQ-011", "rules": ["POWER-03", "CDC-01"], "note": "CDC策略影响低功耗交叉和CDC延迟" },
+    { "req": "REQ-012", "rules": ["IO-02", "MEM-01"], "note": "存储器选型影响资源共享和存储面积" },
+    { "req": "REQ-013", "rules": ["PVT-01"], "note": "PVT操作条件影响功耗预算裕量" },
+    { "req": "REQ-018", "rules": ["IO-03"], "note": "安全隔离影响地址碎片化" },
+    { "req": "REQ-021", "rules": ["POWER-04"], "note": "功耗状态机影响唤醒延迟" },
+    { "req": "REQ-022", "rules": ["ANA-01", "ANA-04"], "note": "PLL/Jitter影响PLL锁时间和Jitter裕量（条件规则）" },
+    { "req": "REQ-023", "rules": ["ANA-02", "ANA-03"], "note": "SerDes/PHY影响SerDes速率和PHY面积功耗（条件规则）" },
+    { "req": "REQ-024", "rules": ["VER-01", "VER-03"], "note": "形式验证影响SVA属性和CDC形式验证（条件规则）" },
+    { "req": "REQ-025", "rules": ["VER-02"], "note": "验证方法学影响功能覆盖率（条件规则）" }
+  ],
+
+  "usage": "变更某 REQ 时：1) 查本表获取关联规则ID列表；2) 仅执行这些规则的检测；3) 若某规则涉及多个REQ且其他REQ尚未确认，跳过该规则并标注'等待关联REQ确认'"
+}

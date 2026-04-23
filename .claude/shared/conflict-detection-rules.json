@@ -1,81 +1,171 @@
 {
-  "version": "1.1",
-  "description": "芯片需求矛盾检测规则 - 阶段C-0 数据",
+  "version": "1.5",
+  "description": "芯片需求矛盾检测规则（基础14条）- reference_values 在 flow/reference-values.json 按规则ID索引。条件规则（ANA/VER）在 flow/conflict-detection-conditional.json。",
+
+  "reference_values_ref": ".claude/shared/flow/reference-values.json",
 
   "detection_rules": [
     {
-      "id": "CD-001",
+      "id": "FREQ-01",
       "name": "频率 vs 工艺节点",
       "logic": "目标频率是否超出该工艺典型Fmax",
-      "reference_values": {
-        "28nm": "典型Fmax 400-500MHz，极限约600MHz",
-        "22nm": "典型Fmax 500-700MHz",
-        "16nm": "典型Fmax 800MHz-1.2GHz",
-        "12nm": "典型Fmax 1.0-1.5GHz",
-        "7nm": "典型Fmax 1.5-2.5GHz",
-        "5nm": "典型Fmax 2.0-3.5GHz"
-      },
+      "ref_values_key": "FREQ-01",
       "example": "28nm要求1GHz",
       "involved_keys": ["REQ-001"],
       "detection_tip": "将REQ-001的目标频率与该工艺的典型Fmax对比，超出则标记矛盾"
     },
     {
-      "id": "CD-002",
+      "id": "FREQ-02",
       "name": "延迟 vs 频率",
       "logic": "延迟cycles是否与功能复杂度匹配",
-      "reference_values": {
-        "pure_combinational": "纯组合逻辑路径：≤2cycles通常可行",
-        "multi_step_compute": "需多次运算（如CRC/加密）：每步至少1cycle，总延迟=步骤数",
-        "memory_access": "存储访问：通常1-2cycles",
-        "complex_pipeline": "复杂流水线：级数+1cycles（含输出寄存）"
-      },
+      "ref_values_key": "FREQ-02",
       "example": "≤1cycles @ 100MHz（功能含多步运算）",
       "involved_keys": ["REQ-001", "REQ-004"],
       "detection_tip": "将REQ-004的延迟要求与功能复杂度对比：延迟<2cycles且功能含多步运算→标记风险"
     },
     {
-      "id": "CD-003",
+      "id": "AREA-01",
       "name": "面积 vs 功能复杂度",
       "logic": "接口位宽/功能数量是否超出面积预算",
-      "reference_values": {
-        "basic_reg": "基础寄存器组（<10个RW寄存器）：约2-5kGates",
-        "simple_fsm": "简单状态机（<8状态）：约1-3kGates",
-        "fifo_sync": "同步FIFO（深度16，宽度32bit）：约1-2kGates",
-        "axi_lite_slave": "AXI-Lite Slave接口：约3-5kGates",
-        "axi4_full_master": "AXI4 Full Master接口（128bit）：约8-15kGates"
-      },
+      "ref_values_key": "AREA-01",
       "example": "256bit AXI + 10功能 < 20kGates",
       "involved_keys": ["REQ-002", "REQ-005"],
       "detection_tip": "将REQ-002的接口复杂度+功能数量对应的预估面积与REQ-005的面积预算对比"
     },
     {
-      "id": "CD-004",
+      "id": "AREA-02",
+      "name": "面积 vs 并行度",
+      "logic": "面积约束与并行度需求是否矛盾",
+      "ref_values_key": "AREA-02",
+      "example": "4路并行 < 20kGates（单路15kGates）",
+      "involved_keys": ["REQ-003", "REQ-005"],
+      "detection_tip": "从REQ-003的数据速率和REQ-005的面积预算推算：所需并行度×单路面积 > 面积预算 → 标记矛盾。"
+    },
+    {
+      "id": "AREA-03",
+      "name": "可靠性 vs 面积",
+      "logic": "ECC/TMR 等可靠性设计增加的面积是否超出预算",
+      "ref_values_key": "AREA-03",
+      "example": "50kGates基础 + ECC(20%) > 55kGates预算",
+      "involved_keys": ["REQ-009", "REQ-005"],
+      "detection_tip": "将REQ-009的可靠性要求对应的面积开销与REQ-005的面积预算对比：基础面积×(1+开销率) > 预算 → 标记矛盾，建议分级保护或放宽面积约束。"
+    },
+    {
+      "id": "POWER-01",
       "name": "功耗 vs 工艺/频率",
       "logic": "功耗预算是否合理",
-      "reference_values": {
-        "28nm_200mhz_typical": "28nm @ 200MHz：典型动态功耗约5-15mW（中等复杂度模块）",
-        "28nm_500mhz_typical": "28nm @ 500MHz：典型动态功耗约15-40mW",
-        "16nm_500mhz_typical": "16nm @ 500MHz：典型动态功耗约8-20mW",
-        "7nm_1ghz_typical": "7nm @ 1GHz：典型动态功耗约10-30mW"
-      },
+      "ref_values_key": "POWER-01",
       "example": "28nm @ 500MHz < 1mW",
       "involved_keys": ["REQ-001", "REQ-005"],
       "detection_tip": "将REQ-001的工艺+频率组合对应的典型功耗与REQ-005的功耗预算对比，偏差过大则标记矛盾"
     },
     {
-      "id": "CD-005",
+      "id": "POWER-02",
       "name": "低功耗 vs DFT",
       "logic": "功耗域划分与扫描链约束是否冲突",
-      "reference_values": {
-        "conflict_pattern": "多电压域 + 全局扫描链 = 冲突（扫描链需跨域同步）",
-        "safe_pattern": "单电压域 + 标准扫描链 = 无冲突",
-        "mitigation": "多电压域时需分域扫描链 + 隔离单元 + 保持触发器"
-      },
+      "ref_values_key": "POWER-02",
       "example": "多电压域 + 全局扫描链",
       "involved_keys": ["REQ-007", "REQ-008"],
       "detection_tip": "检查REQ-007是否要求多功耗域，REQ-008是否要求全局扫描链，两者同时存在则标记矛盾并给出缓解方案"
+    },
+    {
+      "id": "POWER-03",
+      "name": "CDC 策略 vs 低功耗",
+      "logic": "跨时钟域同步策略与功耗域关断是否冲突",
+      "ref_values_key": "POWER-03",
+      "example": "异步FIFO跨功耗域 + 域关断无隔离",
+      "involved_keys": ["REQ-007", "REQ-011"],
+      "detection_tip": "检查REQ-011的CDC策略是否涉及跨功耗域信号：异步FIFO/同步器是否在关断域内？如果是，检查REQ-007的低功耗方案是否包含隔离和状态保持。"
+    },
+    {
+      "id": "POWER-04",
+      "name": "功耗状态切换延迟 vs 实时性",
+      "logic": "功耗状态机的唤醒延迟是否超出实时性约束",
+      "ref_values_key": "POWER-04",
+      "example": "模块要求中断响应≤50cycles + 使用Deep-Sleep(唤醒100cycles)",
+      "involved_keys": ["REQ-004", "REQ-021"],
+      "detection_tip": "将REQ-021的功耗状态唤醒延迟与REQ-004的延迟/实时性约束对比：若模块有中断响应等实时性要求，且功耗状态包含Deep-Sleep或Hibernate，唤醒延迟可能超出实时性约束。标记矛盾并建议降低功耗状态深度或放宽实时性约束。"
+    },
+    {
+      "id": "PERF-01",
+      "name": "延迟 vs 吞吐",
+      "logic": "低延迟要求与高吞吐要求是否内在矛盾",
+      "ref_values_key": "PERF-01",
+      "example": "延迟≤1cycle 且 吞吐≥2ops/cycle",
+      "involved_keys": ["REQ-004"],
+      "detection_tip": "将REQ-004中的延迟和吞吐要求对比：极低延迟+高吞吐通常需要流水线+并行，但流水线增加延迟。标记矛盾并建议用户明确优先级。"
+    },
+    {
+      "id": "IO-01",
+      "name": "接口位宽 vs 数据粒度",
+      "logic": "接口位宽与数据处理粒度是否匹配",
+      "ref_values_key": "IO-01",
+      "example": "128bit接口 + 8bit数据粒度（利用率6.25%）",
+      "involved_keys": ["REQ-002", "REQ-003"],
+      "detection_tip": "将REQ-002的接口位宽与REQ-003的数据粒度对比：利用率<50%或不能整除 → 标记效率警告，建议调整位宽或数据组织。"
+    },
+    {
+      "id": "IO-02",
+      "name": "多模块共享资源竞争",
+      "logic": "多个功能模块共享同一SRAM/总线/仲裁器时是否产生资源竞争",
+      "ref_values_key": "IO-02",
+      "example": "3个功能模块共享1个双端口SRAM，峰值带宽之和超过SRAM带宽",
+      "involved_keys": ["REQ-002", "REQ-003", "REQ-012"],
+      "detection_tip": "检查REQ-003的各功能数据速率和REQ-012的存储配置：各功能峰值带宽之和 > SRAM端口带宽 → 标记矛盾，建议分配独立SRAM bank或增加端口。"
+    },
+    {
+      "id": "IO-03",
+      "name": "安全隔离域 vs 地址空间碎片化",
+      "logic": "安全隔离域数量是否导致地址空间过度碎片化",
+      "ref_values_key": "IO-03",
+      "example": "8个安全隔离域 + 64KB地址空间 → 每域仅8KB，碎片化严重",
+      "involved_keys": ["REQ-018", "REQ-002"],
+      "detection_tip": "检查REQ-018的安全隔离域数量和REQ-002的地址空间大小：隔离域数≥4且地址空间≤64KB → 地址空间利用率低+防火墙规则多。标记矛盾并建议减少隔离域或扩大地址空间。"
+    },
+    {
+      "id": "PVT-01",
+      "name": "PVT 操作条件 vs 功耗预算",
+      "logic": "高温/极端工艺角下功耗是否仍满足预算",
+      "ref_values_key": "PVT-01",
+      "example": "工业级温度+SS角 < 10mW预算（TT常温下预估8mW）",
+      "involved_keys": ["REQ-001", "REQ-005", "REQ-013"],
+      "detection_tip": "将REQ-013的PVT条件（温度范围、工艺角）与REQ-005的功耗预算对比：如果温度范围包含汽车级(125°C)或需要SS角覆盖，功耗可能比TT常温预估高30-50%。预算无裕量则标记矛盾。"
+    },
+    {
+      "id": "MEM-01",
+      "name": "存储容量 vs 面积预算",
+      "logic": "所需SRAM/RegFile容量是否超出面积预算",
+      "ref_values_key": "MEM-01",
+      "example": "需要512Kbit SRAM(4个128Kbit) + ECC > 50kGates面积预算@28nm",
+      "involved_keys": ["REQ-005", "REQ-012"],
+      "detection_tip": "将REQ-012的存储需求（类型、容量、端口数）按工艺估算面积，与REQ-005的面积预算对比：SRAM面积 + ECC开销 + 逻辑面积 > 预算 → 标记矛盾，建议减少容量、合并端口或放宽面积约束。"
+    },
+    {
+      "id": "CDC-01",
+      "name": "CDC 策略 vs 时序裕量",
+      "logic": "CDC同步器增加的延迟是否侵蚀时序裕量",
+      "ref_values_key": "CDC-01",
+      "example": "目标延迟5cycles + 双触发器同步2cycles = 7cycles > 5cycles预算",
+      "involved_keys": ["REQ-004", "REQ-006", "REQ-011"],
+      "detection_tip": "检查REQ-011的CDC策略类型和REQ-004的延迟预算：CDC同步器增加的延迟 + 功能处理延迟 > 延迟预算 → 标记矛盾。建议增加功能并行度补偿CDC延迟，或放宽延迟约束。单时钟域时跳过此检测。",
+      "arch_review_cross_ref": "本规则检测需求阶段的CDC延迟矛盾。方案阶段的CDC实现正确性检测（裸跨域/数据撕裂/级联/复位共享）在 arch-review/cdc-reset-timing-rules.json CDC-01~06。"
+    },
+    {
+      "id": "PERF-02",
+      "name": "功能复杂度 vs 验证周期",
+      "logic": "功能数量和接口复杂度是否超出验证周期预算",
+      "ref_values_key": "PERF-02",
+      "example": "12个功能 + 3个接口 + 多时钟域，验证周期仅4周",
+      "involved_keys": ["REQ-003", "REQ-004", "REQ-006"],
+      "detection_tip": "从REQ-003的功能数量和REQ-006的时钟域数量推算验证复杂度系数，与REQ-004的交付时间约束对比：功能数×接口数×CDC系数对应的验证周期 > 交付预算 → 标记矛盾，建议减少功能或增加验证资源。"
     }
   ],
+
+  "conditional_rules_ref": ".claude/shared/flow/conflict-detection-conditional.json",
+  "conditional_rules_note": "ANA-01~04 和 VER-01~03 共 7 条条件检测规则在独立文件中，仅当 REQ-022/023/024/025 激活时加载",
+
+  "experimental_rules_ref": ".claude/shared/flow/conflict-detection-experimental.json",
+  "experimental_rules_note": "EXP-01~05 共 5 条实验性规则，从 coverage-model gap 自动生成。stageC0 检测时可选加载，输出时标注[实验性]。需人工评审后升级。",
 
   "output_format": {
     "conflict_detected": "## 矛盾检测结果\n\n| 矛盾编号 | 涉及REQ | 矛盾描述 |\n|----------|---------|----------|\n| {id} | {req_ids} | {description} |\n\n**调和方案**：\n| 方案 | 调整 | 影响 |\n|------|------|------|\n| A | {adjustment_a} | {impact_a} |\n| B | {adjustment_b} | {impact_b} |\n\n请选择调和方案，或提供其他调整方向。",

@@ -1,90 +1,80 @@
 ---
 name: rag-query
-description: Query the personal LightRAG knowledge graph for persistent memory across sessions
-version: 1.0.0
+description: Query the LLM Wiki knowledge base for protocol/CBB/architecture information
+version: 2.0.0
 model: sonnet
 triggers:
   - /rag-query
   - what do you know about
   - do you remember
+  - wiki query
 ---
 
-# RAG Query — Personal Knowledge Graph
+# Wiki Query — 结构化知识检索
 
-Query your personal LightRAG knowledge graph to recall decisions, preferences, project context, and learnings from past sessions.
+基于 LLM Wiki 系统的结构化知识检索。Wiki 是预编译的知识页面集合，比传统 RAG 更高效。
 
-## Query Modes
+## 检索流程
 
-| Mode | When to use | What it does |
-|------|------------|--------------|
-| `hybrid` (default) | Most queries | Combines local entity relationships + global topic summaries |
-| `local` | "What's related to X?" | Traverses entity relationships from specific nodes |
-| `global` | "What do you know about topic Y?" | Summarizes across all documents on a topic |
-| `naive` | Simple keyword lookup | Basic text search, fastest but least intelligent |
-
-## How to query
-
-### Full query (returns answer)
+### Step 1：读取索引
 
 ```bash
-node -e "
-const BASE = process.env.LIGHTRAG_SERVER_URL || 'http://YOUR_LIGHTRAG_HOST:YOUR_PERSONAL_PORT';
-(async () => {
-  const auth = await fetch(BASE + '/auth-status').then(r => r.json());
-  const token = auth.access_token;
-  const res = await fetch(BASE + '/query', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify({
-      query: 'QUERY_HERE',
-      mode: 'hybrid'
-    })
-  });
-  const data = await res.json();
-  console.log(JSON.stringify(data, null, 2));
-})();
-"
+Read .claude/wiki/index.md
 ```
 
-### Context-only query (returns raw context for Claude to synthesize)
+在索引中定位相关条目（实体/概念/对比/指南）。
+
+### Step 2：读取 Wiki 页面
 
 ```bash
-node -e "
-const BASE = process.env.LIGHTRAG_SERVER_URL || 'http://YOUR_LIGHTRAG_HOST:YOUR_PERSONAL_PORT';
-(async () => {
-  const auth = await fetch(BASE + '/auth-status').then(r => r.json());
-  const token = auth.access_token;
-  const res = await fetch(BASE + '/query', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify({
-      query: 'QUERY_HERE',
-      mode: 'hybrid',
-      only_need_context: true
-    })
-  });
-  const data = await res.json();
-  console.log(typeof data === 'string' ? data : JSON.stringify(data, null, 2));
-})();
-"
+Read .claude/wiki/{category}/{name}.md
 ```
 
-## Response format
+Wiki 页面包含预编译的结构化知识：核心特性、接口信号、关键参数、应用场景、设计注意事项。
 
-When presenting results to the user:
-- Be concise — summarize, don't dump raw JSON
-- Cite the source type when relevant (e.g., "from a stored decision on 2026-03-15")
-- Flag potentially stale information (anything >30 days old)
-- If no results found, say so clearly — don't fabricate
+### Step 3：深入原始文档（按需）
 
-## Infrastructure
+仅当 wiki 信息不足时：
 
-- **Server**: `YOUR_LIGHTRAG_HOST:YOUR_PERSONAL_PORT`
-- **Auth**: Bearer token from `/auth-status` (guest/disabled mode)
-- **Env var**: `LIGHTRAG_SERVER_URL`
+```bash
+Read .claude/knowledge/{domain}/{name}.md
+```
+
+## 查询模式
+
+| 模式 | 命令示例 | 说明 |
+|------|----------|------|
+| **实体查询** | `/rag-query AXI4` | 读取 entities/axi4.md |
+| **选型对比** | `/rag-query 仲裁器选型` | 读取 comparisons/arbiter-selection.md |
+| **概念查询** | `/rag-query CDC 策略` | 读取 concepts/cdc-strategy.md |
+| **指南查询** | `/rag-query AXI4 集成` | 读取 guides/axi4-integration-guide.md |
+
+## 快速定位表
+
+| 关键词 | Wiki 页面路径 |
+|--------|--------------|
+| AXI4 / AXI / 总线 | entities/axi4.md |
+| APB / 外设总线 | entities/apb.md |
+| SPI / I2C / UART | entities/spi.md / i2c.md / uart.md |
+| PCIe / USB / MIPI | entities/pcie.md / usb.md / mipi.md |
+| FIFO / 同步FIFO | entities/sync_fifo.md |
+| 异步FIFO / CDC | entities/async_fifo.md |
+| 仲裁器 / arbiter | entities/arbiter.md |
+| 交叉开关 / crossbar | entities/crossbar.md |
+| 选型 / 对比 | comparisons/*.md |
+| 设计模式 / 概念 | concepts/*.md |
+| 集成指南 | guides/*.md |
+
+## 响应格式
+
+- 摘要而非原始内容
+- 标注信息来源（wiki 页面名或原始文档路径）
+- 过时信息标记（wiki 页面 >30 天未更新）
+- 无结果时明确说明，不编造
+
+## Wiki 维护
+
+当查询产生有价值的结果时，考虑回写为新 wiki 页面：
+- 新的对比分析 → comparisons/
+- 新的设计概念 → concepts/
+- 新的集成经验 → guides/

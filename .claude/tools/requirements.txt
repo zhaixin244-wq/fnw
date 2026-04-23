@@ -1,0 +1,21 @@
+# ============================================================================
+# Project Tool Dependencies
+# ============================================================================
+# This file lists all external tools required by chip-* agents and skills.
+# Install Python/npm deps via their respective requirements.txt files.
+# Binary tools are placed in .claude/tools/<name>/.
+# ============================================================================
+
+# --- Python packages (pip install -r .claude/skills/chip-png-interface-gen/requirements.txt) ---
+# Pillow>=9.0
+
+# --- Node.js packages (npm install in .claude/skills/chip-png-wavedrom-gen/) ---
+# playwright-core>=1.30
+# @wavedrom/cli>=3.0
+
+# --- Binary tools (in .claude/tools/) ---
+# d2 v0.7.1  -> .claude/tools/d2/d2.exe
+#   Download: https://github.com/terrastruct/d2/releases
+
+# --- External tools (not copied, path reference) ---
+# chromium (playwright) -> $CHROME_PATH or default ms-playwright install path

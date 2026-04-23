@@ -1,0 +1,70 @@
+---
+name: chip-lint-checker
+description: 使用 oss-cad-suite（iverilog + yosys）对 RTL 代码执行 Lint 检查，检测语法错误、可综合性问题、组合环路和 latch。
+---
+
+# Chip Lint Checker
+
+## 任务
+对 RTL 代码执行 Lint 检查，覆盖语法、可综合性、组合环路和 latch 检测。使用 oss-cad-suite 工具链。
+
+## 目录约定
+
+| 项目 | 路径 |
+|------|------|
+| Lint 脚本 | `{module}_work/ds/run/run_lint.sh` |
+| 报告目录 | `{module}_work/ds/report/lint/` |
+| oss-cad-suite | `.claude/tools/oss-cad-suite/` |
+
+## 工具路径
+
+| 工具 | 路径 | 用途 |
+|------|------|------|
+| iverilog | `.claude/tools/oss-cad-suite/bin/iverilog` | Verilog-2005 语法 + 可综合性 Lint |
+| yosys | `.claude/tools/oss-cad-suite/bin/yosys` | 综合感知 Lint（组合环路、驱动冲突） |
+
+## 执行步骤
+
+1. **确定输入**：从微架构文档提取顶层模块名和 RTL 文件列表
+2. **生成脚本**：在 `{module}_work/ds/run/` 下生成 `run_lint.sh`（模板见下方脚本模板）
+3. **创建报告目录**：`mkdir -p {module}_work/ds/report/lint/`
+4. **执行**：`cd {module}_work && bash ds/run/run_lint.sh {top} {rtl_files}`
+5. **解析报告**：读取 `ds/report/lint/` 下的日志文件
+
+## 三阶段输出报告
+
+| 文件 | 阶段 | 内容 |
+|------|------|------|
+| `1_iverilog.log` | 阶段 1 | 语法 error/warning |
+| `2_yosys_lint.log` | 阶段 2 | 组合环路/多驱动检测 |
+| `3_yosys_synth.log` | 阶段 3 | 综合可行性检查 |
+| `3_yosys_synth_stat.log` | 阶段 3 | 面积统计 |
+| `lint_summary.log` | 汇总 | 三阶段 PASS/FAIL |
+
+## Warning 分级处理
+
+| 级别 | 处理 | 典型场景 |
+|------|------|----------|
+| **Critical** | 必须修复，阻断交付 | 组合环路、多驱动、语法 error |
+| **Major** | 必须修复或标注 waive 理由 | 未声明信号、位宽截断、隐式 latch |
+| **Minor** | 建议修复 | 端口未连接（内部信号）、敏感列表冗余 |
+| **Info** | 仅记录 | 参数未使用、信号仅赋值未读取 |
+
+## 降级策略
+
+| 场景 | 行为 |
+|------|------|
+| iverilog 不可用 | 仅执行 yosys 阶段 2+3，标注 `[LINT-DEGRADED]` |
+| yosys 不可用 | 仅执行 iverilog 阶段 1，标注 `[LINT-DEGRADED]` |
+| 均不可用 | 内化执行人工 Lint，标注 `[LINT-MANUAL]` |
+
+## 调用时机
+
+| 时机 | 触发条件 | 与 chip-code-writer 流程的关系 |
+|------|----------|-------------------------------|
+| 子模块 RTL 完成 | 每个子模块写完后 | rtl_impl 阶段内，CBB 集成之后 |
+| 所有子模块完成 | 全部 RTL 写完后 | quality_check 阶段入口 |
+| 修复后复检 | Lint 报告有 Critical/Major | 修复后重新执行对应阶段 |
+
+## CBB Ref
+- oss-cad-suite: `.claude/tools/oss-cad-suite/`（iverilog v14.0, yosys v0.64+68）

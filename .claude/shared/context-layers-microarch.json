@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "description": "分层上下文架构定义（微架构） - 控制 agent 在不同阶段加载哪些文件，最小化 token 消耗",
+
+  "layers": {
+    "L0_resident": {
+      "description": "常驻层 — agent 定义文件中直接内联的内容，始终加载。目标 < 2K tokens",
+      "contents": [
+        "角色定义 + 认知框架（~300 tokens）",
+        "铁律（~50 tokens）",
+        "子模块拆分原则 + 关键设计规范速查（~300 tokens）",
+        "Skills 调用偏好（~200 tokens）",
+        "输出契约 Schema（~200 tokens）",
+        "共享协议引用路径（~100 tokens）"
+      ],
+      "budget": "2K tokens"
+    },
+    "L1_startup": {
+      "description": "启动层 — 激活后首次 Read，整个会话期间只加载一次",
+      "files": [
+        { "path": ".claude/shared/todo-mechanism.md", "tokens": "~1.1K（4.5KB 实测）" },
+        { "path": ".claude/shared/context-layers-microarch.json", "tokens": "~1.1K（4.5KB 实测）" },
+        { "path": ".claude/shared/fs-microarch-mapping.md", "tokens": "~0.8K（3.0KB 实测）" }
+      ],
+      "budget": "~3.0K tokens（一次性）"
+    },
+    "L2_stage": {
+      "description": "阶段层 — 进入每个 stage 时按需注入，进入下一 stage 后可被压缩/替换",
+      "stages": {
+        "input_triage": {
+          "description": "输入确认，无需外部数据文件",
+          "files": [],
+          "budget": "0 tokens"
+        },
+        "submodule_split": {
+          "description": "子模块拆分，读取 FS 文档获取子模块列表",
+          "files": [
+            { "path": "用户提供的 FS 文档", "tokens": "按文档大小" }
+          ],
+          "budget": "按 FS 文档大小"
+        },
+        "microarch_write": {
+          "description": "逐子模块编写微架构",
+          "files": [
+            { "path": ".claude/rules/microarchitecture-template.md", "tokens": "~3.1K（12.4KB 实测）" },
+            { "path": ".claude/shared/quality-checklist-microarch.md", "tokens": "~1.2K（4.9KB 实测）" },
+            { "path": ".claude/shared/chart-generation-spec.md", "tokens": "~1.5K（5.5KB 实测）" }
+          ],
+          "budget": "~5.8K tokens（模板+QC+图表规范）"
+        },
+        "integration_check": {
+          "description": "集成一致性检查 + Critical 矛盾检测",
+          "files": [
+            { "path": ".claude/shared/quality-checklist-microarch.md", "tokens": "~1.2K（4.9KB 实测）" },
+            { "path": ".claude/shared/flow/microarch-conflict-rules.json", "tokens": "~1.4K（5.6KB 实测）" }
+          ],
+          "budget": "~2.6K tokens"
+        },
+        "quality_check": {
+          "description": "质量自检（三阶段：自动化+数据通路+人工）+ 覆盖率分析 + E2E 覆盖合并",
+          "files": [
+            { "path": ".claude/shared/quality-checklist-microarch.md", "tokens": "~1.2K（4.9KB 实测）" },
+            { "path": ".claude/shared/flow/microarch-conflict-rules.json", "tokens": "~1.4K（5.6KB 实测）" },
+            { "path": ".claude/shared/flow/microarch-coverage-model.json", "tokens": "~2.4K 覆盖率模型" },
+            { "path": ".claude/shared/flow/microarch-e2e-coverage.json", "tokens": "~2.6K 端到端覆盖合并" }
+          ],
+          "budget": "~7.6K tokens"
+        }
+      }
+    },
+    "L3_ephemeral": {
+      "description": "临时层 — 用完即弃，不在上下文中持久保留",
+      "contents": [
+        "RAG 检索结果（摘要写入文档后不再引用）",
+        "IP/CBB 文档内容（集成完成后不再引用）",
+        "EDA 工具报告（结论写入文档后不再引用）",
+        "中间状态 JSON（写入文件后不再 Read）"
+      ],
+      "budget": "0 tokens（不持久保留）"
+    }
+  },
+
+  "loading_sequence": {
+    "description": "agent 激活后的文件加载顺序，按阶段推进",
+    "sequence": [
+      { "step": "激活", "action": "L0 常驻（内联） + L1 启动层 Read" },
+      { "step": "输入确认", "action": "无需额外 Read，校验 FS 文档完整性" },
+      { "step": "子模块拆分", "action": "Read FS 文档 §3.3 + §5，提取子模块列表" },
+      { "step": "逐子模块编写", "action": "Read microarchitecture-template.md + quality-checklist-microarch.md → 按模板编写 → 按需 Read IP/CBB 文档（RAG）" },
+      { "step": "集成一致性检查", "action": "Read 全部子模块微架构文档 + Read microarch-conflict-rules.json → 执行 Critical 规则（MA-01/02/03/05）→ 校验接口对齐/数据通路连通/PPA 闭合" },
+      { "step": "质量自检", "action": "Read quality-checklist-microarch.md + microarch-conflict-rules.json → 三阶段自检（自动化→数据通路+人工）→ Read microarch-coverage-model.json → 运行覆盖率分析 → Read microarch-e2e-coverage.json → 合并端到端覆盖视图" }
+    ]
+  },
+
+  "optimization_strategies": {
+    "stage_scoped_loading": {
+      "description": "microarchitecture-template.md 仅在 microarch_write 阶段加载，非编写阶段不占用上下文",
+      "status": "applied"
+    },
+    "fs_content_compression": {
+      "description": "FS 文档读取后提取关键信息（子模块列表/接口/PPA），原文可压缩",
+      "status": "applied"
+    },
+    "ip_content_on_demand": {
+      "description": "IP/CBB 文档仅在集成阶段按需读取，不预加载",
+      "status": "applied"
+    }
+  }
+}
