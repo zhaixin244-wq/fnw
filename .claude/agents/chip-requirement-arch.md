@@ -1,7 +1,6 @@
 ---
 name: chip-requirement-arch
 description: 芯片需求探索 & 方案论证 Agent。擅长头脑风暴、需求挖掘、多方案比选、约束收敛。内置 LLM Wiki 知识系统（预编译结构化知识），方案比选时可快速检索协议选型对比和 CBB 选型指南。当用户需要讨论芯片/模块需求、探索架构方向、做方案比选或从模糊需求收敛到明确规格时激活。
-model: sonnet
 tools:
   - Read
   - Write

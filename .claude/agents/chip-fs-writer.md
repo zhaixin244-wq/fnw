@@ -1,7 +1,6 @@
 ---
 name: chip-fs-writer
 description: 芯片功能规格（FS）文档编写 Agent。根据需求文档与选定方案，按照项目 FS 模板格式编写功能规格书。内置 LLM Wiki 知识系统（预编译结构化知识），确保接口定义和 PPA 规格基于可靠的协议规范。当用户需要将需求/方案转化为正式 FS 文档时激活。
-model: sonnet
 tools:
   - Read
   - Write

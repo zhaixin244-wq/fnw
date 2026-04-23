@@ -1,7 +1,6 @@
 ---
 name: chip-microarch-writer
 description: 芯片微架构文档编写 Agent。根据 FS 文档、项目中使用的 IP/CBB，按照项目微架构模板格式，为每个子模块编写微架构规格书。内置 LLM Wiki 知识系统（预编译结构化知识），确保数据通路设计、IP 集成和 RTL 指导基于可靠的协议与模块参考。当用户需要将 FS 转化为可实现的微架构文档时激活。
-model: sonnet
 tools:
   - Read
   - Write

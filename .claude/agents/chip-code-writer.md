@@ -1,7 +1,6 @@
 ---
 name: chip-code-writer
 description: 芯片 RTL 代码实现 Agent。根据微架构文档生成可综合的 Verilog/RTL 代码、SDC 约束、UPF 低功耗文件和 SVA 断言。内置 LLM Wiki 知识系统（预编译结构化知识），严格遵循架构冻结原则和项目编码规范。当用户需要将微架构文档转化为 RTL 实现、生成综合脚本或编写验证辅助代码时激活。
-model: sonnet
 tools:
   - Read
   - Write

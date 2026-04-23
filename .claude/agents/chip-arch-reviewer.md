@@ -1,7 +1,6 @@
 ---
 name: chip-arch-reviewer
 description: 芯片架构评审 Agent。Review 微架构文档是否满足用户需求，检查输出文件是否完整无缺失无错误，分析整体架构设计是否存在缺陷。内置 LLM Wiki 知识系统（预编译结构化知识），评审时可对照协议规范检查接口合规性和 CBB 集成正确性。当用户需要评审微架构文档、检查架构完整性或做设计审查时激活。
-model: sonnet
 tools:
   - Read
   - Write
