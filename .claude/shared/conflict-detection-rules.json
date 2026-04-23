@@ -1,0 +1,84 @@
+{
+  "version": "1.1",
+  "description": "芯片需求矛盾检测规则 - 阶段C-0 数据",
+
+  "detection_rules": [
+    {
+      "id": "CD-001",
+      "name": "频率 vs 工艺节点",
+      "logic": "目标频率是否超出该工艺典型Fmax",
+      "reference_values": {
+        "28nm": "典型Fmax 400-500MHz，极限约600MHz",
+        "22nm": "典型Fmax 500-700MHz",
+        "16nm": "典型Fmax 800MHz-1.2GHz",
+        "12nm": "典型Fmax 1.0-1.5GHz",
+        "7nm": "典型Fmax 1.5-2.5GHz",
+        "5nm": "典型Fmax 2.0-3.5GHz"
+      },
+      "example": "28nm要求1GHz",
+      "involved_keys": ["REQ-001"],
+      "detection_tip": "将REQ-001的目标频率与该工艺的典型Fmax对比，超出则标记矛盾"
+    },
+    {
+      "id": "CD-002",
+      "name": "延迟 vs 频率",
+      "logic": "延迟cycles是否与功能复杂度匹配",
+      "reference_values": {
+        "pure_combinational": "纯组合逻辑路径：≤2cycles通常可行",
+        "multi_step_compute": "需多次运算（如CRC/加密）：每步至少1cycle，总延迟=步骤数",
+        "memory_access": "存储访问：通常1-2cycles",
+        "complex_pipeline": "复杂流水线：级数+1cycles（含输出寄存）"
+      },
+      "example": "≤1cycles @ 100MHz（功能含多步运算）",
+      "involved_keys": ["REQ-001", "REQ-004"],
+      "detection_tip": "将REQ-004的延迟要求与功能复杂度对比：延迟<2cycles且功能含多步运算→标记风险"
+    },
+    {
+      "id": "CD-003",
+      "name": "面积 vs 功能复杂度",
+      "logic": "接口位宽/功能数量是否超出面积预算",
+      "reference_values": {
+        "basic_reg": "基础寄存器组（<10个RW寄存器）：约2-5kGates",
+        "simple_fsm": "简单状态机（<8状态）：约1-3kGates",
+        "fifo_sync": "同步FIFO（深度16，宽度32bit）：约1-2kGates",
+        "axi_lite_slave": "AXI-Lite Slave接口：约3-5kGates",
+        "axi4_full_master": "AXI4 Full Master接口（128bit）：约8-15kGates"
+      },
+      "example": "256bit AXI + 10功能 < 20kGates",
+      "involved_keys": ["REQ-002", "REQ-005"],
+      "detection_tip": "将REQ-002的接口复杂度+功能数量对应的预估面积与REQ-005的面积预算对比"
+    },
+    {
+      "id": "CD-004",
+      "name": "功耗 vs 工艺/频率",
+      "logic": "功耗预算是否合理",
+      "reference_values": {
+        "28nm_200mhz_typical": "28nm @ 200MHz：典型动态功耗约5-15mW（中等复杂度模块）",
+        "28nm_500mhz_typical": "28nm @ 500MHz：典型动态功耗约15-40mW",
+        "16nm_500mhz_typical": "16nm @ 500MHz：典型动态功耗约8-20mW",
+        "7nm_1ghz_typical": "7nm @ 1GHz：典型动态功耗约10-30mW"
+      },
+      "example": "28nm @ 500MHz < 1mW",
+      "involved_keys": ["REQ-001", "REQ-005"],
+      "detection_tip": "将REQ-001的工艺+频率组合对应的典型功耗与REQ-005的功耗预算对比，偏差过大则标记矛盾"
+    },
+    {
+      "id": "CD-005",
+      "name": "低功耗 vs DFT",
+      "logic": "功耗域划分与扫描链约束是否冲突",
+      "reference_values": {
+        "conflict_pattern": "多电压域 + 全局扫描链 = 冲突（扫描链需跨域同步）",
+        "safe_pattern": "单电压域 + 标准扫描链 = 无冲突",
+        "mitigation": "多电压域时需分域扫描链 + 隔离单元 + 保持触发器"
+      },
+      "example": "多电压域 + 全局扫描链",
+      "involved_keys": ["REQ-007", "REQ-008"],
+      "detection_tip": "检查REQ-007是否要求多功耗域，REQ-008是否要求全局扫描链，两者同时存在则标记矛盾并给出缓解方案"
+    }
+  ],
+
+  "output_format": {
+    "conflict_detected": "## 矛盾检测结果\n\n| 矛盾编号 | 涉及REQ | 矛盾描述 |\n|----------|---------|----------|\n| {id} | {req_ids} | {description} |\n\n**调和方案**：\n| 方案 | 调整 | 影响 |\n|------|------|------|\n| A | {adjustment_a} | {impact_a} |\n| B | {adjustment_b} | {impact_b} |\n\n请选择调和方案，或提供其他调整方向。",
+    "no_conflict": "直接进入阶段C。"
+  }
+}

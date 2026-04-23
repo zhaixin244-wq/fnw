@@ -1,0 +1,44 @@
+---
+name: chip-protocol-compliance-checker
+description: 检查模块接口是否符合 AXI/CHI/TileLink/APB 协议规范。
+---
+
+# Chip Protocol Compliance Checker
+
+## 任务
+检查模块接口架构是否符合选定总线协议的规范要求。
+
+## 支持协议
+- AXI4 / AXI4-Lite
+- ACE / ACE-Lite
+- CHI（AMBA 5）
+- TileLink
+- APB / AHB
+
+## 执行步骤
+1. 确认用户使用的协议版本与接口角色（Master/Slave/Interconnect）。
+2. 逐条核对关键协议要求：
+   - **握手规则**：VALID/READY 依赖关系、无组合路径、数据稳定性
+   - **事务排序**：ID 扩展、out-of-order 支持、原子操作
+   - **缓存一致性**（ACE/CHI/TileLink）：Snoop 响应、脏数据回写、Shareability Domain
+   - **突发传输**：Burst Type/Length、Wrap/Increment 规则、不对齐访问
+   - **地址映射**：Region/Cache/Prot/ QoS 信号定义
+   - **低功耗接口**（AXI4）：CACTIVE/CSYSREQ/CSYSACK 时序
+3. 识别常见违规点：
+   - READY 依赖 VALID 的组合路径
+   - WLAST 与 AWLEN 不匹配
+   - 非法的 Burst Type 组合
+   - ID 位宽不足导致排序冲突
+4. 生成合规检查报告与整改建议。
+
+## 输出格式
+```markdown
+### 协议合规检查报告（协议：AXI4 | 角色：Slave）
+
+| 检查项 | 规范来源 | 状态 | 发现 | 建议 |
+|--------|----------|------|------|------|
+| READY 不依赖 VALID | AXI4 §A3.2.1 | Pass | - | - |
+| WLAST 与 AWLEN 匹配 | AXI4 §A3.4.1 | Fail | 最后一拍未正确置起 WLAST | 在 W 通道计数器中检查 |
+
+**合规评分：X/Y (Z%)**
+```

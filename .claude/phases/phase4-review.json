@@ -1,0 +1,43 @@
+{
+  "phase": 4,
+  "name": "review",
+  "description": "架构评审",
+  "agent": "chip-arch-reviewer",
+  "mode": "foreground",
+  "inputs": {
+    "required": ["requirement_summary", "fs_doc", "all_microarch_docs"],
+    "optional": ["ip_cbb_docs", "protocol_specs"]
+  },
+  "input_sources": {
+    "requirement_summary": "phase1.outputs.requirement_summary",
+    "fs_doc": "phase2.outputs.fs_doc",
+    "all_microarch_docs": "phase3.outputs.all_microarch"
+  },
+  "outputs": {
+    "review_report": "review/{module_name}_arch_review_v1.0.md"
+  },
+  "gate": {
+    "conditions": [
+      "review_report_output",
+      "user_confirmed"
+    ],
+    "result_handling": {
+      "PASS": "enter_phase5",
+      "CONDITIONAL_PASS": "fix_then_re_review",
+      "FAIL": "return_to_appropriate_phase"
+    }
+  },
+  "skills": [
+    "verification-before-completion",
+    "rag-query",
+    "chip-traceability-linker",
+    "chip-review-checklister",
+    "systematic-debugging",
+    "chip-protocol-compliance-checker",
+    "chip-ppa-formatter",
+    "chip-reliability-architect",
+    "chip-version-diff-generator"
+  ],
+  "prev_phase": "phase3-microarch",
+  "next_phase": "phase5-rtl"
+}

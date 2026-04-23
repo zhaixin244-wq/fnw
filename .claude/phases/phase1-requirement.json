@@ -1,0 +1,34 @@
+{
+  "phase": 1,
+  "name": "requirement",
+  "description": "需求探索 & 方案论证",
+  "agent": "chip-requirement-arch",
+  "mode": "foreground",
+  "inputs": {
+    "required": ["user_requirement"],
+    "optional": ["existing_docs", "existing_rtl"]
+  },
+  "outputs": {
+    "requirement_summary": "requirements/{module_name}_requirement_summary_v1.0.md",
+    "adr": "adr/ADR-*.md"
+  },
+  "gate": {
+    "conditions": [
+      "constraints_quantified",
+      "solution_selected",
+      "requirement_summary_output",
+      "user_confirmed"
+    ]
+  },
+  "skills": [
+    "brainstorming",
+    "rag-query",
+    "smart-explore",
+    "chip-design-space-explorer",
+    "chip-ppa-formatter",
+    "chip-diagram-generator",
+    "architecture-decision-records",
+    "chip-traceability-linker"
+  ],
+  "next_phase": "phase2-fs"
+}

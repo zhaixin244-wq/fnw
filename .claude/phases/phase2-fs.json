@@ -1,0 +1,36 @@
+{
+  "phase": 2,
+  "name": "fs",
+  "description": "功能规格（FS）文档编写",
+  "agent": "chip-fs-writer",
+  "mode": "foreground",
+  "inputs": {
+    "required": ["requirement_summary"],
+    "optional": ["project_fs_template", "ip_cbb_list", "protocol_specs"]
+  },
+  "input_sources": {
+    "requirement_summary": "phase1.outputs.requirement_summary"
+  },
+  "outputs": {
+    "fs_doc": "fs/{module_name}_FS_v1.0.md"
+  },
+  "gate": {
+    "conditions": [
+      "all_chapters_complete",
+      "quality_selfcheck_pass",
+      "user_confirmed"
+    ]
+  },
+  "skills": [
+    "chip-doc-structurer",
+    "rag-query",
+    "smart-explore",
+    "chip-diagram-generator",
+    "chip-interface-contractor",
+    "chip-ppa-formatter",
+    "chip-traceability-linker",
+    "verification-before-completion"
+  ],
+  "prev_phase": "phase1-requirement",
+  "next_phase": "phase3-microarch"
+}

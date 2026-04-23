@@ -1,0 +1,61 @@
+{
+  "phase": 5,
+  "name": "rtl",
+  "description": "RTL 代码实现（并行）",
+  "agent": "chip-code-writer",
+  "mode": "parallel",
+  "inputs": {
+    "required": ["microarch_docs"],
+    "optional": ["coding_style_rules", "cbb_docs", "protocol_specs"]
+  },
+  "input_sources": {
+    "microarch_docs": "phase3.outputs.all_microarch"
+  },
+  "parallel_rules": {
+    "sub_agents": "background",
+    "top_agent": "foreground_after_sub_complete",
+    "top_agent_delay": "wait_all_sub_complete"
+  },
+  "deliverables": [
+    "{module_name}.v",
+    "{module_name}_cbb_list.md",
+    "{module_name}.sdc",
+    "{module_name}_sva.sv",
+    "{module_name}_intf.sv",
+    "{module_name}.upf",
+    "{module_name}_tb.v",
+    "Makefile / run_lint.tcl / run_synth.tcl"
+  ],
+  "outputs": {
+    "rtl_dir": "rtl/"
+  },
+  "gate": {
+    "conditions": [
+      "all_deliverables_complete",
+      "quality_selfcheck_pass",
+      "comment_rate_gte_50",
+      "user_confirmed"
+    ]
+  },
+  "quality_gates": [
+    { "name": "Lint", "tool": "SpyGlass/AscentLint", "pass": "Zero Error/High" },
+    { "name": "CDC", "tool": "SpyGlass CDC", "pass": "Zero violation" },
+    { "name": "Synthesis", "tool": "DC/Genus", "pass": "WNS > 0" }
+  ],
+  "skills": [
+    "rag-query",
+    "smart-explore",
+    "verification-before-completion",
+    "chip-rtl-guideline-generator",
+    "chip-cdc-architect",
+    "chip-low-power-architect",
+    "chip-interface-contractor",
+    "chip-diagram-generator",
+    "writing-plans",
+    "systematic-debugging",
+    "chip-traceability-linker",
+    "chip-review-checklister",
+    "chip-protocol-compliance-checker"
+  ],
+  "prev_phase": "phase4-review"
+}

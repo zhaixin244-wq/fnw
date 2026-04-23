@@ -1,0 +1,28 @@
+---
+name: chip-traceability-linker
+description: 需求追溯矩阵（RTM）：需求→架构→接口→PPA→验证。
+---
+
+# Chip Traceability Linker
+
+## 任务
+建立并输出需求追溯矩阵（Requirements Traceability Matrix, RTM）。
+
+## 执行步骤
+1. 收集需求 ID（如 SysReq-001）及其描述。
+2. 为每条需求映射到：
+   - 架构决策 ID（Arch-XXX）
+   - 接口/信号（Intf-XXX）
+   - PPA 指标（PPA-XXX）
+   - 验证策略（Verify-XXX）
+   - 状态（Allocated / Designed / Verified / Waived）
+3. 识别未被覆盖的需求或没有上游需求的孤儿架构项。
+4. 若涉及版本变更，标注新增/删除/修改的追溯链。
+
+## 输出格式
+Markdown 表格：
+| 需求 ID | 需求描述 | 架构决策 | 接口/信号 | PPA 指标 | 验证策略 | 状态 | 备注 |
+
+随后输出：
+- 覆盖率统计（X/Y = Z%）
+- 遗漏项清单（如有）

@@ -1,0 +1,54 @@
+{
+  "phase": 3,
+  "name": "microarch",
+  "description": "微架构文档编写（并行）",
+  "agent": "chip-microarch-writer",
+  "mode": "parallel",
+  "inputs": {
+    "required": ["fs_doc"],
+    "optional": ["project_microarch_template", "ip_cbb_docs", "key_constraints"]
+  },
+  "input_sources": {
+    "fs_doc": "phase2.outputs.fs_doc"
+  },
+  "submodule_extraction": {
+    "source": "phase2.outputs.fs_doc",
+    "section": "§3.3 顶层框图",
+    "method": "从顶层框图提取子模块列表"
+  },
+  "parallel_rules": {
+    "sub_agents": "background",
+    "top_agent": "foreground_after_sub_complete",
+    "top_agent_delay": "wait_all_sub_complete"
+  },
+  "outputs": {
+    "top_microarch": "microarch/{module_name}_top_microarch_v1.0.md",
+    "sub_microarch": "microarch/{module_name}_{sub}_microarch_v1.0.md"
+  },
+  "gate": {
+    "conditions": [
+      "all_microarch_output",
+      "quality_selfcheck_pass",
+      "integration_consistency_pass",
+      "user_confirmed"
+    ]
+  },
+  "skills": [
+    "chip-doc-structurer",
+    "rag-query",
+    "smart-explore",
+    "chip-diagram-generator",
+    "chip-interface-contractor",
+    "chip-cdc-architect",
+    "chip-low-power-architect",
+    "chip-reliability-architect",
+    "chip-ppa-formatter",
+    "chip-budget-allocator",
+    "chip-rtl-guideline-generator",
+    "chip-traceability-linker",
+    "verification-before-completion",
+    "writing-plans"
+  ],
+  "prev_phase": "phase2-fs",
+  "next_phase": "phase4-review"
+}

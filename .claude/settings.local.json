@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -d \"D:/work/ai/fnw/arch/.claude/skills/\"*/)",
+      "WebSearch",
+      "WebFetch(domain:ultraethernet.org)",
+      "WebFetch(domain:scholar.google.com)",
+      "WebFetch(domain:www.nature.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(ls *)",
+      "Bash(python -c 'import json; json.load\\(open\\('\\\\''__TRACKED_VAR__'\\\\''\\)\\); print\\('\\\\''  ✓ Valid JSON'\\\\''\\)')",
+      "Bash(python -c 'import json,sys; json.load\\(open\\('\\\\''__TRACKED_VAR__'\\\\'', encoding='\\\\''utf-8'\\\\''\\)\\); sys.stdout.buffer.write\\(\\('\\\\''__TRACKED_VAR__: OK\\\\n'\\\\''\\).encode\\('\\\\''utf-8'\\\\''\\)\\)')",
+      "Bash(python *)",
+      "Bash(wc -l \"D:/work/ai/fnw/arch/.claude/workflows/phases/\"*.json \"D:/work/ai/fnw/arch/.claude/workflows/prompts/\"*.md \"D:/work/ai/fnw/arch/.claude/workflows/schemas/\"*.json)",
+      "Bash([ -f \"D:/work/ai/fnw/arch/.claude/workflows/$f\" ])",
+      "Bash(rm -rf D:/work/ai/fnw/arch/.claude/workflows/phases)",
+      "Bash(rm -rf D:/work/ai/fnw/arch/.claude/workflows/prompts)",
+      "Bash(rm -rf D:/work/ai/fnw/arch/.claude/workflows/schemas)",
+      "Bash(find *)",
+      "Bash(grep -oP '`\\([^`]+\\)`' D:/work/ai/fnw/arch/.claude/shared/skills-registry.md)",
+      "Bash(grep -oE '`[^`]+`' D:/work/ai/fnw/arch/.claude/shared/skills-registry.md)",
+      "Bash([ -f \"D:/work/ai/fnw/arch/.claude/skills/$skill/SKILL.md\" ])"
+    ]
+  }
+}

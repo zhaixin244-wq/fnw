@@ -1,0 +1,26 @@
+---
+name: chip-interface-contractor
+description: 模块接口契约定义：信号列表、时序、协议行为与 SVA。
+---
+
+# Chip Interface Contractor
+
+## 任务
+输出工业级精确的模块接口契约文档。
+
+## 执行步骤
+1. 确认接口类型（AXI4/ACE/CHI/TileLink/自定义握手/APB/AHB 等）。
+2. 生成端口列表表格：
+   | 信号名 | 方向 | 位宽 | 时钟域 | 复位值 | 描述 |
+3. 定义时序参数表格：
+   | 参数名 | 最小值 | 典型值 | 最大值 | 单位 | 条件 |
+4. 描述事务级行为（VALID/READY 握手规则、突发传输顺序、原子操作支持）。
+5. 生成关键协议的 SystemVerilog Assertion 模板（如握手不丢数据、无组合环路、复位后稳定等）。
+6. 标注 CDC 相关信号（若为跨时钟域接口）及同步策略。
+
+## 输出格式
+1. 端口列表（Markdown 表格）
+2. 时序参数表
+3. 事务行为描述（条目式）
+4. SVA 断言代码块（```systemverilog）
+5. 接口约束与风险提示

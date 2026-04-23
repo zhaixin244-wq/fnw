@@ -1,0 +1,175 @@
+{
+  "version": "1.0",
+  "description": "芯片需求采集流程模板 - 驱动agent的完整需求采集和方案输出流程。agent只需读取此文件并按stage顺序执行。",
+
+  "flow": {
+    "entry": {
+      "description": "激活后第一步：读取 .claude/shared/todo-mechanism.md 输出代办清单，获得用户确认后进入input_triage",
+      "rules": ["方案选择/输入缺失/架构疑问时强制暂停"]
+    },
+
+    "input_triage": {
+      "description": "根据用户输入判断类型，选择对应路径",
+      "rules": [
+        "独立文档/超500字结构化描述且含≥6项约束维度 → complete",
+        "2-5项约束维度的具体数值 → partial",
+        "仅模块名或一句话功能描述 → vague"
+      ],
+      "paths": {
+        "complete": "stage0 → stageA → stageB核对（已有项✅，缺失项⬜补问） → stageC0 → stageC",
+        "partial": "stage0 → stageA → stageB补齐未覆盖项 → stageC0 → stageC",
+        "vague":   "stage0 → stageA → stageB全部逐项 → stageC0 → stageC"
+      }
+    },
+
+    "stage0": {
+      "name": "前置探索",
+      "description": "参考brainstorming方法论（一次一个澄清提问、多选项对比、探索→收敛节奏），不直接调用skill",
+      "trigger": "清单确认后，所有输入类型均触发",
+      "depth": "中等。2-3个澄清提问+定性方向探索，不做定量PPA分析，不涉及具体协议选型",
+      "question_strategy": {
+        "complete": { "start": "基于已有文档提问（边界、未覆盖的权衡点）", "count": 2 },
+        "partial":  { "start": "基于已有约束补全缺失维度、探索约束间关系", "count": "2-3" },
+        "vague":    { "start": "从模块价值开始（定位、功能、权衡）", "count": 3 }
+      },
+      "exploration_directions": [
+        "模块核心价值与边界 — 这个模块解决什么问题？边界在哪？",
+        "关键约束与权衡点 — 哪些是硬约束？哪些可以妥协？",
+        "初步架构方向 — 仅定性探索（串行vs并行、共享存储vs分布存储等），不做定量分析，不涉及具体协议选型"
+      ],
+      "output_format": "## 探索结论\n\n| # | 探索项 | 结论 | 备注 |\n|---|--------|------|------|\n| 1 | 模块定位 | {结论} | - |\n| 2 | 核心功能 | {结论} | - |\n| 3 | 关键约束 | {结论} | - |\n| 4 | 初步架构方向 | {结论}（定性） | 定量分析留给方案设计 |\n\n## 待确认项\n- {需要后续确认的内容}",
+      "pending_item_handling": {
+        "stage_a_match": "在stageA第1-3问确认",
+        "constraint_match": "带入stageB对应项",
+        "other": "stageC汇总表增加行"
+      },
+      "transition": "stage0结论直接带入stageA，不重复探索"
+    },
+
+    "stageA": {
+      "name": "最小信息集",
+      "description": "4问按序确认",
+      "questions": [
+        { "q": "模块在SoC中的位置？上游/下游模块是什么？", "maps_to": "stageB REQ-002 位置推断" },
+        { "q": "核心功能一句话描述？", "maps_to": "stageB REQ-003 部分覆盖" },
+        { "q": "PPA优先级排序？（性能/功耗/面积，选最重要的一项）", "maps_to": "stageB REQ-004/REQ-005 追问分级" },
+        { "q": "阶段0探索结论确认 — 关键约束和初步架构方向是否需要调整？", "maps_to": "stageB/方案设计阶段" }
+      ],
+      "transition": "回答摘要直接带入stageB对应项，不重复提问"
+    },
+
+    "stageB": {
+      "name": "约束检查清单",
+      "description": "逐项确认，每项只问一次。数据从requirement-checklist.json获取。",
+      "execution_steps": [
+        "1. 先回顾stageA回答摘要（模块位置、核心功能、PPA优先级、阶段0结论），作为上下文锚点",
+        "2. Read requirement-checklist.json",
+        "3. 按constraint_items顺序逐项确认，利用execution_hint字段指导追问策略",
+        "4. 用户不确定时（trigger_rules），按exploration_template输出推荐值+可选项",
+        "5. 不适用判定：按not_applicable_rules三条规则",
+        "6. 追问分级：按priority_inquiry_rules，根据stageA优先级状态决定追问深度"
+      ],
+      "data_source": ".claude/shared/requirement-checklist.json"
+    },
+
+    "stageC0": {
+      "name": "矛盾检测",
+      "description": "数据从conflict-detection-rules.json获取。",
+      "triggers": {
+        "active": "stageB全部完成后，自动执行全部5项检测",
+        "passive": "stageB中用户自行发现矛盾 → 立即暂停，输出调和方案"
+      },
+      "output_format_conflict": "## 矛盾检测结果\n\n| 矛盾编号 | 涉及REQ | 矛盾描述 |\n|----------|---------|----------|\n| {id} | {req_ids} | {description} |\n\n**调和方案**：\n| 方案 | 调整 | 影响 |\n|------|------|------|\n| A | {adjustment_a} | {impact_a} |\n| B | {adjustment_b} | {impact_b} |\n\n请选择调和方案，或提供其他调整方向。",
+      "output_format_no_conflict": "直接进入stageC。",
+      "data_source": ".claude/shared/conflict-detection-rules.json"
+    },
+
+    "stageC": {
+      "name": "需求确认汇总",
+      "output_format": "## 需求确认汇总\n\n| 编号 | 约束项 | 确认值 | 备注 |\n|------|--------|--------|------|\n| REQ-001 | 工艺与频率 | {值} | - |\n| ... | ... | ... | ... |\n| REQ-{NNN} | {补充约束项} | {值} | 阶段0补充",
+      "confirmation_prompt": "以上为需求理解汇总，请确认是否准确、有无遗漏。确认后我将开始方案设计。",
+      "confirmation_rules": {
+        "confirm": ["确认", "正确", "没问题", "对", "OK"],
+        "reject_with_turn": ["好的，但是...", "行，不过..."],
+        "reject_hesitant": ["嗯...好吧", "行吧", "先这样吧"],
+        "reject_partial": ["大部分没问题，XX有点疑问"],
+        "rule": "正向确认词后紧跟转折词/省略号/疑问 → 不确认。仅纯正向确认词 → 确认。"
+      },
+      "req_numbering": "REQ-001~REQ-009对应stageB的9个约束项。阶段0补充项从REQ-010起。方案设计中必须引用此编号。",
+      "file_naming": "{module_name}_requirement_summary_v{版本号}.md"
+    },
+
+    "change_handling": {
+      "description": "任何阶段用户变更约束时的统一流程",
+      "steps": [
+        "1. 记录变更日志",
+        "2. 重走变更项的stageB（Read requirement-checklist.json，逐项重新确认）",
+        "3. stageC汇总（重新输出汇总表）",
+        "4. 重新确认",
+        "5. 如已在方案设计阶段，确认后重新生成方案"
+      ],
+      "log_format": "## 变更日志\n| 版本 | 变更项 | 原值 | 新值 | 变更原因 | 时间 |\n|------|--------|------|------|----------|------|\n| v1.1 | REQ-004 | ≤10cycles | ≤5cycles | 用户反馈 | 需求确认后 |"
+    },
+
+    "solution_design": {
+      "name": "方案设计",
+      "iron_rule": "NO PPA CLAIMS WITHOUT QUANTITATIVE EVIDENCE",
+      "description": "数据从solution-template.json获取。",
+      "execution_steps": [
+        "1. Read solution-template.json",
+        "2. 按solution_count_rules确定方案数量",
+        "3. 按input_anchoring.rules锚定每个方案的REQ覆盖",
+        "4. 按single_solution_elements逐要素输出每个方案",
+        "5. 按comparison_table_template.output_format输出对比表",
+        "6. 按recommendation_format推荐方案，理由必须回溯到具体REQ"
+      ],
+      "data_source": ".claude/shared/solution-template.json"
+    },
+
+    "adr": {
+      "name": "ADR记录",
+      "trigger": "用户在2+方案间做选择时",
+      "format": "Nygard格式",
+      "fields": ["背景（引用REQ编号）", "决策（选定方案）", "备选（其他方案及拒绝原因）", "后果（正面/负面/风险）"],
+      "skill": "architecture-decision-records"
+    },
+
+    "exception_handling": [
+      { "scenario": "需求自相矛盾", "action": "stageB中发现→按stageC0规则暂停输出调和方案；stageC0主动检测→同上" },
+      { "scenario": "用户不了解某约束", "action": "按requirement-checklist.json not_applicable_rules处理" },
+      { "scenario": "用户频繁变更≥3次", "action": "维护变更日志，每次重走对应项并重新汇总" },
+      { "scenario": "信息不足且用户无法补充", "action": "标注为假设条件：[假设] REQ-XXX: 假设内容" },
+      { "scenario": "用户跳过确认直接出方案", "action": "警告后执行，未确认项标注[未确认]" }
+    ]
+  },
+
+  "skill_contracts": {
+    "description": "每个skill调用必须指定输入输出格式",
+    "contracts": [
+      {
+        "skill": "chip-design-space-explorer",
+        "input": "REQ汇总表（完整文本）+ 方案数量",
+        "output": "2-3个候选方案，每方案含架构框图(Mermaid)+PPA预估+REQ覆盖+风险点",
+        "when": "方案生成阶段"
+      },
+      {
+        "skill": "chip-ppa-formatter",
+        "input": "单方案的原始PPA数据（延迟/面积/功耗）",
+        "output": "结构化PPA表（Target/Budget/Estimated）+ PVT条件标注",
+        "when": "每个方案PPA预估输出时"
+      },
+      {
+        "skill": "architecture-decision-records",
+        "input": "方案对比表 + 用户选择 + REQ汇总表",
+        "output": "Nygard格式ADR文档（背景/决策/备选/后果）",
+        "when": "用户在2+方案间做选择后"
+      },
+      {
+        "skill": "rag-query",
+        "input": "查询关键词（协议名/CBB名/接口类型）",
+        "output": "相关协议/CBB文档摘要 + 选型对比数据",
+        "when": "方案设计阶段涉及协议/CBB选型时"
+      }
+    ]
+  }
+}

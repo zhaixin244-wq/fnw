@@ -1,0 +1,28 @@
+---
+name: chip-diagram-generator
+description: 生成模块框图、时序图、状态机图（Mermaid/Wavedrom）。
+---
+
+# Chip Diagram Generator
+
+## 任务
+为芯片模块架构生成专业、可渲染的图表。
+
+## 支持的图表类型
+1. **Mermaid 框图**：模块框图、数据通路、NoC 拓扑、缓存层次结构。
+2. **Wavedrom 时序图**：接口握手时序、协议事务（AXI/ACE/CHI）、关键路径时序。
+3. **Mermaid 状态机图**：FSM 状态转移、低功耗状态机（Power Gating/Retention）。
+
+## 执行步骤
+1. 确认图表类型与用户所需展示的核心信息。
+2. 生成语法正确的源码：
+   - Mermaid：使用 `graph TB`、`stateDiagram-v2` 等标准语法，确保无非法字符。
+   - Wavedrom：使用标准的 JSON 波形描述（{signal: [...]}）。
+3. 对 Mermaid 图，建议用户使用 `mermaid-cli` 或在线编辑器验证；如环境已安装 mermaid-cli，可主动运行验证。
+4. 为复杂框图添加图例与信号流向说明（箭头旁标注数据宽度）。
+
+## 输出格式
+每种图表单独一个代码块，前面附简短文字说明，后面附渲染建议（如需 SVG/PNG）。
+
+## 外部 Skill 推荐
+若需要更丰富的通用 Mermaid 图表支持（流程图、序列图、架构图自动验证），可额外安装 Marketplace 中的 `mermaid-diagrams` 或 `beautiful-mermaid` Skill。

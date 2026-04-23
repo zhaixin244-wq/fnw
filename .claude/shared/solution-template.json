@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "description": "方案设计模板 - 方案比选输出格式",
+
+  "solution_count_rules": [
+    { "condition": "架构路径明确（协议固定、数据通路单一）", "count": 2 },
+    { "condition": "架构有多种可行路径（不同总线、不同并行度）", "count": 3 },
+    { "condition": "用户明确要求方案数", "count": "按用户要求" }
+  ],
+
+  "input_anchoring": {
+    "description": "每个方案决策严格基于阶段C的REQ汇总表",
+    "rules": [
+      "REQ中有明确值的：方案必须满足该值",
+      "REQ中标注不适用的：方案中该维度使用行业默认值，不作为差异点",
+      "REQ中标注默认值的：方案可提供优于默认值的选项，但不能差于默认值"
+    ]
+  },
+
+  "single_solution_elements": [
+    { "element": "架构框图", "requirement": "Mermaid模块图 + 数据通路，标注信号宽度" },
+    { "element": "PPA预估", "requirement": "量化：延迟cycles、面积kGates、功耗mW。无法量化标注'目标值，待综合验证'" },
+    { "element": "需求覆盖", "requirement": "列出覆盖的REQ编号及对应设计决策" },
+    { "element": "风险点", "requirement": "≥1条具体技术风险" },
+    { "element": "接口假设", "requirement": "列出所有接口假设" }
+  ],
+
+  "comparison_table_template": {
+    "header": ["对比维度", "方案A", "方案B", "方案C"],
+    "rows": [
+      { "dimension": "延迟", "unit": "cycles" },
+      { "dimension": "面积", "unit": "kGates" },
+      { "dimension": "功耗", "unit": "mW" },
+      { "dimension": "复杂度", "unit": "低/中/高" },
+      { "dimension": "关键风险", "unit": "-" },
+      { "dimension": "适用场景", "unit": "-" }
+    ],
+    "output_format": "| 对比维度 | 方案A | 方案B | 方案C |\n|----------|--------|--------|--------|\n| 延迟 | X cycles | Y cycles | Z cycles |\n| 面积 | X kGates | Y kGates | Z kGates |\n| 功耗 | X mW | Y mW | Z mW |\n| 复杂度 | 低/中/高 | ... | ... |\n| 关键风险 | ... | ... | ... |\n| 适用场景 | ... | ... | ... |"
+  },
+
+  "recommendation_format": {
+    "description": "推荐一个方案，理由必须回溯到具体REQ",
+    "example": "推荐方案B。理由：REQ-004要求延迟≤10cycles，方案B为8cycles；REQ-005面积<50kGates，方案B为42kGates。"
+  },
+
+  "skills_to_call": [
+    "chip-design-space-explorer",
+    "chip-ppa-formatter"
+  ]
+}
