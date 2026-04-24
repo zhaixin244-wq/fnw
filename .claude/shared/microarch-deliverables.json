@@ -1,0 +1,137 @@
+{
+  "version": "1.0",
+  "description": "微架构交付物清单与验证规则",
+
+  "deliverables": {
+    "required": [
+      {
+        "id": "doc",
+        "file": "{module}_{sub}_microarch_v{ver}.md",
+        "path": "<module>_work/ds/doc/ua/",
+        "type": "markdown",
+        "generator": "Write",
+        "consumers": ["chip-code-writer", "chip-arch-reviewer"]
+      },
+      {
+        "id": "d2_arch",
+        "file": "wd_{sub}_arch.d2",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "d2",
+        "generator": "Write + Skill:chip-png-d2-gen",
+        "consumers": ["chip-arch-reviewer"],
+        "trigger": "§3.3"
+      },
+      {
+        "id": "d2_datapath",
+        "file": "wd_{sub}_datapath.d2",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "d2",
+        "generator": "Write + Skill:chip-png-d2-gen",
+        "consumers": ["chip-arch-reviewer"],
+        "trigger": "§5.1"
+      },
+      {
+        "id": "d2_fsm",
+        "file": "wd_{sub}_fsm.d2",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "d2",
+        "generator": "Write + Skill:chip-png-d2-gen",
+        "consumers": ["chip-arch-reviewer"],
+        "trigger": "§5.3"
+      },
+      {
+        "id": "wd_timing",
+        "file": "wd_{desc}.json",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "wavedrom",
+        "generator": "Write + Skill:chip-png-wavedrom-gen",
+        "consumers": ["chip-arch-reviewer"],
+        "trigger": "§4.2/§5.2/§5.4"
+      },
+      {
+        "id": "intf_json",
+        "file": "wd_intf_{sub}.json",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "interface",
+        "generator": "Write + Skill:chip-png-interface-gen",
+        "consumers": ["chip-png-interface-gen"],
+        "trigger": "§4.1"
+      },
+      {
+        "id": "png_arch",
+        "file": "wd_{sub}_arch.png",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "png",
+        "generator": "Skill:chip-png-d2-gen",
+        "consumers": ["doc-embed"],
+        "depends_on": "d2_arch"
+      },
+      {
+        "id": "png_datapath",
+        "file": "wd_{sub}_datapath.png",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "png",
+        "generator": "Skill:chip-png-d2-gen",
+        "consumers": ["doc-embed"],
+        "depends_on": "d2_datapath"
+      },
+      {
+        "id": "png_fsm",
+        "file": "wd_{sub}_fsm.png",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "png",
+        "generator": "Skill:chip-png-d2-gen",
+        "consumers": ["doc-embed"],
+        "depends_on": "d2_fsm"
+      },
+      {
+        "id": "png_timing",
+        "file": "wd_{desc}.png",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "png",
+        "generator": "Skill:chip-png-wavedrom-gen",
+        "consumers": ["doc-embed"],
+        "depends_on": "wd_timing"
+      },
+      {
+        "id": "png_intf",
+        "file": "wd_intf_{sub}.png",
+        "path": "<module>_work/ds/doc/ua/tmp/",
+        "type": "png",
+        "generator": "Skill:chip-png-interface-gen",
+        "consumers": ["doc-embed"],
+        "depends_on": "intf_json"
+      }
+    ],
+    "conditional": [
+      {
+        "id": "intermediate",
+        "file": "{module}_intermediate_state_v{ver}.json",
+        "path": "<module>_work/ds/doc/ua/",
+        "type": "json",
+        "generator": "Write",
+        "consumers": ["session-recovery"],
+        "condition": "submodule_count > 2"
+      }
+    ]
+  },
+
+  "validation": {
+    "per_submodule_gate": [
+      "all .d2 files have corresponding .png",
+      "all .json files have corresponding .png",
+      "all images referenced in doc exist"
+    ],
+    "final_gate": [
+      "batch compilation successful",
+      "RTM 'implementation' column non-empty",
+      "synthesis checklist 12 items marked"
+    ]
+  },
+
+  "degradation": {
+    "d2_compile_fail": "keep .d2, mark [D2-DEGRADED], text description fallback",
+    "wavedrom_parse_fail": "keep .json, mark error location, text table fallback",
+    "intf_gen_fail": "skip (non-critical)"
+  }
+}

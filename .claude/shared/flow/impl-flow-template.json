@@ -23,8 +23,8 @@
       ]
     },
     "L3_temporary": {
-      "description": "临时加载 — RAG 结果/工具输出，用完即弃",
-      "contents": ["RAG 检索结果", "Lint 报告", "综合报告"]
+      "description": "临时加载 — Wiki 结果/工具输出，用完即弃",
+      "contents": ["Wiki 检索结果", "Lint 报告", "综合报告"]
     }
   },
 
@@ -40,8 +40,8 @@
       "required_inputs": [
         { "id": "microarch_doc", "name": "微架构文档", "priority": "Must", "missing_action": "暂停，列出缺失章节" },
         { "id": "coding_style", "name": "编码规范", "priority": "Must", "missing_action": "使用默认 .claude/rules/coding-style.md" },
-        { "id": "cbb_list", "name": "CBB 清单", "priority": "Should", "missing_action": "RAG 检索补充" },
-        { "id": "protocol_docs", "name": "接口协议文档", "priority": "Should", "missing_action": "RAG 检索或标注 [待确认]" },
+        { "id": "cbb_list", "name": "CBB 清单", "priority": "Should", "missing_action": "Wiki 检索补充" },
+        { "id": "protocol_docs", "name": "接口协议文档", "priority": "Should", "missing_action": "Wiki 检索或标注 [待确认]" },
         { "id": "constraints", "name": "关键约束（频率/复位/DFT）", "priority": "Must", "missing_action": "从微架构文档提取" }
       ],
       "input_classification": {
@@ -51,15 +51,15 @@
           "仅微架构概述，无详细接口/状态机/FIFO → vague"
         ],
         "paths": {
-          "complete": "rag_retrieval → module_structure → rtl_impl → sdc_sva → quality_check → delivery",
-          "partial": "rag_retrieval（补充 CBB）→ module_structure → rtl_impl → sdc_sva → quality_check → delivery",
+          "complete": "wiki_retrieval → module_structure → rtl_impl → sdc_sva → quality_check → delivery",
+          "partial": "wiki_retrieval（补充 CBB）→ module_structure → rtl_impl → sdc_sva → quality_check → delivery",
           "vague": "暂停，等待微架构补充 → 重新 input_triage"
         }
       }
     },
 
-    "rag_retrieval": {
-      "name": "RAG 检索",
+    "wiki_retrieval": {
+      "name": "Wiki 检索",
       "description": "读取涉及的 CBB 文档和协议文档",
       "obligations": [
         "CBB 实例化前必须读取 CBB 文档获取标准示例",
@@ -91,7 +91,7 @@
       "per_submodule_steps": [
         "数据通路实现（从微架构 §5.1 逐阶段编码）",
         "控制逻辑 + FSM（从微架构 §5.3 两段式状态机）",
-        "CBB 集成（从 RAG 检索结果实例化，标注 // CBB Ref）",
+        "CBB 集成（从 Wiki 检索结果实例化，标注 // CBB Ref）",
         "接口逻辑（valid/ready 握手、背压、异常处理）"
       ],
       "architecture_frozen": true,

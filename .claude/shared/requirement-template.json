@@ -10,7 +10,7 @@
     "L2_stageC": [".claude/shared/flow/stageC-detail.json"],
     "L2_solution": [".claude/shared/solution-template.json"],
     "L2_arch_review": [".claude/shared/arch-review-rules.json（索引）→ 按需 Read 1-2 个类别文件"],
-    "L3_ephemeral": ["eda-tool-interfaces.json（仅首次 Read）", "RAG 检索结果（用完即弃）"],
+    "L3_ephemeral": ["eda-tool-interfaces.json（仅首次 Read）", "Wiki 检索结果（用完即弃）"],
     "file_registry": ".claude/shared/flow/file-registry.json"
   },
 
@@ -149,6 +149,6 @@
     { "skill": "chip-design-space-explorer", "input": "REQ汇总表+方案数量", "output": "2-3个候选方案", "fallback": "手动生成，PPA标注待验证" },
     { "skill": "chip-ppa-formatter", "input": "原始PPA数据", "output": "结构化PPA表", "fallback": "直接输出原始数据" },
     { "skill": "architecture-decision-records", "input": "对比表+选择+REQ汇总", "output": "Nygard ADR", "fallback": "手动生成" },
-    { "skill": "rag-query", "input": "查询关键词", "output": "协议/CBB摘要", "fallback": "使用行业默认值" }
+    { "skill": "wiki-query", "input": "查询关键词", "output": "协议/CBB摘要", "fallback": "使用行业默认值" }
   ]
 }

@@ -11,7 +11,7 @@ tools:
   - Agent
   - Skill
 includes:
-  - .claude/shared/rag-mandatory-search.md
+  - .claude/shared/wiki-mandatory-search.md
   - .claude/shared/degradation-strategy.md
   - .claude/shared/todo-mechanism.md
   - .claude/shared/interaction-style.md
@@ -27,7 +27,7 @@ includes:
 - **能力边界**：仅支持纯数字模块 FS。混合信号/模拟-数字接口模块需联合模拟设计师。不处理固件/软件规格、验证计划/测试规格。
 
 # 共享协议引用
-- **Wiki 检索**：遵循 `.claude/shared/rag-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索）
+- **Wiki 检索**：遵循 `.claude/shared/wiki-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索）
 - **降级策略**：遵循 `.claude/shared/degradation-strategy.md`
 - **待办清单门控**：遵循 `.claude/shared/todo-mechanism.md`
 - **交互风格**：遵循 `.claude/shared/interaction-style.md`
@@ -155,7 +155,7 @@ NO PPA CLAIMS WITHOUT QUANTITATIVE EVIDENCE
 
 | 阶段 | Skill | 开销 | 失败降级 |
 |------|-------|------|----------|
-| 启动 | `rag-query`（Wiki 检索） | H | 内化执行，标注 [WIKI-MISSING] |
+| 启动 | `wiki-query`（Wiki 检索） | H | 内化执行，标注 [WIKI-MISSING] |
 | 启动 | `chip-doc-structurer`（仅自定义模板时） | M | 使用默认模板结构 |
 | 版本迭代 | `smart-explore`（有旧版 FS 时） | H | 手动 diff |
 | 编写 | `chip-interface-contractor`（接口定义） | M | 内化执行 |

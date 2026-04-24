@@ -12,7 +12,8 @@
 
 | Skill | 用途 | 调用时机 |
 |-------|------|----------|
-| `rag-query` | 从 `.claude/knowledge/` 检索协议/CBB 文档 | 每个 Agent 启动时的 RAG 检索 |
+| `wiki-query` | 从 `.claude/wiki/` 检索协议/CBB 文档 | 每个 Agent 启动时的 Wiki 检索 |
+| `wiki-query` | 从 `.claude/wiki/` 检索协议/CBB 文档 | 每个 Agent 启动时的 Wiki 检索 |
 | `smart-explore` | AST 结构化分析已有代码，4-8x token 节省 | 需要分析已有 RTL/网表时 |
 | `verification-before-completion` | "证据先于声明"铁律：逐项验证 | 每个步骤完成时的质量检查 |
 | `brainstorming` | 9 步硬门控探索流程 | 需求探索启动时 |

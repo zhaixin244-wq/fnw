@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "description": "微架构标准工作流步骤",
+
+  "context_layers": {
+    "L0": "agent-inline (role, rules, deliverables)",
+    "L1": "startup-once (todo-mechanism, context-layers, fs-microarch-mapping)",
+    "L2": "per-stage (template, checklist, conflict-rules)",
+    "L3": "temporary (wiki, IP docs, EDA reports)"
+  },
+
+  "steps": {
+    "1_input_triage": {
+      "name": "输入确认",
+      "actions": ["confirm FS path", "confirm template", "confirm submodule list"],
+      "output": "input completeness report",
+      "next": "2_submodule_split"
+    },
+    "2_submodule_split": {
+      "name": "子模块拆分",
+      "principles": [
+        "functional independence",
+        "interface completeness",
+        "clock domain alignment",
+        "IP/CBB independence",
+        "top_level_interconnect_only: 顶层模块仅做子模块实例化和信号连接，禁止包含任何组合/时序逻辑。若 FS 分析发现需要额外功能模块，必须拆分为独立子模块并生成对应微架构文档",
+        "register_module_pure_config: 寄存器模块仅包含配置寄存器的读写逻辑。功能相近的表项（如通道配置、Credit 配置、加密配置等）按功能归属放入对应功能模块，寄存器模块仅提供寄存器读写接口（APB slave + 寄存器 decode），不承载功能逻辑"
+      ],
+      "output": "submodule list",
+      "next": "3_microarch_write"
+    },
+    "3_microarch_write": {
+      "name": "逐子模块编写",
+      "per_submodule": [
+        {"step": "3.1", "section": "§3", "action": "overview", "chart": null},
+        {"step": "3.2", "section": "§3.3", "action": "generate arch diagram", "chart": "d2_arch", "mandatory": true},
+        {"step": "3.3", "section": "§4.1", "action": "port list", "chart": null},
+        {"step": "3.4", "section": "§4.1", "action": "generate port diagram", "chart": "intf_json", "mandatory": true},
+        {"step": "3.5", "section": "§4.2", "action": "protocol & timing", "chart": null},
+        {"step": "3.6", "section": "§4.2", "action": "generate timing diagram", "chart": "wd_timing", "mandatory": true},
+        {"step": "3.7", "section": "§5.1", "action": "datapath", "chart": null},
+        {"step": "3.8", "section": "§5.1", "action": "generate datapath diagram", "chart": "d2_datapath", "mandatory": true},
+        {"step": "3.9", "section": "§5.2", "action": "control logic", "chart": null},
+        {"step": "3.10", "section": "§5.2", "action": "generate control timing", "chart": "wd_ctrl", "mandatory": false, "condition": "if wavedrom exists"},
+        {"step": "3.11", "section": "§5.3", "action": "state machine", "chart": null},
+        {"step": "3.12", "section": "§5.3", "action": "generate FSM diagram", "chart": "d2_fsm", "mandatory": true},
+        {"step": "3.13", "section": "§5.4", "action": "pipeline (if needed)", "chart": null},
+        {"step": "3.14", "section": "§5.4", "action": "generate pipeline timing", "chart": "wd_pipeline", "mandatory": false, "condition": "if wavedrom exists"},
+        {"step": "3.15", "section": "§5.5-5.6", "action": "FIFO/IP (if needed)", "chart": null},
+        {"step": "3.16", "section": "§6-13", "action": "other sections", "chart": null},
+        {"step": "3.17", "section": "-", "action": "gate check", "chart": null, "mandatory": true}
+      ],
+      "gate": "all .d2/.json have .png",
+      "next": "4_integration_check"
+    },
+    "4_integration_check": {
+      "name": "集成一致性检查",
+      "checks": ["interface alignment", "datapath connectivity", "PPA closure", "critical rules MA-01/02/03/05", "register module interface alignment: reg_wr_en/reg_rd_en/reg_addr/reg_wr_data 从寄存器模块到各功能模块的连接完整，reg_rd_data 多路 mux 正确"],
+      "next": "5_quality_check"
+    },
+    "5_quality_check": {
+      "name": "质量自检",
+      "actions": ["3-phase checklist", "all MA rules", "chart compilation", "coverage analysis", "E2E merge"],
+      "gate": "RTM non-empty, synthesis checklist marked",
+      "next": "6_final_compilation"
+    },
+    "6_final_compilation": {
+      "name": "批量图表编译",
+      "command": "node .claude/skills/chip-png-wavedrom-gen/gen_wavedrom.js <module>_work/ds/doc/ua/tmp/",
+      "validation": "all charts compiled successfully"
+    }
+  },
+
+  "specialist_collaboration": {
+    "chip-cdc-architect": {"target": "§7", "inherit": "CDC signal table"},
+    "chip-low-power-architect": {"target": "§10", "inherit": "power domain framework"},
+    "chip-reliability-architect": {"target": "§12", "inherit": "ECC/TMR scheme"}
+  },
+
+  "exception_handling": {
+    "fs_missing_sections": "pause, list missing items",
+    "ip_unavailable": "Wiki fail → mark 'based on general knowledge'",
+    "interface_conflict": "pause, output reconciliation",
+    "timing_no_lib": "mark 'estimated, pending synthesis'",
+    "d2_compile_fail": "keep source, mark [D2-DEGRADED]",
+    "wavedrom_parse_fail": "keep source, mark error location",
+    "wiki_conflict": "mark both sources, use latest version"
+  }
+}

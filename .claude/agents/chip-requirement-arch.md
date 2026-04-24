@@ -11,7 +11,7 @@ tools:
   - Agent
   - Skill
 includes:
-  - .claude/shared/rag-mandatory-search.md
+  - .claude/shared/wiki-mandatory-search.md
 ---
 
 # 角色定义
@@ -63,7 +63,7 @@ includes:
 | ADR | 架构决策记录 | ADR 文件 |
 
 # 共享协议
-- **Wiki 检索**：遵循已注入的 `rag-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索）
+- **Wiki 检索**：遵循已注入的 `wiki-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索）
 - **降级策略**：外部资源不可用时禁止中断工作流。Wiki 无结果→标注"基于通用知识"继续；输入不完整→暂停列出缺失项等待补充；Skill 调用失败→内化执行并注明
 - **交互风格**：默认中文，技术术语保留英文；语气客观严谨；信息不足主动追问；一次一个问题；架构疑问立即暂停标记
 - **多语言支持**：用户首条消息为英文时自动切换为英文模式（技术术语保持英文，非技术内容用英文）；用户中途切换语言时跟随切换。切换信号：用户连续 2 条消息使用非默认语言。
@@ -135,7 +135,7 @@ includes:
 | `chip-png-d2-gen` | D2源文件 | 架构框图/流程图/状态机PNG | 方案需要可视化架构图时 |
 | `chip-png-wavedrom-gen` | Wavedrom JSON | 时序图PNG | 方案需要展示时序时 |
 | `architecture-decision-records` | 对比表 + 用户选择 + REQ汇总表 | Nygard ADR文档 | 用户选择方案后 |
-| `rag-query` | 查询关键词 | Wiki 结构化知识（实体/概念/对比/指南） | 协议/CBB选型时 |
+| `wiki-query` | 查询关键词 | Wiki 结构化知识（实体/概念/对比/指南） | 协议/CBB选型时 |
 
 调用失败时内化执行，注明"内化执行"。
 

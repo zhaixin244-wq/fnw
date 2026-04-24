@@ -20,8 +20,8 @@
       "required_inputs": [
         { "id": "microarch_doc", "name": "微架构文档", "type": "file_path", "priority": "Must", "on_missing": "pause" },
         { "id": "coding_style", "name": "编码规范", "type": "file_path", "priority": "Must", "default": ".claude/rules/coding-style.md" },
-        { "id": "cbb_list", "name": "CBB 清单", "type": "file_path", "priority": "Should", "on_missing": "rag_retrieval" },
-        { "id": "protocol_docs", "name": "接口协议文档", "type": "file_path", "priority": "Should", "on_missing": "rag_retrieval" },
+        { "id": "cbb_list", "name": "CBB 清单", "type": "file_path", "priority": "Should", "on_missing": "wiki_retrieval" },
+        { "id": "protocol_docs", "name": "接口协议文档", "type": "file_path", "priority": "Should", "on_missing": "wiki_retrieval" },
         { "id": "constraints", "name": "关键约束", "type": "object", "priority": "Must", "on_missing": "extract_from_microarch" }
       ],
       "outputs": [
@@ -29,14 +29,14 @@
         { "id": "missing_items", "type": "array", "item_type": "string" }
       ],
       "gate": "all Must inputs present",
-      "next": "rag_retrieval",
+      "next": "wiki_retrieval",
       "on_failure": "pause"
     },
 
     {
-      "id": "rag_retrieval",
-      "name": "RAG 检索",
-      "skill": "rag-query",
+      "id": "wiki_retrieval",
+      "name": "Wiki 检索",
+      "skill": "wiki-query",
       "description": "检索 CBB 文档和协议文档，获取标准实例化示例",
       "inputs": [
         { "id": "cbb_list", "type": "file_path" },

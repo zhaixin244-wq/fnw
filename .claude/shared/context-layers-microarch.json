@@ -71,7 +71,7 @@
     "L3_ephemeral": {
       "description": "临时层 — 用完即弃，不在上下文中持久保留",
       "contents": [
-        "RAG 检索结果（摘要写入文档后不再引用）",
+        "Wiki 检索结果（摘要写入文档后不再引用）",
         "IP/CBB 文档内容（集成完成后不再引用）",
         "EDA 工具报告（结论写入文档后不再引用）",
         "中间状态 JSON（写入文件后不再 Read）"
@@ -86,7 +86,7 @@
       { "step": "激活", "action": "L0 常驻（内联） + L1 启动层 Read" },
       { "step": "输入确认", "action": "无需额外 Read，校验 FS 文档完整性" },
       { "step": "子模块拆分", "action": "Read FS 文档 §3.3 + §5，提取子模块列表" },
-      { "step": "逐子模块编写", "action": "Read microarchitecture-template.md + quality-checklist-microarch.md → 按模板编写 → 按需 Read IP/CBB 文档（RAG）" },
+      { "step": "逐子模块编写", "action": "Read microarchitecture-template.md + quality-checklist-microarch.md → 按模板编写 → 按需 Read IP/CBB 文档（Wiki）" },
       { "step": "集成一致性检查", "action": "Read 全部子模块微架构文档 + Read microarch-conflict-rules.json → 执行 Critical 规则（MA-01/02/03/05）→ 校验接口对齐/数据通路连通/PPA 闭合" },
       { "step": "质量自检", "action": "Read quality-checklist-microarch.md + microarch-conflict-rules.json → 三阶段自检（自动化→数据通路+人工）→ Read microarch-coverage-model.json → 运行覆盖率分析 → Read microarch-e2e-coverage.json → 合并端到端覆盖视图" }
     ]

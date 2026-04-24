@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "description": "chip-code-writer agent 数据型配置 — 文件管理/交付物/工具路径",
+
+  "file_management": {
+    "work_dir": "{module}_work/",
+    "entries": [
+      { "type": "RTL 源码",    "path": "{module}_work/rtl/{submodule}.v",                      "desc": "主模块" },
+      { "type": "SVA 断言",    "path": "{module}_work/rtl/{submodule}_sva.sv",                 "desc": "SVA 文件" },
+      { "type": "SDC 约束",    "path": "{module}_work/syn/{submodule}.sdc",                    "desc": "综合约束" },
+      { "type": "TB",          "path": "{module}_work/rtl/{submodule}_tb.v",                   "desc": "仿真 testbench" },
+      { "type": "CBB 清单",    "path": "{module}_work/ds/doc/{submodule}_cbb_list.md",         "desc": "CBB 使用清单" },
+      { "type": "Lint 报告",   "path": "{module}_work/ds/report/lint/",                        "desc": "Lint 报告" },
+      { "type": "综合报告",    "path": "{module}_work/ds/report/syn/",                         "desc": "综合报告" },
+      { "type": "中间状态",    "path": "{module}_work/rtl/{module}_impl_state_v{ver}.json",    "desc": "会话恢复" },
+      { "type": "修改报告",    "path": "{module}_work/ds/report/modify_report_{YYYYMMDD}_{ver}.md", "desc": "修改现有 RTL 时必生成" }
+    ],
+    "persistence_rule": "所有阶段产生的代码、脚本必须持久化到模块工作目录中，禁止仅输出到对话"
+  },
+
+  "deliverables": {
+    "count": 10,
+    "items": [
+      { "id": 1,  "file": "RTL 源码 .v" },
+      { "id": 2,  "file": "CBB 清单 _cbb_list.md" },
+      { "id": 3,  "file": "SDC .sdc" },
+      { "id": 4,  "file": "SVA _sva.sv" },
+      { "id": 5,  "file": "Interface _intf.sv（如需）" },
+      { "id": 6,  "file": "UPF .upf（如需）" },
+      { "id": 7,  "file": "TB _tb.v（如需）" },
+      { "id": 8,  "file": "Makefile/Lint/综合脚本" },
+      { "id": 9,  "file": "Lint 报告 lint_summary.log", "gate": "ALL PASS" },
+      { "id": 10, "file": "综合报告 synth_summary.log", "gate": "ALL PASS + 面积达标" }
+    ]
+  },
+
+  "tools": [
+    { "name": "iverilog",        "path": ".claude/tools/oss-cad-suite/bin/iverilog",        "usage": "语法 Lint" },
+    { "name": "yosys",           "path": ".claude/tools/oss-cad-suite/bin/yosys",           "usage": "综合 Lint + 面积估计" },
+    { "name": "stage-runner",    "path": ".claude/shared/flow/stage-runner.sh",             "usage": "输入校验 + metrics 记录" },
+    { "name": "change-detect",   "path": ".claude/shared/change-detect.sh",                 "usage": "微架构变更自动检测" },
+    { "name": "metrics-summary", "path": ".claude/shared/flow/metrics-summary.sh",          "usage": "全流程性能汇总报告" }
+  ],
+
+  "exception_handling": [
+    { "scene": "微架构文档缺失关键章节", "behavior": "暂停列出缺失项，等待用户补充" },
+    { "scene": "CBB 文档不可用",         "behavior": "标注 [CBB-MISSING]，基于通用知识实现" },
+    { "scene": "架构疑问",               "behavior": "暂停标记 [ARCH-QUESTION]，输出矛盾描述" },
+    { "scene": "接口位宽不匹配",         "behavior": "暂停输出差异分析，等待确认" },
+    { "scene": "专项 agent 输出矛盾",    "behavior": "暂停，输出矛盾描述 + 调和方案" },
+    { "scene": "Lint 不通过",            "behavior": "进入自愈循环，迭代 ≥10 次暂停确认" },
+    { "scene": "Synthesis 不通过",       "behavior": "进入自愈循环，面积差异 >50% 暂停确认" }
+  ],
+
+  "workflow_adaptation": [
+    { "condition": "有微架构 + CBB 文档",     "action": "直接实现" },
+    { "condition": "只有微架构",               "action": "Wiki 检索补充，找不到标记 [CBB-MISSING]" },
+    { "condition": "修改现有 RTL",             "action": "强制走修改流程（Read modify-rtl-flow.json）" },
+    { "condition": "部分交付物",               "action": "按指定范围执行" },
+    { "condition": "多模块开发",               "action": "调用 chip-impl-parallel-dev Skill" }
+  ]
+}

@@ -18,7 +18,7 @@
       "required_inputs": [
         { "id": "fs_doc", "name": "FS 文档", "priority": "Must", "missing_action": "暂停，等待用户提供" },
         { "id": "microarch_template", "name": "微架构模板", "priority": "Should", "missing_action": "使用默认模板 .claude/rules/microarchitecture-template.md" },
-        { "id": "ip_cbb_docs", "name": "IP/CBB 文档", "priority": "Should", "missing_action": "按需通过 RAG 检索" },
+        { "id": "ip_cbb_docs", "name": "IP/CBB 文档", "priority": "Should", "missing_action": "按需通过 Wiki 检索" },
         { "id": "submodule_list", "name": "子模块划分", "priority": "Must", "missing_action": "从 FS §3.3 提取，缺失时暂停" },
         { "id": "constraints", "name": "关键约束（PPA/时序/功耗）", "priority": "Should", "missing_action": "从 FS §8 + REQ 汇总表提取" }
       ],
@@ -63,7 +63,7 @@
         "§10-11 验证要点 + 风险分析",
         "§12-13 ADR + RTM"
       ],
-      "rag_obligation": "每个子模块涉及协议/接口/CBB/选型前，必须先完成 RAG 检索",
+      "rag_obligation": "每个子模块涉及协议/接口/CBB/选型前，必须先完成 Wiki 检索",
       "chart_generation": "图表规范详见 .claude/shared/chart-generation-spec.md。架构图/状态机/数据通路 → D2（chip-png-d2-gen），时序图 → Wavedrom（chip-png-wavedrom-gen），接口端口图 → Interface（chip-png-interface-gen）。质量门禁：quality_check 阶段执行编译验证。",
       "intermediate_persistence": {
         "trigger": "子模块编写完成 > 2 个后自动触发",
@@ -165,7 +165,7 @@
 
     "exception_handling": [
       { "scenario": "FS 文档缺失关键章节", "action": "暂停列出缺失项，等待补充" },
-      { "scenario": "IP 文档不可用", "action": "RAG 无结果→标注'基于通用知识'，关键参数标注待确认" },
+      { "scenario": "IP 文档不可用", "action": "Wiki 无结果→标注'基于通用知识'，关键参数标注待确认" },
       { "scenario": "子模块间接口矛盾", "action": "暂停输出调和方案" },
       { "scenario": "时序分析无法完成（无工艺库）", "action": "标注'预估值，待综合验证'，给出定性分析" },
       { "scenario": "用户跳过确认直接写", "action": "警告后执行，未确认项标注[未确认]" }
@@ -173,7 +173,7 @@
   },
 
   "skill_contracts": [
-    { "skill": "rag-query", "input": "协议/CBB 关键词", "output": "协议摘要+选型数据", "fallback": "使用行业默认值" },
+    { "skill": "wiki-query", "input": "协议/CBB 关键词", "output": "协议摘要+选型数据", "fallback": "使用行业默认值" },
     { "skill": "chip-png-d2-gen", "input": "D2 源文件", "output": "架构框图/状态机 PNG", "fallback": "文本描述" },
     { "skill": "chip-png-wavedrom-gen", "input": "Wavedrom JSON", "output": "时序图 PNG", "fallback": "文本描述" },
     { "skill": "chip-interface-contractor", "input": "接口信号列表", "output": "精确接口契约", "fallback": "手动生成" },

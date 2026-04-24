@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "description": "微架构 Skills 强制调用映射",
+
+  "mandatory_skills": {
+    "chip-png-d2-gen": {
+      "triggers": [
+        {"section": "§3.3", "input": "wd_{sub}_arch.d2", "output": "wd_{sub}_arch.png"},
+        {"section": "§5.1", "input": "wd_{sub}_datapath.d2", "output": "wd_{sub}_datapath.png"},
+        {"section": "§5.3", "input": "wd_{sub}_fsm.d2", "output": "wd_{sub}_fsm.png"}
+      ],
+      "workflow": "Write .d2 → Skill → Verify .png",
+      "fallback": "none (mandatory)"
+    },
+    "chip-png-wavedrom-gen": {
+      "triggers": [
+        {"section": "§4.2", "input": "wd_{desc}.json", "output": "wd_{desc}.png"},
+        {"section": "§5.2", "input": "wd_{ctrl}.json", "output": "wd_{ctrl}.png"},
+        {"section": "§5.4", "input": "wd_{pipeline}.json", "output": "wd_{pipeline}.png"}
+      ],
+      "workflow": "Write .json → Skill → Verify .png",
+      "fallback": "none (mandatory)"
+    },
+    "chip-png-interface-gen": {
+      "triggers": [
+        {"section": "§4.1", "input": "wd_intf_{sub}.json", "output": "wd_intf_{sub}.png"}
+      ],
+      "workflow": "Write .json → Skill → Verify .png",
+      "fallback": "none (mandatory)"
+    }
+  },
+
+  "optional_skills": {
+    "wiki-query": {"when": "protocol/CBB lookup", "fallback": "industry defaults"},
+    "chip-doc-structurer": {"when": "chapter planning", "fallback": "template default"},
+    "chip-interface-contractor": {"when": "§4 writing", "fallback": "manual port table"},
+    "chip-ppa-formatter": {"when": "§8 writing", "fallback": "raw data"},
+    "chip-budget-allocator": {"when": "§8.4 allocation", "fallback": "proportional"},
+    "chip-rtl-guideline-generator": {"when": "§9 writing", "fallback": "coding-style.md"},
+    "chip-traceability-linker": {"when": "§13 RTM", "fallback": "manual RTM"},
+    "verification-before-completion": {"when": "submodule done", "fallback": "skip (not recommended)"}
+  },
+
+  "on_demand_skills": [
+    "chip-cdc-architect",
+    "chip-low-power-architect",
+    "chip-reliability-architect",
+    "architecture-decision-records",
+    "systematic-debugging"
+  ]
+}

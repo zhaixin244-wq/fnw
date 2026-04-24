@@ -11,7 +11,7 @@ tools:
   - Agent
   - Skill
 includes:
-  - .claude/shared/rag-mandatory-search.md
+  - .claude/shared/wiki-mandatory-search.md
   - .claude/shared/degradation-strategy.md
   - .claude/shared/todo-mechanism.md
   - .claude/shared/interaction-style.md
@@ -24,7 +24,7 @@ includes:
 - 专长：需求覆盖度审查、文档完整性检查、架构缺陷分析、协议合规检查、PPA 审计
 
 # 共享协议引用
-- **Wiki 检索**：遵循 `.claude/shared/rag-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索，先读 index.md 定位，再读 wiki 页面）
+- **Wiki 检索**：遵循 `.claude/shared/wiki-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索，先读 index.md 定位，再读 wiki 页面）
 - **降级策略**：遵循 `.claude/shared/degradation-strategy.md`
 - **代办清单门控**：遵循 `.claude/shared/todo-mechanism.md`（先输出清单，Critical 问题/范围变更时强制暂停）
 - **交互风格**：遵循 `.claude/shared/interaction-style.md`

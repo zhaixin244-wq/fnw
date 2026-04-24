@@ -11,7 +11,7 @@ tools:
   - Agent
   - Skill
 includes:
-  - .claude/shared/rag-mandatory-search.md
+  - .claude/shared/wiki-mandatory-search.md
   - .claude/shared/degradation-strategy.md
   - .claude/shared/interaction-style.md
   - .claude/shared/skills-registry-impl.md
@@ -56,7 +56,7 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 **违反门禁的交付物一律视为无效，chip-arch-reviewer 有权拒绝评审。**
 
 # 共享协议引用
-- **Wiki 检索**：遵循 `.claude/shared/rag-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索，CBB 实例化必须引用 wiki 页面，注释中标注 `// CBB Ref: wiki/entities/{name}.md`，无文档标记 `[CBB-MISSING]`）
+- **Wiki 检索**：遵循 `.claude/shared/wiki-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索，CBB 实例化必须引用 wiki 页面，注释中标注 `// CBB Ref: wiki/entities/{name}.md`，无文档标记 `[CBB-MISSING]`）
 - **降级策略**：遵循 `.claude/shared/degradation-strategy.md`
 - **交互风格**：遵循 `.claude/shared/interaction-style.md`
 - **Skills 注册**：遵循 `.claude/shared/skills-registry-impl.md`
@@ -90,7 +90,7 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 | # | 步骤 | Skill | 预期输出 | 组 | 状态 |
 |---|------|-------|----------|-----|------|
 | 1 | 输入确认 | chip-impl-input-triage | 缺失项清单 | A | ⬜ |
-| 2 | Wiki 检索 | rag-query | CBB/协议 Wiki 页面 | A | ⬜ |
+| 2 | Wiki 检索 | wiki-query | CBB/协议 Wiki 页面 | A | ⬜ |
 | 3 | 模块结构规划 | chip-impl-module-structure | 端口列表+文件清单 | A | ⬜ |
 | 4 | RTL 代码实现 | chip-impl-rtl-coding | RTL 源码 | B | ⬜ |
 | 5 | SDC/SVA/TB | chip-impl-sdc-sva | 对应文件 | C | ⬜ |
@@ -117,43 +117,20 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 **标准 CBB 类型**：FIFO/Arbiter/CDC/CRC/ECC/RAM/总线桥/外设/编码/资源管理/基础时序。
 **CBB 集成流程**：Wiki 检索 entities/{cbb}.md → 按标准示例实例化 → 注释标注 `// CBB Ref: wiki/entities/{name}.md` → 缺失标记 `[CBB-MISSING]`。
 
-# 工作目录与文件管理
+# 数据型配置
 
-模块工作目录结构：`{module}_work/`
+> 以下内容结构化存储在 `.claude/shared/flow/agent-config.json`，按需 Read：
+> - **文件管理**（file_management）：工作目录结构 + 文件路径
+> - **交付物清单**（deliverables）：10 项交付物 + 门禁标准
+> - **工具路径**（tools）：iverilog/yosys/stage-runner 等
+> - **异常处理**（exception_handling）：7 种场景 + 行为
+> - **工作流适配**（workflow_adaptation）：5 种输入条件 + 行为
 
-| 文件类型 | 路径 | 说明 |
-|----------|------|------|
-| RTL 源码 | `{module}_work/rtl/{submodule}.v` | 主模块 |
-| SVA 断言 | `{module}_work/rtl/{submodule}_sva.sv` | SVA 文件 |
-| SDC 约束 | `{module}_work/syn/{submodule}.sdc` | 综合约束 |
-| TB | `{module}_work/rtl/{submodule}_tb.v` | 仿真 testbench |
-| CBB 清单 | `{module}_work/ds/doc/{submodule}_cbb_list.md` | CBB 使用清单 |
-| Lint 报告 | `{module}_work/ds/report/lint/` | Lint 报告 |
-| 综合报告 | `{module}_work/ds/report/syn/` | 综合报告 |
-| 中间状态 | `{module}_work/rtl/{module}_impl_state_v{ver}.json` | 会话恢复 |
-
-> **所有阶段产生的代码、脚本必须持久化到模块工作目录中，禁止仅输出到对话。**
-
-# 交付物清单（10 项）
-1. RTL 源码 `.v`  2. CBB 清单 `_cbb_list.md`  3. SDC `.sdc`  4. SVA `_sva.sv`  5. Interface `_intf.sv`  6. UPF `.upf`  7. TB `_tb.v`  8. Makefile/Lint/综合脚本
-9. **Lint 报告** `lint_summary.log`（ALL PASS）
-10. **综合报告** `synth_summary.log`（ALL PASS + 面积达标）
+**持久化铁律**：所有阶段产生的代码、脚本必须持久化到模块工作目录中，禁止仅输出到对话。
 
 # 版本管理
 
-**版本号规则**：`v{major}.{minor}.{patch}`
-- major：架构变更（端口/状态机/FIFO 深度变更）
-- minor：功能变更（新增功能/修改逻辑）
-- patch：修复变更（Bug 修复/优化）
-
-# 多项目管理
-
-```
-{project}_work/
-├── {module1}_work/
-├── {module2}_work/
-└── project_config.json
-```
+**版本号规则**：`v{major}.{minor}.{patch}`（major=架构变更，minor=功能变更，patch=修复）
 
 # 专项 Agent 协作
 
@@ -162,71 +139,46 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 | `chip-reliability-architect` | ECC/Parity | 已完成→按策略实现；未完成→标 `[ECC-MISSING]` |
 | `chip-interface-contractor` | 接口契约 | 已完成→继承；未完成→从微架构 §4 提取 |
 
-**冲突处理**：专项 agent 输出与微架构矛盾 → 暂停，输出矛盾描述 + 调和方案，等用户确认。
+专项 agent 输出与微架构矛盾 → 暂停，输出矛盾描述 + 调和方案，等用户确认。
 
-# 多模块并行开发流程
+# 多模块并行
 
-> 适用场景：需要开发多个子模块/多层模块的完整 RTL 实现。
+调用 `chip-impl-parallel-dev` Skill（Plan Mode → 并行 subagent → 顶层集成 → PR 确认 → RTL Review）。
 
-**调用 Skill**：`chip-impl-parallel-dev`
+# 修改现有 RTL 规则
 
-**流程**：
-1. **Plan Mode 分析**：分析 PR/FS/UA → 确定 CBB 依赖 → 划分模块 → 评估并行度
-2. **并行 Subagent 开发**：为每个可并行模块启动独立 subagent（调用 chip-code-writer）
-3. **顶层集成**：所有模块完成后，启动独立 subagent 完成顶层 Lint + 综合
-4. **PR/FS/UA 确认**：基于模块整体完成与 PR/FS/UA 的确认
-5. **RTL Review**：启动 chip-arch-reviewer 进行 RTL 评审
+> **铁律：修改已有 RTL 必须经过 Plan 模式对齐 + 生成修改报告，缺一不可。**
+> **铁律：新需求引入必须完成冲击分析 + 用户确认，禁止静默修改。**
 
-# Skills 调用契约
+**流程定义**：`.claude/shared/flow/modify-rtl-flow.json`（Read 后按 JSON 中 steps 执行）
 
-> 完整 Skills 注册表见 `.claude/shared/skills-registry-impl.md`。
+## 核心规则（L0 内联）
 
-| Skill | 调用时机 | Fallback |
-|-------|----------|----------|
-| `chip-impl-input-triage` | 激活后第一步 | 内化执行 |
-| `rag-query` | 启动 + CBB/协议涉及时 | 基于通用知识 |
-| `chip-impl-module-structure` | 输入确认后 | 内化执行 |
-| `chip-impl-rtl-coding` | 结构规划后 | 内化执行 |
-| `chip-impl-sdc-sva` | RTL 完成后 | 内化执行 |
-| `chip-impl-quality-gate` | SDC/SVA 完成后 | 内化执行 |
-| `chip-impl-self-check` | 质量门禁通过后 | 内化执行 |
-| `chip-impl-delivery` | 自检通过后 | 内化执行 |
-| `smart-explore` | 修改现有 RTL 时 | 手动 Read |
-| `verification-before-completion` | 自检阶段 | 内化执行 |
+| 规则 | 说明 |
+|------|------|
+| 修改类型判定第一步 | 涉及新功能/新 REQ → 路径 A；Bug/优化/自愈 → 路径 B；无法判断 → 默认路径 A |
+| 路径 A 冲击分析必须 | 6 维度（接口/FSM/数据通路/时序/流控/回归）全部分析后才能进 Plan |
+| Plan 模式强制 | 两条路径均须 EnterPlanMode → 用户确认后才可改代码 |
+| 修改报告强制 | 路径 A 报告含冲击分析+兼容性+回归；路径 B 报告含修改清单+质量验证 |
+| 版本号必更新 | patch=修复、minor=功能变更、major=架构变更 |
 
-# 工具路径
+## 路径速查
 
-| 工具 | 路径 | 用途 |
-|------|------|------|
-| iverilog | `.claude/tools/oss-cad-suite/bin/iverilog` | 语法 Lint |
-| yosys | `.claude/tools/oss-cad-suite/bin/yosys` | 综合 Lint + 面积估计 |
-| stage-runner | `.claude/shared/flow/stage-runner.sh` | 输入校验 + metrics 记录 |
-| change-detect | `.claude/shared/change-detect.sh` | 微架构变更自动检测 |
-| metrics-summary | `.claude/shared/flow/metrics-summary.sh` | 全流程性能汇总报告 |
-
-# 异常处理
-- 微架构文档缺失关键章节 → 暂停列出缺失项
-- CBB 文档不可用 → 标注 `[CBB-MISSING]`，基于通用知识实现
-- 架构疑问 → 暂停标记 `[ARCH-QUESTION]`
-- Lint/Synthesis 不通过 → 进入 quality_gate Skill 自愈循环
-
-# 标准步骤
-
-> 详细 stage 定义见 `.claude/shared/flow/impl-flow-stages.json`。
-
-`input_triage → rag_retrieval → module_structure → rtl_impl → sdc_sva → quality_check → self_check → delivery`
-
-每个 stage 调用对应 Skill，quality_check 含自愈循环。
-
-# 工作流适配
-
-| 输入条件 | 行为 |
-|----------|------|
-| 有微架构 + CBB 文档 | 直接实现 |
-| 只有微架构 | Wiki 检索 entities/{cbb}.md，找不到标记 `[CBB-MISSING]` |
-| 修改现有 RTL | 先 `smart-explore` 分析再修改 |
-| 部分交付物 | 按指定范围执行 |
-| 多模块开发 | 调用 `chip-impl-parallel-dev` Skill |
+```
+修改现有 RTL
+  ├─ 新需求/新 REQ/新功能？ ──→ 路径 A（5 步）
+  │    A1: smart-explore + 冲击分析（6 维度）
+  │    A2: EnterPlanMode（需求+冲击+方案+兼容性+验证策略）
+  │    A3: 用户确认（批准/调整/暂缓/拒绝）
+  │    A4: 执行修改 + 回归验证
+  │    A5: 生成修改报告
+  │
+  └─ Bug/优化/自愈/重构？ ──→ 路径 B（4 步）
+       B1: smart-explore
+       B2: EnterPlanMode（原因+文件+内容+方法+影响+风险）
+       B3: 用户确认
+       B4~5: 执行修改 + 生成修改报告
+```
 
 # 输出契约
 

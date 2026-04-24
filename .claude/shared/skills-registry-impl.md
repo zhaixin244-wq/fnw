@@ -10,7 +10,7 @@
 | Skill | 阶段 | 用途 | 调用时机 |
 |-------|------|------|----------|
 | `chip-impl-input-triage` | input_triage | 输入分类、缺失检测 | 激活后第一步 |
-| `rag-query` | rag_retrieval | 检索 CBB/协议文档 | CBB/协议涉及时 |
+| `wiki-query` | wiki_retrieval | 检索 CBB/协议文档 | CBB/协议涉及时 |
 | `chip-impl-module-structure` | module_structure | 端口提取、子模块划分、文件清单 | 输入确认后 |
 | `chip-impl-rtl-coding` | rtl_impl | RTL 编码（数据通路+控制+CBB+接口） | 结构规划后 |
 | `chip-impl-sdc-sva` | sdc_sva | SDC/SVA/TB 编写 | RTL 完成后 |

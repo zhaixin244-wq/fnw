@@ -1,0 +1,199 @@
+{
+  "version": "1.0",
+  "description": "修改现有 RTL 流程定义 — 区分新需求引入（路径 A）和常规修改（路径 B）",
+  "agent": "chip-code-writer",
+
+  "trigger_conditions": [
+    "用户明确要求修改/完善/重构已有 RTL 文件",
+    "新需求引入需要在已有 RTL 上增加/变更功能",
+    "微架构变更导致 RTL 需级联更新",
+    "Bug 修复需要改动已有 RTL",
+    "自愈循环中修复 Lint/综合问题"
+  ],
+
+  "type_classification": {
+    "description": "激活后第一步判定修改类型",
+    "default": "path_a",
+    "rules": [
+      { "condition": "用户提出新增功能 / 新 REQ 编号 / 新特性", "path": "path_a" },
+      { "condition": "修改涉及'原有 RTL 不存在的功能'", "path": "path_a" },
+      { "condition": "无法判断是否为新需求", "path": "path_a" },
+      { "condition": "Bug 修复、优化、微架构笔误修正、Lint/综合自愈、重构", "path": "path_b" }
+    ]
+  },
+
+  "path_a": {
+    "name": "新需求引入（强制冲击分析）",
+    "iron_rule": "新需求必须评估对已有功能的冲击，未完成冲击分析禁止动代码",
+    "steps": [
+      {
+        "id": "A1",
+        "name": "智能探索 + 冲击分析",
+        "skill": "smart-explore",
+        "actions": [
+          "分析已有 RTL 完整实现（模块结构、端口、FSM、FIFO、数据通路、SVA）",
+          "分析与其他模块的接口依赖关系"
+        ],
+        "impact_analysis": {
+          "mandatory": true,
+          "dimensions": [
+            { "id": "port", "name": "接口冲击", "check": "新需求是否需要新增/修改端口？是否改变现有端口语义？" },
+            { "id": "fsm", "name": "FSM 冲击", "check": "新需求是否需要新增状态？是否改变现有状态转移条件？" },
+            { "id": "datapath", "name": "数据通路冲击", "check": "新需求是否插入新的处理阶段？是否改变现有数据格式？" },
+            { "id": "timing", "name": "时序冲击", "check": "新需求是否引入新的关键路径？是否影响现有时序裕量？" },
+            { "id": "flowctrl", "name": "流控冲击", "check": "新需求是否改变背压行为？是否影响 FIFO 深度需求？" },
+            { "id": "regression", "name": "功能回归风险", "check": "新需求是否可能影响现有功能的正确性？" }
+          ],
+          "output": "impact_analysis_report"
+        },
+        "next": "A2"
+      },
+      {
+        "id": "A2",
+        "name": "Plan 模式：需求修改计划",
+        "mode": "EnterPlanMode",
+        "mandatory": true,
+        "plan_contents": [
+          { "field": "requirement", "description": "新需求的完整描述和 REQ 编号" },
+          { "field": "impact_report", "description": "A-1 冲击分析的结论" },
+          { "field": "modify_plan", "description": "涉及文件清单 + 每个文件的具体修改点 + 修改方法" },
+          { "field": "compatibility", "description": "如何保证新需求不破坏已有功能" },
+          { "field": "verification", "description": "新增测试场景 + 回归测试清单" },
+          { "field": "version", "description": "预计版本号变更（minor 或 major）" }
+        ],
+        "next": "A3"
+      },
+      {
+        "id": "A3",
+        "name": "用户确认",
+        "mandatory": true,
+        "options": [
+          { "action": "approved", "next": "A4" },
+          { "action": "adjust", "next": "A2" },
+          { "action": "defer", "next": null, "behavior": "保存 Plan，不执行修改" },
+          { "action": "reject", "next": null, "behavior": "记录拒绝原因，不执行修改" }
+        ]
+      },
+      {
+        "id": "A4",
+        "name": "执行修改",
+        "rules": [
+          "按 Plan 逐文件修改",
+          "每个文件修改后立即 Lint 检查",
+          "接口变更时检查下游模块适配",
+          "FSM/FIFO 变更时重新执行质量检查项",
+          "按 A-2 验证策略执行回归测试"
+        ],
+        "next": "A5"
+      },
+      {
+        "id": "A5",
+        "name": "生成修改报告",
+        "mandatory": true,
+        "report_path": "{module}_work/ds/report/modify_report_{YYYYMMDD}_{ver}.md",
+        "extra_sections_for_path_a": ["impact_analysis", "compatibility", "regression_test"],
+        "next": null
+      }
+    ]
+  },
+
+  "path_b": {
+    "name": "常规修改（标准 Plan 对齐）",
+    "steps": [
+      {
+        "id": "B1",
+        "name": "智能探索",
+        "skill": "smart-explore",
+        "actions": ["分析待修改的 RTL 文件，理解现有实现"],
+        "next": "B2"
+      },
+      {
+        "id": "B2",
+        "name": "Plan 模式对齐",
+        "mode": "EnterPlanMode",
+        "mandatory": true,
+        "plan_contents": [
+          { "field": "reason", "description": "修改原因（Bug/优化/微架构修正/自愈修复）" },
+          { "field": "file_list", "description": "涉及文件清单" },
+          { "field": "changes", "description": "每个文件的具体修改点" },
+          { "field": "method", "description": "修改方法（重写/局部 Edit/参数调整）" },
+          { "field": "impact", "description": "影响范围" },
+          { "field": "risk", "description": "风险评估" }
+        ],
+        "next": "B3"
+      },
+      {
+        "id": "B3",
+        "name": "用户确认",
+        "mandatory": true,
+        "options": [
+          { "action": "approved", "next": "B4" },
+          { "action": "adjust", "next": "B2" },
+          { "action": "reject", "next": null, "behavior": "不执行修改" }
+        ]
+      },
+      {
+        "id": "B4",
+        "name": "执行修改",
+        "rules": [
+          "按 Plan 逐文件修改",
+          "每个文件修改后立即 Lint 检查",
+          "接口变更时检查下游模块适配",
+          "FSM/FIFO 变更时重新执行质量检查项"
+        ],
+        "next": "B5"
+      },
+      {
+        "id": "B5",
+        "name": "生成修改报告",
+        "mandatory": true,
+        "report_path": "{module}_work/ds/report/modify_report_{YYYYMMDD}_{ver}.md",
+        "next": null
+      }
+    ]
+  },
+
+  "modify_report_template": {
+    "common_fields": [
+      { "field": "date", "description": "修改日期" },
+      { "field": "version", "description": "版本号 v{major}.{minor}.{patch}" },
+      { "field": "type", "description": "修改类型", "values": ["新需求引入", "Bug 修复", "微架构调整", "优化", "自愈修复"] },
+      { "field": "path", "description": "修改路径", "values": ["路径 A（冲击分析）", "路径 B（标准 Plan）"] },
+      { "field": "trigger", "description": "触发来源" }
+    ],
+    "sections": {
+      "impact_analysis": {
+        "path": "A only",
+        "table_columns": ["冲击维度", "影响", "说明"],
+        "rows_from": "impact_analysis.dimensions"
+      },
+      "file_list": {
+        "table_columns": ["#", "文件路径", "修改类型", "修改摘要"]
+      },
+      "change_details": {
+        "per_file": ["修改原因", "修改内容", "影响范围"]
+      },
+      "compatibility": {
+        "path": "A only",
+        "description": "如何保证新需求不破坏已有功能"
+      },
+      "regression_test": {
+        "path": "A only",
+        "table_columns": ["测试场景", "结果"]
+      },
+      "quality_check": {
+        "table_columns": ["检查项", "结果"],
+        "rows": ["Lint", "综合", "IC 自检"]
+      },
+      "risks": {
+        "format": "bullet_list"
+      }
+    }
+  },
+
+  "version_rules": {
+    "patch": "Bug 修复/优化（不改功能行为）",
+    "minor": "新增功能/修改逻辑（功能变更）",
+    "major": "端口/状态机/FIFO 深度变更（架构级变更）"
+  }
+}
