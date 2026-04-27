@@ -74,7 +74,7 @@
 
 ### 1. 芯片任务必须使用专用 Agent
 
-RTL/FS/UA/评审相关任务**禁止手动生成**，必须调用对应专用 Agent。详见 `.claude/rules/chip-agent-mandatory.md`。
+RTL/FS/UA/评审/验证/验证环境相关任务**禁止手动生成**，必须调用对应专用 Agent。详见 `.claude/rules/chip-agent-mandatory.md`。
 
 **唯一例外**：
 - 仅读取/搜索现有代码
