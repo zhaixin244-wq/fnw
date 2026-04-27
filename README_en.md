@@ -10,54 +10,51 @@
 
 ### Key Features
 
-- **6 Specialized Agents** covering the full chip design lifecycle: requirement exploration, functional specification, microarchitecture, architecture review, RTL coding, and code review
+- **12 Specialized Agents** covering the full chip design lifecycle: requirement exploration, functional specification, microarchitecture, architecture review, RTL coding, synthesis & timing, top integration, low-power design, DFT, verification architecture, verification environment, and project management
 - **230+ Skills** spanning chip-specific tasks, engineering workflows, code quality, and multi-language support
 - **Structured Knowledge Base** with protocol specifications (AXI, AHB, APB, PCIe, USB, DDR, etc.), CBB library (FIFO, arbiter, CDC, ECC, etc.), CPU/MMU/networking references
 - **Document Templates** for Functional Specifications (FS) and Microarchitecture Specifications with strict quality checklists
 - **Chart Generation Pipeline** using D2 (architecture diagrams, state machines) and Wavedrom (timing diagrams) compiled to PNG
 - **RTL Coding Standards** enforced through automated lint checks and comprehensive design rule verification
+- **Built-in UART Example** demonstrating the complete design flow from requirements to RTL
 
 ### Architecture
 
 ```
 fnw/
 ├── .claude/
-│   ├── agents/            # 6 specialized AI Agents
+│   ├── agents/            # 12 specialized AI Agents
 │   │   ├── chip-requirement-arch.md   # Requirement exploration & solution trade-off
 │   │   ├── chip-fs-writer.md          # Functional Specification authoring
 │   │   ├── chip-microarch-writer.md   # Microarchitecture specification authoring
 │   │   ├── chip-arch-reviewer.md      # Architecture review & defect analysis
 │   │   ├── chip-code-writer.md        # RTL code implementation
-│   │   └── chip-arch.md               # General chip architecture Agent
+│   │   ├── chip-sta-analyst.md        # Synthesis & timing analysis
+│   │   ├── chip-top-integrator.md     # Top-level integration
+│   │   ├── chip-lowpower-designer.md  # Low-power design
+│   │   ├── chip-dft-engineer.md       # DFT design
+│   │   ├── chip-verfi-arch.md         # Verification architecture
+│   │   ├── chip-env-writer.md         # Verification environment
+│   │   └── chip-project-lead.md       # Project management
 │   ├── skills/            # 230+ Skill definitions
-│   │   ├── chip-impl-*/   # RTL implementation skills (coding, SDC/SVA, lint, etc.)
-│   │   ├── chip-png-*/    # Chart generation (D2, Wavedrom, interface diagrams)
-│   │   ├── chip-*-architect/  # CDC, low-power, reliability architecture
-│   │   └── ...            # Engineering, testing, DevOps, security skills
 │   ├── knowledge/         # Structured knowledge base
-│   │   ├── bus-protocol/  # AXI, AHB, APB, PCIe, USB, DDR, SPI, I2C, UART, etc.
-│   │   ├── cbb/           # Common Building Blocks (FIFO, arbiter, CDC, ECC, etc.)
-│   │   ├── IP/            # IP core references (ARM, RISC-V, Ethernet, DDR, PCIe, USB)
-│   │   ├── cpu/           # CPU architecture (pipeline, cache, branch predictor, interrupt)
-│   │   ├── mmu/           # MMU (page table, TLB, virtualization, memory protection)
-│   │   └── ...            # Network protocol, I/O protocol, verification
 │   ├── rules/             # Coding standards & document templates
-│   │   ├── coding-style.md              # RTL coding standard (Verilog-2005)
-│   │   ├── function-spec-template.md    # FS document template
-│   │   └── microarchitecture-template.md # Microarchitecture document template
 │   ├── shared/            # Shared configurations & quality checklists
-│   ├── prompts/           # Agent prompt templates
-│   ├── phases/            # Workflow phase definitions (JSON)
 │   ├── wiki/              # LLM Wiki knowledge system
 │   └── tools/             # External tools (d2, chromium, etc.)
+├── uart_work/             # UART example workspace (complete design flow demo)
+│   ├── ds/doc/pr/         # Requirement summary, solution, ADR
+│   ├── ds/doc/fs/         # Functional Specification
+│   ├── ds/doc/ua/         # Microarchitecture documents + review report
+│   ├── ds/rtl/            # RTL source (7 submodules + SVA)
+│   └── ds/run/            # Synthesis/Lint scripts
 ├── memory/                # Persistent memory for cross-session context
-├── LICENSE                # MIT License
 └── requirements.txt       # Python/Node.js dependency specifications
 ```
 
 ### Design Workflow
 
-The plugin implements a 5-phase chip design workflow:
+The plugin implements a complete chip design workflow:
 
 | Phase | Agent | Input | Output |
 |-------|-------|-------|--------|
@@ -66,90 +63,56 @@ The plugin implements a 5-phase chip design workflow:
 | **Phase 3: Microarchitecture** | `chip-microarch-writer` | FS document | Microarchitecture specs per submodule (datapath, FSM, FIFO, IP integration) |
 | **Phase 4: Review** | `chip-arch-reviewer` | Microarchitecture documents | Review report covering requirements, completeness, defects, protocol compliance |
 | **Phase 5: RTL** | `chip-code-writer` | Reviewed microarchitecture | Verilog RTL, SDC constraints, UPF, SVA assertions |
+| **Phase 6: Synthesis** | `chip-sta-analyst` | RTL + SDC | Synthesis report, timing report, area report |
+| **Phase 7: Integration** | `chip-top-integrator` | Submodule RTL | Top module, interface checks, system lint |
 
 ### Agents
 
-| Agent | Role | Expertise |
-|-------|------|-----------|
-| **chip-requirement-arch** | Requirement exploration & trade-off analysis | Brainstorming, multi-solution comparison, constraint convergence, DSE |
-| **chip-fs-writer** | Functional Specification authoring | Requirement-to-spec mapping, interface definition, PPA specification, RTM |
-| **chip-microarch-writer** | Microarchitecture specification authoring | Datapath design, control logic, FSM, FIFO, IP/CBB integration |
-| **chip-arch-reviewer** | Architecture review & defect analysis | Requirement coverage, document completeness, protocol compliance, PPA audit |
-| **chip-code-writer** | RTL code implementation | Verilog/RTL, CDC/RDC, low-power, SDC, SVA, synthesis scripts |
-
-### Chip-Specific Skills (14 Skills)
-
-| Skill | Description |
-|-------|-------------|
-| `chip-budget-allocator` | System-level PPA budget decomposition to submodules |
-| `chip-cdc-architect` | Clock domain crossing analysis and sync strategy |
-| `chip-design-space-explorer` | Area-Performance-Power Pareto-optimal design exploration |
-| `chip-diagram-generator` | Mermaid/Wavedrom diagram generation |
-| `chip-doc-structurer` | Document chapter structure and content weighting |
-| `chip-interface-contractor` | Precise interface contract (ports, timing, SVA) |
-| `chip-low-power-architect` | Power domain, isolation, retention, UPF design |
-| `chip-ppa-formatter` | Structured PPA specification tables |
-| `chip-protocol-compliance-checker` | AXI/ACE/CHI/TileLink/APB/AHB protocol compliance |
-| `chip-reliability-architect` | ECC/Parity/TMR, aging, IR Drop, ESD analysis |
-| `chip-review-checklister` | 9-dimension review checklist with completeness scoring |
-| `chip-rtl-guideline-generator` | RTL coding standard generation (Clock/Reset/DFT/SVA) |
-| `chip-traceability-linker` | Requirements Traceability Matrix (RTM) with coverage stats |
-| `chip-version-diff-generator` | Architecture version diff and impact analysis |
-
-### Knowledge Base
-
-The built-in knowledge base covers:
-
-- **Bus Protocols** (17): AXI4, AXI4-Lite, AXI4-Stream, AHB, APB, PCIe, USB, DDR, SPI, I2C, UART, CAN, JTAG, MIPI, TileLink, Wishbone
-- **Common Building Blocks** (40+): FIFO, arbiter, CDC sync, ECC, CRC, crossbar, barrel shifter, clock divider/gating, gray code, and more
-- **IP Cores**: ARM Cortex cores, RISC-V, Ethernet MAC/PCS, DDR controller, PCIe controller, USB controller, PLL/DLL, SPI/I2C/UART
-- **CPU Architecture**: Pipeline, cache hierarchy, branch predictor, interrupt controller, multi-core
-- **MMU**: Page table, TLB, memory protection, virtualization, address space, memory attributes
-- **Verification**: Verification methodology references
-
-### Prerequisites
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or IDE extension
-- **Python 3.8+** with packages: `Pillow`, `pyyaml`, `pytest`
-- **Node.js 16+** with packages: `@wavedrom/cli`, `playwright-core`
-- **D2** diagram language (optional, for architecture diagram generation)
-
-### Installation
-
-1. Clone this repository into your project's root:
-   ```bash
-   git clone <repository-url> .claude
-   ```
-
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-
-4. (Optional) Install D2 for architecture diagram generation:
-   - Download from [D2 releases](https://github.com/terrastruct/d2/releases)
-   - Place `d2.exe` in `.claude/tools/d2/` or add to system PATH
+| Agent | Role | Activation Names |
+|-------|------|-----------------|
+| **chip-requirement-arch** | Requirement exploration & trade-off | 赵知几 / 知几 / Archie |
+| **chip-fs-writer** | Functional Specification authoring | 钱典成 / 典成 / Felix |
+| **chip-microarch-writer** | Microarchitecture specification authoring | 孙弘微 / 弘微 / Marcus |
+| **chip-arch-reviewer** | Architecture review & defect analysis | 宋晶瑶 / 晶瑶 / Clara |
+| **chip-code-writer** | RTL code implementation | 张铭研 / 铭研 / Ethan |
+| **chip-sta-analyst** | Synthesis & timing analysis | 周闻哲 / 闻哲 / Winston |
+| **chip-top-integrator** | Top-level integration | 陆灵犀 / 灵犀 / Lexi |
+| **chip-lowpower-designer** | Low-power design | 沈未央 / 未央 / Shannon |
+| **chip-dft-engineer** | DFT design | 陆青萝 / 青萝 / Tina |
+| **chip-verfi-arch** | Verification architecture | 顾衡之 / 衡之 / Daniel |
+| **chip-env-writer** | Verification environment | 韩映川 / 映川 / Henry |
+| **chip-project-lead** | Project management | 林若水 / 若水 / Linus |
 
 ### Usage
+
+#### Quick Start
+
+```bash
+# 1. Clone the repository
+git clone <repository-url> fnw
+
+# 2. Install dependencies
+cd fnw
+pip install -r requirements.txt
+npm install
+
+# 3. Use in Claude Code
+# Just tell Claude what module you want to design
+```
 
 #### Start a New Module Design
 
 ```
-User: 帮我设计一个 PCIe RC 模块
+User: 帮我设计一个 UART 模块
 ```
 
 The `chip-requirement-arch` Agent will activate and guide you through requirement exploration.
 
-#### Full Workflow Example
+#### Full Workflow Example (UART)
 
 ```bash
 # Phase 1: Requirement exploration
-User: 赵知几，帮我梳理一个 AXI-to-APB bridge 的需求
+User: 赵知几，帮我梳理一个 UART 模块的需求
 
 # Phase 2: Functional Specification
 User: 小成，根据需求汇总写 FS 文档
@@ -158,21 +121,14 @@ User: 小成，根据需求汇总写 FS 文档
 User: 小微，基于 FS 写微架构文档
 
 # Phase 4: Architecture Review
-User: 评审一下微架构文档
+User: 晶瑶，评审一下微架构文档
 
 # Phase 5: RTL Implementation
-User: 根据微架构文档生成 RTL 代码
+User: 铭研，根据微架构文档生成 RTL 代码
+
+# Phase 6: Synthesis
+User: 闻哲，对 RTL 进行综合和时序分析
 ```
-
-#### Agent Activation
-
-Agents are activated by name or nickname:
-
-| Agent | Activation Names |
-|-------|-----------------|
-| chip-requirement-arch | 赵知几 / 知几 / 小几 / Archie / 架构师 / 需求师 |
-| chip-fs-writer | 钱典成 / 典成 / 小成 / Felix / 规格师 / FS师 |
-| chip-microarch-writer | 孙弘微 / 弘微 / 小微 / Sam / 微架构师 |
 
 #### Initialize Module Work Directory
 
@@ -182,13 +138,45 @@ bash .claude/skills/chip-create-dir/init_workdir.sh <module_name>
 
 Creates a standardized directory structure with `ds/` (design) and `dv/` (verification) subtrees.
 
+### Built-in Example: UART
+
+The project includes a complete UART module design example (`uart_work/`), demonstrating the full flow from requirements to RTL:
+
+| File | Description |
+|------|-------------|
+| `ds/doc/pr/uart_requirement_summary_v1.0.md` | Requirement summary (17 requirements) |
+| `ds/doc/pr/uart_solution_v1.0.md` | Architecture solution (4 ADRs) |
+| `ds/doc/fs/uart_FS_v1.0.md` | Functional Specification (15 chapters, 1250 lines) |
+| `ds/doc/ua/*_microarch_v1.0.md` | 7 submodule microarchitecture documents |
+| `ds/doc/ua/uart_review_report_v1.0.md` | Architecture review report |
+| `ds/rtl/*.v` | 7 RTL source files + SVA assertions |
+| `ds/run/` | Lint/Synthesis scripts + SDC constraints |
+
+**UART Module Features**:
+- Standard UART asynchronous communication (5/6/7/8 data bits, 1/1.5/2 stop bits, parity)
+- Fractional baud rate generator (9600~921600 bps, accuracy < 0.1%)
+- TX/RX FIFO (depth 16, register array)
+- Hardware RTS/CTS flow control
+- 16550-compatible register layout
+- APB slave interface
+- Loopback self-test mode
+
 ### Quality Assurance
 
-- **RTL Coding Standards**: Enforced via `rules/coding-style.md` — covers naming, module declaration, clock/reset, FSM, handshake, FIFO, CDC, DFT, and synthesizability checks
+- **RTL Coding Standards**: Enforced via `rules/coding-style.md`
 - **Document Quality Checklists**: 22-item FS checklist, 36-item microarchitecture checklist, 39-item RTL implementation checklist
 - **Automated Lint**: Verilator `--lint-only -Wall` integration
 - **SVA Assertions**: SystemVerilog assertions bound via `ifdef ASSERT_ON`
 - **Degradation Strategy**: Graceful fallback when external tools are unavailable (D2, Wavedrom, RAG)
+
+### Prerequisites
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI or IDE extension
+- **Python 3.8+** with packages: `Pillow`, `pyyaml`, `pytest`
+- **Node.js 16+** with packages: `@wavedrom/cli`, `playwright-core`
+- **D2** diagram language (optional, for architecture diagram generation)
+- **Verilator** (optional, for RTL lint checks)
+- **Yosys** (optional, for synthesis verification)
 
 ### License
 

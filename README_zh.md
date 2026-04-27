@@ -10,54 +10,51 @@
 
 ### 核心特性
 
-- **6 个专业化 Agent**，覆盖芯片设计全生命周期：需求探索、功能规格、微架构、架构评审、RTL 编码和代码评审
+- **12 个专业化 Agent**，覆盖芯片设计全生命周期：需求探索、功能规格、微架构、架构评审、RTL 编码、综合时序、顶层集成、低功耗、DFT、验证架构、验证环境、项目管理
 - **230+ 个 Skill**，涵盖芯片专用任务、工程工作流、代码质量、多语言支持
 - **结构化知识库**，包含协议规范（AXI、AHB、APB、PCIe、USB、DDR 等）、CBB 库（FIFO、仲裁器、CDC、ECC 等）、CPU/MMU/网络参考
 - **文档模板**，用于功能规格书（FS）和微架构规格书，配备严格的质量检查清单
 - **图表生成流水线**，使用 D2（架构图、状态机）和 Wavedrom（时序图）编译为 PNG
 - **RTL 编码规范**，通过自动化 lint 检查和全面的设计规则验证强制执行
+- **内置 UART 示例**，展示从需求到 RTL 的完整设计流程
 
 ### 项目结构
 
 ```
 fnw/
 ├── .claude/
-│   ├── agents/            # 6 个专业化 AI Agent
+│   ├── agents/            # 12 个专业化 AI Agent
 │   │   ├── chip-requirement-arch.md   # 需求探索 & 方案论证
 │   │   ├── chip-fs-writer.md          # 功能规格书编写
 │   │   ├── chip-microarch-writer.md   # 微架构规格书编写
 │   │   ├── chip-arch-reviewer.md      # 架构评审 & 缺陷分析
 │   │   ├── chip-code-writer.md        # RTL 代码实现
-│   │   └── chip-arch.md               # 通用芯片架构 Agent
+│   │   ├── chip-sta-analyst.md        # 综合 & 时序分析
+│   │   ├── chip-top-integrator.md     # 顶层集成
+│   │   ├── chip-lowpower-designer.md  # 低功耗设计
+│   │   ├── chip-dft-engineer.md       # DFT 设计
+│   │   ├── chip-verfi-arch.md         # 验证架构
+│   │   ├── chip-env-writer.md         # 验证环境编写
+│   │   └── chip-project-lead.md       # 项目管理
 │   ├── skills/            # 230+ 个 Skill 定义
-│   │   ├── chip-impl-*/   # RTL 实现相关 Skill（编码、SDC/SVA、lint 等）
-│   │   ├── chip-png-*/    # 图表生成（D2、Wavedrom、接口图）
-│   │   ├── chip-*-architect/  # CDC、低功耗、可靠性架构
-│   │   └── ...            # 工程、测试、DevOps、安全等 Skill
 │   ├── knowledge/         # 结构化知识库
-│   │   ├── bus-protocol/  # AXI、AHB、APB、PCIe、USB、DDR、SPI、I2C、UART 等
-│   │   ├── cbb/           # 通用构建模块（FIFO、仲裁器、CDC、ECC 等）
-│   │   ├── IP/            # IP 核参考（ARM、RISC-V、Ethernet、DDR、PCIe、USB）
-│   │   ├── cpu/           # CPU 架构（流水线、Cache、分支预测、中断）
-│   │   ├── mmu/           # MMU（页表、TLB、虚拟化、内存保护）
-│   │   └── ...            # 网络协议、IO 协议、验证
 │   ├── rules/             # 编码规范 & 文档模板
-│   │   ├── coding-style.md              # RTL 编码规范（Verilog-2005）
-│   │   ├── function-spec-template.md    # FS 文档模板
-│   │   └── microarchitecture-template.md # 微架构文档模板
 │   ├── shared/            # 共享配置 & 质量检查清单
-│   ├── prompts/           # Agent 提示词模板
-│   ├── phases/            # 工作流阶段定义（JSON）
 │   ├── wiki/              # LLM Wiki 知识系统
 │   └── tools/             # 外部工具（d2、chromium 等）
+├── uart_work/             # UART 示例工作区（完整设计流程演示）
+│   ├── ds/doc/pr/         # 需求汇总、方案、ADR
+│   ├── ds/doc/fs/         # 功能规格书
+│   ├── ds/doc/ua/         # 微架构文档 + 评审报告
+│   ├── ds/rtl/            # RTL 源码（7 个子模块 + SVA）
+│   └── ds/run/            # 综合/Lint 脚本
 ├── memory/                # 跨会话持久记忆
-├── LICENSE                # MIT 许可证
 └── requirements.txt       # Python/Node.js 依赖规格
 ```
 
 ### 设计工作流
 
-插件实现了 5 阶段芯片设计工作流：
+插件实现完整的芯片设计工作流：
 
 | 阶段 | Agent | 输入 | 输出 |
 |------|-------|------|------|
@@ -66,90 +63,56 @@ fnw/
 | **阶段 3：微架构** | `chip-microarch-writer` | FS 文档 | 各子模块微架构规格（数据通路、FSM、FIFO、IP 集成） |
 | **阶段 4：评审** | `chip-arch-reviewer` | 微架构文档 | 评审报告（需求覆盖度、完整性、缺陷、协议合规） |
 | **阶段 5：RTL** | `chip-code-writer` | 评审通过的微架构 | Verilog RTL、SDC 约束、UPF、SVA 断言 |
+| **阶段 6：综合** | `chip-sta-analyst` | RTL + SDC | 综合报告、时序报告、面积报告 |
+| **阶段 7：集成** | `chip-top-integrator` | 子模块 RTL | 顶层模块、接口检查、系统 lint |
 
 ### Agent 一览
 
-| Agent | 角色 | 专长 |
-|-------|------|------|
-| **chip-requirement-arch** | 需求探索 & 方案论证 | 头脑风暴、多方案比选、约束收敛、DSE |
-| **chip-fs-writer** | 功能规格书编写 | 需求到规格映射、接口定义、PPA 规格、RTM |
-| **chip-microarch-writer** | 微架构规格书编写 | 数据通路设计、控制逻辑、FSM、FIFO、IP/CBB 集成 |
-| **chip-arch-reviewer** | 架构评审 & 缺陷分析 | 需求覆盖度、文档完整性、协议合规、PPA 审计 |
-| **chip-code-writer** | RTL 代码实现 | Verilog/RTL、CDC/RDC、低功耗、SDC、SVA、综合脚本 |
-
-### 芯片专用 Skill（14 个）
-
-| Skill | 说明 |
-|-------|------|
-| `chip-budget-allocator` | 系统级 PPA 指标按层级拆解到子模块 |
-| `chip-cdc-architect` | 时钟域划分与 CDC 信号同步策略 |
-| `chip-design-space-explorer` | 面积/性能/功耗三维帕累托最优设计探索 |
-| `chip-diagram-generator` | Mermaid/Wavedrom 图表生成 |
-| `chip-doc-structurer` | 文档章节结构与内容权重设计 |
-| `chip-interface-contractor` | 精确接口契约（端口、时序、SVA） |
-| `chip-low-power-architect` | 功耗域、隔离、保持、UPF 设计 |
-| `chip-ppa-formatter` | 结构化 PPA 规格表输出 |
-| `chip-protocol-compliance-checker` | AXI/ACE/CHI/TileLink/APB/AHB 协议合规检查 |
-| `chip-reliability-architect` | ECC/Parity/TMR、老化、IR Drop、ESD 分析 |
-| `chip-review-checklister` | 9 维度评审清单与完整性评分 |
-| `chip-rtl-guideline-generator` | RTL 编码规范生成（Clock/Reset/DFT/SVA） |
-| `chip-traceability-linker` | 需求追溯矩阵（RTM）与覆盖率统计 |
-| `chip-version-diff-generator` | 架构版本差异对比与影响分析 |
-
-### 知识库
-
-内置知识库覆盖：
-
-- **总线协议**（17 种）：AXI4、AXI4-Lite、AXI4-Stream、AHB、APB、PCIe、USB、DDR、SPI、I2C、UART、CAN、JTAG、MIPI、TileLink、Wishbone
-- **通用构建模块**（40+ 种）：FIFO、仲裁器、CDC 同步器、ECC、CRC、Crossbar、桶形移位器、时钟分频/门控、格雷码等
-- **IP 核**：ARM Cortex 系列、RISC-V、Ethernet MAC/PCS、DDR 控制器、PCIe 控制器、USB 控制器、PLL/DLL、SPI/I2C/UART
-- **CPU 架构**：流水线、Cache 层次结构、分支预测、中断控制器、多核
-- **MMU**：页表、TLB、内存保护、虚拟化、地址空间、内存属性
-- **验证方法学**：验证方法论参考
-
-### 环境要求
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI 或 IDE 扩展
-- **Python 3.8+**，依赖包：`Pillow`、`pyyaml`、`pytest`
-- **Node.js 16+**，依赖包：`@wavedrom/cli`、`playwright-core`
-- **D2** 图表语言（可选，用于架构图生成）
-
-### 安装
-
-1. 克隆本仓库到项目根目录：
-   ```bash
-   git clone <repository-url> .claude
-   ```
-
-2. 安装 Python 依赖：
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. 安装 Node.js 依赖：
-   ```bash
-   npm install
-   ```
-
-4. （可选）安装 D2 用于架构图生成：
-   - 从 [D2 releases](https://github.com/terrastruct/d2/releases) 下载
-   - 将 `d2.exe` 放入 `.claude/tools/d2/` 或添加到系统 PATH
+| Agent | 角色 | 唤醒名称 |
+|-------|------|----------|
+| **chip-requirement-arch** | 需求探索 & 方案论证 | 赵知几 / 知几 / 小几 / Archie |
+| **chip-fs-writer** | 功能规格书编写 | 钱典成 / 典成 / 小成 / Felix |
+| **chip-microarch-writer** | 微架构规格书编写 | 孙弘微 / 弘微 / 小微 / Marcus |
+| **chip-arch-reviewer** | 架构评审 & 缺陷分析 | 宋晶瑶 / 晶瑶 / Clara |
+| **chip-code-writer** | RTL 代码实现 | 张铭研 / 铭研 / Ethan |
+| **chip-sta-analyst** | 综合 & 时序分析 | 周闻哲 / 闻哲 / Winston |
+| **chip-top-integrator** | 顶层集成 | 陆灵犀 / 灵犀 / Lexi |
+| **chip-lowpower-designer** | 低功耗设计 | 沈未央 / 未央 / Shannon |
+| **chip-dft-engineer** | DFT 设计 | 陆青萝 / 青萝 / Tina |
+| **chip-verfi-arch** | 验证架构 | 顾衡之 / 衡之 / Daniel |
+| **chip-env-writer** | 验证环境编写 | 韩映川 / 映川 / Henry |
+| **chip-project-lead** | 项目管理 | 林若水 / 若水 / Linus |
 
 ### 使用方法
+
+#### 快速开始
+
+```bash
+# 1. 克隆仓库
+git clone <repository-url> fnw
+
+# 2. 安装依赖
+cd fnw
+pip install -r requirements.txt
+npm install
+
+# 3. 在 Claude Code 中使用
+# 直接告诉 Claude 你要设计什么模块即可
+```
 
 #### 启动新模块设计
 
 ```
-用户：帮我设计一个 PCIe RC 模块
+用户：帮我设计一个 UART 模块
 ```
 
 `chip-requirement-arch` Agent 将激活并引导您完成需求探索。
 
-#### 完整工作流示例
+#### 完整工作流示例（UART）
 
 ```bash
 # 阶段 1：需求探索
-用户：赵知几，帮我梳理一个 AXI-to-APB bridge 的需求
+用户：赵知几，帮我梳理一个 UART 模块的需求
 
 # 阶段 2：功能规格
 用户：小成，根据需求汇总写 FS 文档
@@ -158,21 +121,14 @@ fnw/
 用户：小微，基于 FS 写微架构文档
 
 # 阶段 4：架构评审
-用户：评审一下微架构文档
+用户：晶瑶，评审一下微架构文档
 
 # 阶段 5：RTL 实现
-用户：根据微架构文档生成 RTL 代码
+用户：铭研，根据微架构文档生成 RTL 代码
+
+# 阶段 6：综合验证
+用户：闻哲，对 RTL 进行综合和时序分析
 ```
-
-#### Agent 唤醒方式
-
-通过名称或昵称唤醒 Agent：
-
-| Agent | 唤醒名称 |
-|-------|---------|
-| chip-requirement-arch | 赵知几 / 知几 / 小几 / Archie / 架构师 / 需求师 |
-| chip-fs-writer | 钱典成 / 典成 / 小成 / Felix / 规格师 / FS师 |
-| chip-microarch-writer | 孙弘微 / 弘微 / 小微 / Sam / 微架构师 |
 
 #### 初始化模块工作目录
 
@@ -182,13 +138,45 @@ bash .claude/skills/chip-create-dir/init_workdir.sh <模块名>
 
 创建标准化目录结构，包含 `ds/`（设计）和 `dv/`（验证）两级子树。
 
+### 内置示例：UART
+
+项目包含一个完整的 UART 模块设计示例（`uart_work/`），展示从需求到 RTL 的全流程：
+
+| 文件 | 说明 |
+|------|------|
+| `ds/doc/pr/uart_requirement_summary_v1.0.md` | 需求汇总（17 条需求） |
+| `ds/doc/pr/uart_solution_v1.0.md` | 架构方案（4 个 ADR） |
+| `ds/doc/fs/uart_FS_v1.0.md` | 功能规格书（15 章，1250 行） |
+| `ds/doc/ua/*_microarch_v1.0.md` | 7 个子模块微架构文档 |
+| `ds/doc/ua/uart_review_report_v1.0.md` | 架构评审报告 |
+| `ds/rtl/*.v` | 7 个 RTL 源文件 + SVA 断言 |
+| `ds/run/` | Lint/综合脚本 + SDC 约束 |
+
+**UART 模块特性**：
+- 标准 UART 异步通信（5/6/7/8 数据位，1/1.5/2 停止位，奇偶校验）
+- 小数波特率发生器（9600~921600 bps，精度 < 0.1%）
+- TX/RX FIFO（深度 16，寄存器阵列）
+- 硬件 RTS/CTS 流控
+- 16550 兼容寄存器布局
+- APB 从接口
+- Loopback 自测试模式
+
 ### 质量保障
 
-- **RTL 编码规范**：通过 `rules/coding-style.md` 强制执行 — 覆盖命名、模块声明、时钟/复位、FSM、握手、FIFO、CDC、DFT 和可综合性检查
+- **RTL 编码规范**：通过 `rules/coding-style.md` 强制执行
 - **文档质量检查清单**：22 项 FS 检查、36 项微架构检查、39 项 RTL 实现检查
 - **自动化 Lint**：集成 Verilator `--lint-only -Wall`
 - **SVA 断言**：通过 `` `ifdef ASSERT_ON `` 绑定的 SystemVerilog 断言
 - **降级策略**：外部工具不可用时的优雅降级（D2、Wavedrom、RAG）
+
+### 环境要求
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI 或 IDE 扩展
+- **Python 3.8+**，依赖包：`Pillow`、`pyyaml`、`pytest`
+- **Node.js 16+**，依赖包：`@wavedrom/cli`、`playwright-core`
+- **D2** 图表语言（可选，用于架构图生成）
+- **Verilator**（可选，用于 RTL lint 检查）
+- **Yosys**（可选，用于综合验证）
 
 ### 许可证
 

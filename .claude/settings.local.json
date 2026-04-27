@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/skills/chip-create-dir/init_workdir.sh uart)",
+      "Bash(verilator --lint-only -Wall ../rtl/uart_fifo.v)",
+      "Bash(verilator --lint-only -Wall ../rtl/uart_baud_gen.v)",
+      "Bash(verilator --lint-only -Wall ../rtl/uart_tx.v)",
+      "Bash(verilator --lint-only -Wall ../rtl/uart_rx.v)",
+      "Bash(verilator --lint-only -Wall ../rtl/uart_reg_mod.v)",
+      "Bash(verilator --lint-only -Wall ../rtl/uart_ctrl.v)",
+      "Bash(export PATH=\"/d/work/ai/fnw/arch/.claude/tools/oss-cad-suite/bin:$PATH\")",
+      "Bash(verilator --version)"
+    ]
+  }
+}
