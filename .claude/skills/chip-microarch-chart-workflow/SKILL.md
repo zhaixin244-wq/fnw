@@ -16,9 +16,9 @@ tools:
 
 ```json
 {
-  "module": "{module_name}",
-  "submodule": "{submodule_name}",
-  "output_dir": "{module_name}_work/ds/doc/ua/tmp",
+  "module": "data_adpt",
+  "submodule": "input_if_mod",
+  "output_dir": "data_adpt_work/ds/doc/ua/tmp",
   "charts": ["arch", "datapath", "fsm", "timing", "intf"]
 }
 ```

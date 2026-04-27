@@ -9,6 +9,7 @@
 - [Overview](#overview)
 - [Requirements & Installation](#requirements--installation)
 - [Quick Start](#quick-start)
+- [Agent Usage Tips](#agent-usage-tips)
 - [Agent Details & Dialogue Examples](#agent-details--dialogue-examples)
 - [Design Workflow](#design-workflow)
 - [Built-in Example: UART](#built-in-example-uart)
@@ -188,6 +189,104 @@ User: 一步步来，先帮我梳理需求
 | "直接写" / "一口气完成" | Continuous mode: list plan then execute continuously |
 | "暂停一下" | Pause at any point |
 | "继续" | Resume from pause |
+
+### Agent Usage Tips
+
+#### When an Agent Reports Multiple Issues: Confirm One by One
+
+Agents (especially the review Agent) often list multiple issues at once (Critical / Major / Minor). **Don't accept all fixes at once — confirm each one individually**:
+
+```
+# ❌ Not recommended: accept all fixes at once
+User: Fix everything
+
+# ✅ Recommended: confirm each issue one by one
+User: 逐一与我确认
+
+# Agent will interact like this:
+Clara: Issue #1 (Critical): LSR[0] uses !rx_fifo_full instead of !rx_fifo_empty
+       Reason: Data Ready should indicate FIFO has data to read, i.e. FIFO is not empty
+       Fix: Change to !rx_fifo_empty
+       Confirm fix?
+
+User: Yes, continue to next
+
+Clara: Issue #2 (Major): IIR encoding has BI/FE/PE conflicting with RxAvailable
+       ...
+```
+
+**Why confirm one by one**:
+- Issues have different severity levels — you may want to fix Critical first, then review Major
+- Some issues may be false positives — you need to judge whether they truly need fixing
+- Fixing one issue may affect the context of other issues
+- Prevents the Agent from modifying code you didn't intend to change
+
+**When to use this approach**:
+- Architecture review reports (issue lists from `chip-arch-reviewer`)
+- RTL code review with multiple lint errors
+- FS/UA document consistency check results
+- Any time an Agent lists 3+ modification suggestions at once
+
+#### When to Use Plan Mode
+
+**Plan mode** is for complex tasks that need planning before execution. In Claude Code, you can enter Plan mode by:
+
+```
+User: Make a plan first, don't start coding yet
+User: Help me plan the design approach for this module
+User: /plan
+```
+
+**Recommended scenarios for Plan mode**:
+
+| Scenario | Reason | Example |
+|----------|--------|---------|
+| **New module design kickoff** | Need to confirm requirements scope and solution direction | "Help me design a DDR controller" |
+| **Multi-module integration** | Need to clarify inter-module interfaces and dependencies | "Integrate UART, SPI, I2C onto the peripheral bus" |
+| **Architecture refactoring** | Need to assess impact before making changes | "Change FIFO from register array to SRAM implementation" |
+| **Uncertain task scope** | Need to explore before deciding what to do | "Optimize the timing of this module" |
+| **Cross-phase work** | Involves multiple Agent collaboration | "Help me do the full flow from requirements to RTL" |
+| **Post-review fixes** | Multiple issues need prioritization | "The review report has 10 issues, help me plan the fix order" |
+
+**Scenarios where Plan mode is NOT recommended**:
+
+| Scenario | Reason |
+|----------|--------|
+| Clear, small-scope task | Direct execution is faster, e.g. "Change this register's reset value" |
+| Plan already exists, just execute | Agent already output a todo list, just say "Start" |
+| Urgent fix | Time-critical, go straight to code changes |
+
+**How Plan mode works**:
+
+```
+User: Make a plan first — I want to change the UART baud rate generator
+      from integer division to fractional division
+
+Claude: Let me analyze the impact and create a plan:
+
+## Change Plan
+
+### Impact Scope
+- uart_baud_gen.v — Core change (add fractional accumulator)
+- uart_top.v — Port connections may change
+- uart_FS_v1.0.md — PPA metrics update
+- uart_baud_gen_microarch_v1.0.md — Microarchitecture doc update
+
+### Execution Steps
+1. Update baud rate accuracy metrics in FS document
+2. Update data path design in microarchitecture document
+3. Modify uart_baud_gen.v RTL code
+4. Update uart_top.v port connections
+5. Re-review
+
+### Risks
+- Fractional accumulator adds ~20 registers
+- Need to verify baud rate accuracy meets < 0.1% target
+
+Confirm this plan?
+
+User: Confirmed, start execution
+```
 
 ---
 

@@ -15,18 +15,18 @@ description: 基于 UVM-1.2 的验证环境编码规范。适用于所有 UVM �
 
 | 文件类型 | 命名规则 | 示例 |
 |----------|----------|------|
-| Package | `{module}_pkg.sv` | `{module}_pkg.sv` |
+| Package | `{module}_pkg.sv` | `data_adpt_pkg.sv` |
 | Interface | `{module}_intf.sv` | `axi4_intf.sv` |
 | Transaction | `{module}_seq_item.sv` | `axi4_rd_seq_item.sv` |
 | Sequence | `{module}_seq.sv` | `axi4_rd_seq.sv` |
 | Driver | `{module}_driver.sv` | `axi4_driver.sv` |
 | Monitor | `{module}_monitor.sv` | `axi4_monitor.sv` |
 | Agent | `{module}_agent.sv` | `axi4_agent.sv` |
-| Scoreboard | `{module}_scoreboard.sv` | `{module}_scoreboard.sv` |
-| Coverage | `{module}_cov.sv` | `{module}_cov.sv` |
-| Env | `{module}_env.sv` | `{module}_env.sv` |
-| Test | `{module}_base_test.sv` | `{module}_base_test.sv` |
-| TB Top | `{module}_tb_top.sv` | `{module}_tb_top.sv` |
+| Scoreboard | `{module}_scoreboard.sv` | `data_adpt_scoreboard.sv` |
+| Coverage | `{module}_cov.sv` | `data_adpt_cov.sv` |
+| Env | `{module}_env.sv` | `data_adpt_env.sv` |
+| Test | `{module}_base_test.sv` | `data_adpt_base_test.sv` |
+| TB Top | `{module}_tb_top.sv` | `data_adpt_tb_top.sv` |
 
 **一个文件一个类**。例外：极小的 helper class（<30 行）可与关联类同文件。
 
@@ -63,11 +63,11 @@ description: 基于 UVM-1.2 的验证环境编码规范。适用于所有 UVM �
 | Driver | `{if}_driver` | `axi4_driver` |
 | Monitor | `{if}_monitor` | `axi4_monitor` |
 | Agent | `{if}_agent` | `axi4_agent` |
-| Scoreboard | `{module}_scoreboard` | `{module}_scoreboard` |
-| Coverage | `{module}_cov` | `{module}_cov` |
-| Env | `{module}_env` | `{module}_env` |
-| Config | `{if}_cfg` / `{module}_env_cfg` | `axi4_cfg` / `{module}_env_cfg` |
-| Test | `{module}_{scenario}_test` | `{module}_basic_test` |
+| Scoreboard | `{module}_scoreboard` | `data_adpt_scoreboard` |
+| Coverage | `{module}_cov` | `data_adpt_cov` |
+| Env | `{module}_env` | `data_adpt_env` |
+| Config | `{if}_cfg` / `{module}_env_cfg` | `axi4_cfg` / `data_adpt_env_cfg` |
+| Test | `{module}_{scenario}_test` | `data_adpt_basic_test` |
 | Interface | `{if}_intf` | `axi4_intf` |
 
 ### 2.2 成员变量命名
@@ -195,8 +195,8 @@ driver = new("driver", this);
 覆盖仅在 test 层进行，禁止在 env/agent 内部覆盖：
 
 ```systemverilog
-class {module}_stress_test extends {module}_base_test;
-    `uvm_component_utils({module}_stress_test)
+class data_adpt_stress_test extends data_adpt_base_test;
+    `uvm_component_utils(data_adpt_stress_test)
 
     virtual function void build_phase(uvm_phase phase);
         // 覆盖 sequence 类型
@@ -243,13 +243,13 @@ if (!uvm_config_db#(virtual axi4_intf)::get(this, "", "vif", vif))
 
 ```systemverilog
 // Test 中 set
-{module}_env_cfg env_cfg = {module}_env_cfg::type_id::create("env_cfg");
+data_adpt_env_cfg env_cfg = data_adpt_env_cfg::type_id::create("env_cfg");
 env_cfg.data_width = 32;
 env_cfg.ch_num     = 4;
-uvm_config_db#({module}_env_cfg)::set(this, "env", "env_cfg", env_cfg);
+uvm_config_db#(data_adpt_env_cfg)::set(this, "env", "env_cfg", env_cfg);
 
 // Env 中 get
-if (!uvm_config_db#({module}_env_cfg)::get(this, "", "env_cfg", cfg))
+if (!uvm_config_db#(data_adpt_env_cfg)::get(this, "", "env_cfg", cfg))
     `uvm_fatal("NOCFG", "Environment config not set")
 ```
 
@@ -478,15 +478,15 @@ endclass
 ### 9.1 标准 Scoreboard 模板
 
 ```systemverilog
-class {module}_scoreboard extends uvm_scoreboard;
-    `uvm_component_utils({module}_scoreboard)
+class data_adpt_scoreboard extends uvm_scoreboard;
+    `uvm_component_utils(data_adpt_scoreboard)
 
     // TLM 端口
     uvm_analysis_imp_decl(_exp)    // 期望数据（来自上游 monitor）
     uvm_analysis_imp_decl(_act)    // 实际数据（来自下游 monitor）
 
-    uvm_analysis_imp_exp #(axi4_seq_item, {module}_scoreboard) exp_imp;
-    uvm_analysis_imp_act #(axi4_seq_item, {module}_scoreboard) act_imp;
+    uvm_analysis_imp_exp #(axi4_seq_item, data_adpt_scoreboard) exp_imp;
+    uvm_analysis_imp_act #(axi4_seq_item, data_adpt_scoreboard) act_imp;
 
     // 期望队列
     axi4_seq_item exp_queue[$];
@@ -557,13 +557,13 @@ endclass
 ### 10.1 Covergroup 定义
 
 ```systemverilog
-class {module}_cov extends uvm_component;
-    `uvm_component_utils({module}_cov)
+class data_adpt_cov extends uvm_component;
+    `uvm_component_utils(data_adpt_cov)
 
-    uvm_analysis_imp #(axi4_seq_item, {module}_cov) item_imp;
+    uvm_analysis_imp #(axi4_seq_item, data_adpt_cov) item_imp;
 
     // 功能覆盖率
-    covergroup cg_{module};
+    covergroup cg_data_adpt;
         cp_xact_type: coverpoint item.xact_type {
             bins read  = {AXI_READ};
             bins write = {AXI_WRITE};
@@ -584,16 +584,16 @@ class {module}_cov extends uvm_component;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
-        cg_{module} = new();
+        cg_data_adpt = new();
     endfunction
 
     virtual function void write(axi4_seq_item item);
-        cg_{module}.sample();
+        cg_data_adpt.sample();
     endfunction
 
     virtual function void report_phase(uvm_phase phase);
         `uvm_info("COV", $sformatf("Functional coverage: %.1f%%",
-            cg_{module}.get_inst_coverage()), UVM_LOW)
+            cg_data_adpt.get_inst_coverage()), UVM_LOW)
     endfunction
 endclass
 ```
@@ -685,8 +685,8 @@ endinterface
 ### 12.1 Config Object 模板
 
 ```systemverilog
-class {module}_env_cfg extends uvm_object;
-    `uvm_object_utils({module}_env_cfg)
+class data_adpt_env_cfg extends uvm_object;
+    `uvm_object_utils(data_adpt_env_cfg)
 
     // 编译时参数（来自 DUT parameter）
     int data_width = 32;
@@ -710,7 +710,7 @@ class {module}_env_cfg extends uvm_object;
         ch_num inside {[1:8]};
     }
 
-    function new(string name = "{module}_env_cfg");
+    function new(string name = "data_adpt_env_cfg");
         super.new(name);
         axi_cfg = axi4_cfg::type_id::create("axi_cfg");
         apb_cfg = apb_cfg::type_id::create("apb_cfg");
@@ -775,15 +775,15 @@ endtask
 | O-06 | 超时保护 | `uvm_top.set_timeout(10ms)` |
 
 ```systemverilog
-class {module}_base_test extends uvm_test;
-    `uvm_component_utils({module}_base_test)
+class data_adpt_base_test extends uvm_test;
+    `uvm_component_utils(data_adpt_base_test)
 
     virtual task run_phase(uvm_phase phase);
-        {module}_base_seq seq;
+        data_adpt_base_seq seq;
         phase.raise_objection(this, "Starting sequence");
         phase.phase_done.set_drain_time(this, 100ns);
 
-        seq = {module}_base_seq::type_id::create("seq");
+        seq = data_adpt_base_seq::type_id::create("seq");
         seq.start(env.axi_agt.sequencer);
 
         phase.drop_objection(this, "Sequence completed");
@@ -1178,9 +1178,9 @@ endclass
 
 | 类型 | 命名规则 | 示例 |
 |------|----------|------|
-| 寄存器类 | `ral_reg_{module}_{REG}` | `ral_reg_{module}_CTRL` |
-| Block 类 | `ral_block_{module}_reg_block` | `ral_block_{module}_reg_block` |
-| Adapter 类 | `{module}_reg_adapter` | `{module}_reg_adapter` |
+| 寄存器类 | `ral_reg_{module}_{REG}` | `ral_reg_data_adpt_CTRL` |
+| Block 类 | `ral_block_{module}_reg_block` | `ral_block_data_adpt_reg_block` |
+| Adapter 类 | `{module}_reg_adapter` | `data_adpt_reg_adapter` |
 | Block 实例 | `ral_model` 或 `{module}_reg_block` | `ral_model` |
 | Adapter 实例 | `reg_adapter` | `reg_adapter` |
 | Map 名 | `default_map` | `default_map` |

@@ -20,7 +20,75 @@ description: RTL 代码实现 — 逐子模块实现数据通路+控制逻辑+CB
 2. **控制逻辑 + FSM**：从微架构 §5.3 两段式状态机
 3. **CBB 集成**：从 RAG 检索结果实例化，标注 `// CBB Ref`
 4. **接口逻辑**：valid/ready 握手、背压、异常处理
-5. 保存到 `{module}_work/rtl/{submodule}.v`
+5. 保存到 `{module}_work/ds/rtl/{submodule}.v`
+
+## 模板化 always 块骨架
+
+> 编码时直接复用以下模板，减少 LLM 推理开销，提升代码一致性。`{...}` 为占位符。
+
+### 复位模板（异步复位同步释放）
+```verilog
+// Ref: Arch-Sec-{X.Y} — {信号功能描述}
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        {signal}_r <= {reset_value};
+    end else begin
+        {signal}_r <= {signal}_nxt;
+    end
+end
+```
+
+### FSM 两段式模板
+```verilog
+// FSM 段1：时序逻辑存状态
+// Ref: Arch-Sec-{X.Y} — {状态机功能描述}
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) state_cur <= S_IDLE;
+    else state_cur <= state_nxt;
+end
+
+// FSM 段2：组合逻辑算次态
+always @(*) begin
+    state_nxt = S_IDLE;  // 默认值（防 latch）
+    case (state_cur)
+        S_IDLE: if ({condition}) state_nxt = S_WORK;
+        S_WORK: state_nxt = {done} ? S_IDLE : S_WORK;
+        default: state_nxt = S_IDLE;  // 非法状态回收
+    endcase
+end
+```
+
+### 握手模板（Valid-Ready）
+```verilog
+// Valid-Ready 握手模板
+// Ref: Arch-Sec-{X.Y} — {接口功能描述}
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) valid_r <= 1'b0;
+    else if (valid_r && ready) valid_r <= next_valid;  // 握手后更新
+    else if (!valid_r) valid_r <= next_valid;           // 无数据时可更新
+end
+
+assign ready = !downstream_backpressure;  // ready 仅依赖下游
+```
+
+### 组合逻辑模板（防 latch）
+```verilog
+always @(*) begin
+    // 默认值（必须）
+    {output1} = {default1};
+    {output2} = {default2};
+    case ({selector})
+        {VAL_A}: begin
+            {output1} = {value_a1};
+            {output2} = {value_a2};
+        end
+        {VAL_B}: begin
+            {output1} = {value_b1};
+        end
+        default: ;  // case default（必须）
+    endcase
+end
+```
 
 ## 架构冻结铁律
 ```

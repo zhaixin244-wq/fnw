@@ -96,7 +96,7 @@
     {
       "id": "sdc_sva_scripts",
       "name": "SVA + Run 脚本生成",
-      "skill": "inline",
+      "skill": "chip-impl-sdc-sva",
       "description": "生成 SVA 断言 + run 目录脚本（.f / .sdc / lint.sh / synth_yosys.tcl）",
       "inputs": [
         { "id": "rtl_files", "type": "array", "item_type": "file_path" },
@@ -118,7 +118,7 @@
     {
       "id": "quality_check",
       "name": "质量门禁（Lint + 综合）",
-      "skill": "inline",
+      "skill": "chip-impl-quality-gate",
       "description": "执行 Lint 检查（Verilator）+ 综合检查（Yosys），不通过进入自愈循环",
       "inline_steps": [
         "mkdir -p {work_dir}/ds/report/lint {work_dir}/ds/report/syn",

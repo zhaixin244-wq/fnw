@@ -55,116 +55,33 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 2. 组合逻辑：`always @(*)` 必须赋默认值，case 有 default，if 有 else
 3. FSM：用 `localparam` 定义状态，禁止 `define`，两段式
 4. 握手：`valid` 不能依赖 `ready` 的组合逻辑（防组合环路）
-5. always 块：≤ 100 行，生成信号 < 5 个，语义不相近拆分
+5. always 块：≤ 100 行（复杂逻辑可放宽至 200 行），生成信号 < 5 个，语义不相近拆分
 6. 禁止：casex/casez、task、门控时钟、位置关联实例化、单字母名
 
-# 强制质量门禁
+# RTL Bug 检查（Skill 外置）
+
+> **铁律：RTL 交付前必须调用 `chip-rtl-bug-checker` Skill 执行 Bug 模式检查。**
+> Skill 内置 6 大类检查项（流水线/状态机、输入锁存、接口连接、FIFO/流控、位域/宽度、资源冲突），基于 data_adpt 实战经验。
+
+**调用时机**：每个子模块 RTL 编写完成后、质量门禁执行前。
+**降级处理**：Skill 调用失败时，内化执行核心检查项（FSM 边界检查、FIFO 深度检查、位宽匹配检查）。
+
+# 强制质量门禁（Skill 外置）
 
 > **铁律：Lint 和综合检查是 RTL 交付的强制前置条件，不可跳过、不可降级。**
 > **铁律：RTL 生成后必须自动生成 run 目录脚本并执行检查，禁止"只写代码不跑检查"。**
 
 | 门禁 | 强制级别 | 通过标准 | 失败行为 |
 |------|----------|----------|----------|
-| **Lint** | **MUST** | Verilator `--lint-only -Wall` 零 error | 进入自愈循环修复 |
-| **综合** | **MUST** | Yosys 综合零 error + 面积合理 | 进入自愈循环优化 |
+| **Lint** | **MUST** | Verilator `--lint-only -Wall` 零 error | 自愈循环修复 |
+| **综合** | **MUST** | Yosys 综合零 error + 面积合理 | 自愈循环优化 |
 | **自检** | **MUST** | IC-01~39 + IM-01~08 全部通过 | 逐项修复后重新自检 |
 
 **违反门禁的交付物一律视为无效，chip-arch-reviewer 有权拒绝评审。**
 
-## 质量门禁执行流程（内联，不依赖外部 Skill）
-
-> 以下步骤在 RTL + SVA 生成完成后**自动执行**，无需用户触发。
-
-### Step 1：生成 run 目录脚本
-
-在 `{work_dir}/run/` 下生成以下文件：
-
-**1a. `{module}.f`（文件列表）**：
-```
-// SRAM stub（lint/sim 用）
-{rtl_dir}/sram_1r1w_tp_stub.v
-// 子模块（按依赖顺序）
-{rtl_dir}/{submodule1}.v
-{rtl_dir}/{submodule2}.v
-...
-// 顶层
-{rtl_dir}/{module}_top.v
-```
-
-**1b. `{module}.sdc`（SDC 约束）**：
-从微架构文档 §6 提取 SDC 约束建议，包含：
-- `create_clock`（周期从 FS §8.1 获取）
-- `set_input_delay`（所有输入端口）
-- `set_output_delay`（所有输出端口）
-- `set_false_path -from [get_ports rst_n]`
-
-**1c. `lint.sh`（Lint 脚本）**：
-```bash
-#!/bin/bash
-VERILATOR=".claude/tools/oss-cad-suite/bin/verilator"
-RTL_DIR="../ds/rtl"
-# 逐模块 lint + 顶层全量 lint
-${VERILATOR} --lint-only -Wall ${files} 2>&1 | tee lint_${module}.log
-```
-
-**1d. `synth_yosys.tcl`（综合脚本）**：
-```tcl
-# 读入 RTL → hierarchy -check → proc → opt → techmap → stat → write_netlist
-```
-
-### Step 2：执行 Lint 检查
-
-```bash
-cd {work_dir}/run && bash lint.sh all 2>&1 | tee {work_dir}/ds/report/lint/lint_summary.log
-```
-
-**判定标准**：
-- 输出包含 `Error` → **FAIL**，进入自愈循环
-- 仅 `Warning`（PINCONNECTEMPTY/TIMESCALEMOD 等预期警告）→ **PASS**
-- 零 error 零 warning → **PASS**
-
-### Step 3：执行综合检查
-
-```bash
-cd {work_dir}/run && yosys synth_yosys.tcl 2>&1 | tee {work_dir}/ds/report/syn/synth_summary.log
-```
-
-**判定标准**：
-- Yosys 输出 `ERROR` → **FAIL**，进入自愈循环
-- 综合成功 + `stat` 输出面积数据 → **PASS**
-- 面积与 PPA 预估差异 >50% → 标注 `[AREA-WARNING]`，不阻塞
-
-### Step 4：自愈循环
-
-Lint/综合失败时的修复流程：
-
-```
-失败 → 读取错误信息 → 定位 RTL 文件+行号 → 分析原因 → 修复代码 → 重新执行检查
-```
-
-**自愈规则**：
-| 规则 | 说明 |
-|------|------|
-| 最大迭代 | 10 次（超过暂停等待用户确认） |
-| 修复范围 | 仅修复当前错误，不引入新逻辑 |
-| 架构冻结 | 自愈修复不得改变架构设计 |
-| 日志记录 | 每次修复记录：错误→原因→修复内容→结果 |
-| 振荡检测 | 同一错误反复出现 3 次 → 暂停，输出根因分析 |
-
-### 交付物检查清单
-
-RTL 交付时必须包含以下文件（缺一不可）：
-
-| # | 文件 | 路径 | 门禁 |
-|---|------|------|------|
-| 1 | RTL 源码 | `{work_dir}/rtl/{module}.v` | Lint PASS |
-| 2 | SVA 断言 | `{work_dir}/rtl/{module}_sva.sv` | - |
-| 3 | SDC 约束 | `{work_dir}/run/{module}.sdc` | - |
-| 4 | 文件列表 | `{work_dir}/run/{module}.f` | - |
-| 5 | Lint 脚本 | `{work_dir}/run/lint.sh` | - |
-| 6 | 综合脚本 | `{work_dir}/run/synth_yosys.tcl` | - |
-| 7 | Lint 报告 | `{work_dir}/ds/report/lint/lint_summary.log` | ALL PASS |
-| 8 | 综合报告 | `{work_dir}/ds/report/syn/synth_summary.log` | ALL PASS |
+**调用时机**：RTL + SVA + run 脚本生成完成后自动执行。
+**降级处理**：Skill 调用失败时，内化执行核心流程（iverilog lint → yosys synth → 自愈修复）。
+**执行细节**：详见 `chip-impl-quality-gate` Skill（环境检测/Lint/综合/自愈循环/迭代控制）。
 
 # 共享协议引用
 - **Wiki 检索**：遵循 `.claude/shared/wiki-mandatory-search.md`（基于 LLM Wiki 的结构化知识检索，CBB 实例化必须引用 wiki 页面，注释中标注 `// CBB Ref: wiki/entities/{name}.md`，无文档标记 `[CBB-MISSING]`）
@@ -200,25 +117,24 @@ RTL 交付时必须包含以下文件（缺一不可）：
 ## 代办清单（{连续/步进}模式）
 | # | 步骤 | 执行方式 | 预期输出 | 组 | 状态 |
 |---|------|----------|----------|-----|------|
-| 1 | 输入确认 | 内联执行 | 缺失项清单 | A | ⬜ |
+| 1 | 输入确认 | Skill:chip-impl-input-triage | 缺失项清单 | A | ⬜ |
 | 2 | Wiki 检索 | Skill:wiki-query | CBB/协议 Wiki 页面 | A | ⬜ |
-| 3 | 模块结构规划 | 内联执行 | 端口列表+文件清单 | A | ⬜ |
-| 4 | RTL 代码实现 | 内联执行 | RTL 源码 .v | B | ⬜ |
-| 5 | SVA 断言编写 | 内联执行 | SVA 文件 _sva.sv | C | ⬜ |
-| 6 | 生成 run 脚本 | 内联执行 | .f + .sdc + lint.sh + synth.tcl | C | ⬜ |
-| 7 | 执行 Lint 检查 | 内联执行(Bash) | lint_summary.log ALL PASS | D | ⬜ |
-| 8 | 执行综合检查 | 内联执行(Bash) | synth_summary.log ALL PASS | D | ⬜ |
-| 9 | 自检 | 内联执行 | 自检报告 | D | ⬜ |
-| 10 | 交付 | 内联执行 | 交付清单 | D | ⬜ |
+| 3 | 模块结构规划 | Skill:chip-impl-module-structure | 端口列表+文件清单 | A | ⬜ |
+| 4 | RTL 代码实现 | Skill:chip-impl-rtl-coding | RTL 源码 .v | B | ⬜ |
+| 5 | Bug 检查 | Skill:chip-rtl-bug-checker | Bug 检查报告 | B | ⬜ |
+| 6 | SVA + Run 脚本 | Skill:chip-impl-sdc-sva | _sva.sv + .f + .sdc + lint.sh + synth.tcl | C | ⬜ |
+| 7 | 质量门禁 | Skill:chip-impl-quality-gate | lint + synth ALL PASS | D | ⬜ |
+| 8 | 自检 | Skill:chip-impl-self-check | 自检报告 | D | ⬜ |
+| 9 | 交付 | Skill:chip-impl-delivery | 交付清单 | D | ⬜ |
 ```
 
-**关键变化**：步骤 6-8 是**自动连续执行**的——RTL 写完后立即生成脚本、立即跑 lint、立即跑综合，不需要用户额外触发。
+**关键变化**：步骤 7-9 是**自动连续执行**的——RTL 写完后立即生成脚本、立即跑 lint、立即跑综合，不需要用户额外触发。
 
 **状态流转示例**（质量门禁失败→自愈→通过）：
 ```markdown
-| 7 | 执行 Lint 检查 | 内联执行(Bash) | ALL PASS | D | ❌ |  ← Lint 失败
-| 7 | 执行 Lint 检查 | 内联执行(Bash) | ALL PASS | D | 🔄 |  ← 自愈修复中（读错误→定位→修复→重跑）
-| 7 | 执行 Lint 检查 | 内联执行(Bash) | ALL PASS | D | ✅ |  ← 修复通过
+| 8 | 执行 Lint 检查 | 内联执行(Bash) | ALL PASS | D | ❌ |  ← Lint 失败
+| 8 | 执行 Lint 检查 | 内联执行(Bash) | ALL PASS | D | 🔄 |  ← 自愈修复中（读错误→定位→修复→重跑）
+| 8 | 执行 Lint 检查 | 内联执行(Bash) | ALL PASS | D | ✅ |  ← 修复通过
 ```
 
 ## 暂停规则
@@ -240,70 +156,32 @@ FIFO / Arbiter / CDC / CRC / ECC / RAM / 总线桥 / 外设 / 编码 / 资源管
 ```
 Wiki 检索 CBB → 找到候选 → 对比需求 vs CBB 能力
   ├─ CBB 完全满足 → 直接复用（标注 CBB Ref）
-  ├─ CBB 部分满足 → 进入例外确认流程（见下方）
+  ├─ CBB 部分满足 → 调用 chip-cbb-exception-confirm Skill
   └─ CBB 不存在   → 自研模块（独立文件，标注 [CBB-CUSTOM]）
 ```
 
-## 例外确认流程（CBB 部分满足时）
-
-> 当 CBB 与需求存在差异时，**逐项**与用户确认，禁止一次性抛出所有差异。
-
-### Step 1：差异识别
-
-逐项对比 CBB spec vs 需求，输出差异表：
-
-| # | 对比项 | CBB 能力 | 需求要求 | 差异描述 | 影响 |
-|---|--------|----------|----------|----------|------|
-| 1 | {参数} | {CBB值} | {需求值} | {差异} | {功能/性能/面积影响} |
-
-### Step 2：逐项确认
-
-每条差异单独询问用户：
-```
-[CBB-DIFF-CONFIRM]
-CBB：{cbb_name}
-差异项 #N：{对比项}
-CBB 能力：{CBB值}
-需求要求：{需求值}
-影响：{影响描述}
-
-请确认：
-1. 是否可接受 CBB 的能力？（接受 → 使用 CBB，放弃该需求项）
-2. 还是需要自研替代？（自研 → 进入 Step 3）
-```
-
-### Step 3：自研类 CBB 模块
-
-用户确认需自研后，按以下规则生成：
-
-| 规则 | 说明 |
-|------|------|
-| **独立文件** | 单独一个 `.v` 文件，不混入主模块 |
-| **独立 module** | 文件内只有一个 module，命名 `{top_module}_{cbb_type}_custom.v` |
-| **接口对齐 CBB** | 尽量保持与 CBB 相同的接口风格，便于后续替换 |
-| **标注来源** | 文件头标注 `// [CBB-CUSTOM] 替代 CBB: {cbb_name}，原因: {差异摘要}` |
-| **注释 CBB Ref** | `// CBB Ref: wiki/entities/{cbb_name}.md（不满足，已自研替代）` |
-| **纳入 filelist** | 自动加入 `run/{module}.f` 文件列表 |
-| **Lint 覆盖** | 自研模块必须通过 Lint 检查 |
-
-### 示例
-
-```
-需求：48 深度同步 FIFO（非 2 的幂）
-CBB：sync_fifo（深度必须 2 的幂，最接近为 64）
-
-差异确认：
-  #1 深度：CBB=64（2^6），需求=48 → 浪费 16 项存储
-  用户选择：接受 CBB → 使用 sync_fifo DEPTH=64
-
-  或
-
-  用户选择：自研 → 生成 {module}_fifo_custom.v（48 深度）
-```
+**调用时机**：CBB 部分满足时。
+**降级处理**：Skill 调用失败时，内联执行差异表输出 + 逐项确认。
 
 ## CBB 集成流程（标准路径）
 
 Wiki 检索 entities/{cbb}.md → 按标准示例实例化 → 注释标注 `// CBB Ref: wiki/entities/{name}.md` → 缺失标记 `[CBB-MISSING]`。
+
+## CBB 抽象决策（Skill 外置）
+
+> **铁律：CBB 抽象前必须评估接口兼容性、参数化能力和复用价值。**
+> 调用 `chip-cbb-decision` Skill 自动评估是否需要抽象为 CBB。
+
+**调用时机**：模块结构规划阶段，发现可复用逻辑时。
+**降级处理**：Skill 调用失败时，使用内联判断标准：接口标准化 + 参数可配置 + 功能自包含 + 复用收益 ≥ 2 处。
+
+# 仲裁策略选择（Skill 外置）
+
+> **铁律：仲裁策略选择必须基于公平性需求和饥饿风险评估。**
+> 调用 `chip-arbiter-selector` Skill 自动选择合适的仲裁策略。
+
+**调用时机**：RTL 编码阶段，需要实现仲裁逻辑时。
+**降级处理**：Skill 调用失败时，使用内联判断：持续流 + 3+ 通道 → RR；突发流 + 无 QoS → 固定优先级。
 
 # 数据型配置
 
@@ -332,6 +210,20 @@ Wiki 检索 entities/{cbb}.md → 按标准示例实例化 → 注释标注 `// 
 # 多模块并行
 
 调用 `chip-impl-parallel-dev` Skill（Plan Mode → 并行 subagent → 顶层集成 → PR 确认 → RTL Review）。
+
+# 编码规范补充（基于 data_adpt 实战经验）
+
+> **铁律：以下规范项为强制检查项，违反将导致功能 Bug。**
+
+## G. 位域与参数化（防 BUG-09/10/11）
+- G1: 寄存器位域偏移必须用 `localparam` 定义，禁止硬编码数字
+- G2: 赋值两侧位宽必须匹配，不同时需显式截位 `[W-1:0]` 或扩展 `{pad, val}`
+- G3: FIFO 深度必须为 2 的幂，用 `localparam DEPTH = 2**$clog2(REQ_DEPTH)` 对齐
+
+## H. 资源冲突处理（防 BUG-12）
+- H1: 同一寄存器数组同周期多写端口，必须定义优先级（reclaim > alloc > write）
+- H2: 写冲突逻辑必须在 always 块开头用 if-else 明确优先级
+- H3: 冲突场景必须在注释中标注 `// Priority: X > Y`
 
 # 修改现有 RTL 规则
 

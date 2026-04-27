@@ -1,0 +1,140 @@
+---
+name: chip-arbiter-selector
+description: 仲裁策略选择 Skill。基于请求模式、通道数和 QoS 要求，自动选择合适的仲裁策略（Fixed Priority / Round-Robin / WRR），并评估饥饿风险。当 chip-code-writer 在 RTL 编码阶段需要实现仲裁逻辑时调用。
+tools:
+  - Read
+---
+
+# 仲裁策略选择器
+
+> 基于公平性需求和饥饿风险评估，选择合适的仲裁策略。chip-code-writer 在 RTL 编码阶段调用。
+
+## 输入
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| scenario | string | 是 | 仲裁场景描述 |
+| channel_count | int | 是 | 仲裁通道数 |
+| request_pattern | string | 是 | 请求模式：`continuous`（持续流）/ `bursty`（突发流）/ `mixed`（混合） |
+| qos_requirements | object[] | 否 | 各通道 QoS 要求（带宽/延迟） |
+| protocol_priority | string | 否 | 协议规定的优先级（如有） |
+
+## 输出
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| strategy | string | `fixed_priority` / `round_robin` / `weighted_rr` |
+| starvation_risk | string | `high` / `medium` / `low` |
+| reason | string | 选择理由 |
+| implementation_notes | string | RTL 实现要点 |
+
+## 策略选择规则
+
+### 固定优先级（Fixed Priority）适用条件（需全部满足）
+
+1. **无并发饥饿**：高优先级请求不会持续阻塞低优先级
+2. **请求模式**：请求到达是突发性的，非持续流
+3. **协议要求**：上游协议明确规定优先级
+
+### Round-Robin 适用条件（任一满足）
+
+1. **公平性要求**：各通道需平等带宽
+2. **持续流场景**：请求持续到达，可能造成饥饿
+3. **多通道竞争**：3+ 通道同时竞争共享资源
+
+### Weighted Round-Robin 适用条件
+
+1. **差异化 QoS**：各通道有不同带宽要求
+2. **非均匀负载**：通道间负载差异 > 2x
+
+## 饥饿风险评估矩阵
+
+| 风险等级 | 请求模式 | 优先级策略 | QoS 要求 | 推荐策略 |
+|----------|----------|-----------|----------|----------|
+| **高风险** | 持续流 | 固定优先级 | 低优先级通道有 QoS | 必须用 RR |
+| **中风险** | 突发流 | 固定优先级 | 低优先级通道有延迟要求 | 建议用 RR |
+| **低风险** | 突发流 | 固定优先级 | 无 QoS 要求 | 可用固定优先级 |
+| **无风险** | 突发流 | - | 无并发 | 可用固定优先级 |
+
+## 执行流程
+
+```
+分析请求模式 → 评估饥饿风险 → 检查 QoS 要求 → 选择策略 → 输出实现要点
+```
+
+## 输出格式
+
+```markdown
+## 仲裁策略选择报告
+
+**场景**：{scenario}
+**通道数**：{channel_count}
+**请求模式**：{request_pattern}
+
+### 饥饿风险评估
+
+| 评估项 | 结果 |
+|--------|------|
+| 请求模式 | {continuous/bursty/mixed} |
+| 优先级策略 | {固定/无} |
+| QoS 要求 | {有/无} |
+| 风险等级 | {high/medium/low} |
+
+### 策略选择
+
+**推荐策略**：{fixed_priority / round_robin / weighted_rr}
+**理由**：{reason}
+
+### RTL 实现要点
+
+{implementation_notes}
+```
+
+## 实战案例
+
+| 场景 | 请求模式 | 通道数 | QoS | 风险 | 策略 | 原因 |
+|------|----------|--------|-----|------|------|------|
+| 4ch RAM 请求仲裁 | 持续流 | 4 | 无 | 高 | **RR** | 各通道平等，需防饥饿 |
+| pending 通道选择 | 持续流 | 4 | 无 | 高 | **RR** | 多通道竞争，公平性重要 |
+| debubble buffer 输出 | 突发流 | 2 | 无 | 低 | **固定优先级** | 不会同时满足，无饥饿风险 |
+| output_if_mod ready_q_push | 突发流 | N | 无 | 低 | **固定优先级** | node 动态分配，近似 FIFO |
+| W1/W2 SRAM 写冲突 | 突发流 | 2 | 协议规定 | 低 | **固定优先级 (W2优先)** | 协议要求，W2 是返回数据 |
+
+## RTL 编码模板
+
+### 固定优先级
+
+```verilog
+// Fixed priority: ch0 > ch1 > ch2 > ch3
+always @(*) begin
+    grant_idx = 2'd0;
+    if (req_vec[0])      grant_idx = 2'd0;
+    else if (req_vec[1]) grant_idx = 2'd1;
+    else if (req_vec[2]) grant_idx = 2'd2;
+    else if (req_vec[3]) grant_idx = 2'd3;
+end
+```
+
+### Round-Robin
+
+```verilog
+// Round-robin with pointer update on grant
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) rr_ptr <= 2'd0;
+    else if (grant_valid) rr_ptr <= grant_idx + 1'b1;
+end
+
+always @(*) begin
+    grant_idx = rr_ptr;
+    for (i = 0; i < 4; i = i + 1) begin
+        if (req_vec[(rr_ptr + i) % 4]) begin
+            grant_idx = (rr_ptr + i) % 4;
+        end
+    end
+end
+```
+
+## 降级处理
+
+- 输入信息不完整 → 默认选择 RR（最安全），标注 `[INPUT-INCOMPLETE]`
+- 无法判断请求模式 → 默认选择 RR，标注 `[PATTERN-UNKNOWN]`

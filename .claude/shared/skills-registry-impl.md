@@ -14,7 +14,7 @@
 | `chip-impl-module-structure` | module_structure | 端口提取、子模块划分、文件清单 | 输入确认后 |
 | `chip-impl-rtl-coding` | rtl_impl | RTL 编码（数据通路+控制+CBB+接口） | 结构规划后 |
 | `chip-impl-sdc-sva` | sdc_sva | SDC/SVA/TB 编写 | RTL 完成后 |
-| *(内联)* chip-impl-quality-gate | quality_check | Lint+综合门禁+自愈循环 | SDC/SVA 完成后。**内联在 agent 定义中，不依赖外部 Skill** |
+| `chip-impl-quality-gate` | quality_check | Lint+综合门禁+自愈循环 | SDC/SVA 完成后 |
 | `chip-impl-self-check` | self_check | IC-01~39 + IM-01~08 自检 | 质量门禁通过后 |
 | `chip-impl-delivery` | delivery | 交付物清单验证+打包 | 自检通过后 |
 
@@ -35,6 +35,9 @@
 
 | Skill | 用途 | 调用时机 |
 |-------|------|----------|
+| `chip-rtl-bug-checker` | RTL Bug 模式检查（6 大类） | 每个子模块 RTL 编写完成后 |
+| `chip-cbb-decision` | CBB 抽象决策评估 | 模块结构规划阶段，发现可复用逻辑时 |
+| `chip-arbiter-selector` | 仲裁策略选择 + 饥饿风险评估 | RTL 编码阶段，需要实现仲裁逻辑时 |
 | `chip-cdc-architect` | CDC 信号表 + 同步策略 | 跨时钟域设计时 |
 | `chip-low-power-architect` | Power Domain + Isolation + UPF | 低功耗设计时 |
 | `chip-reliability-architect` | ECC/Parity/TMR + 老化裕量 | 可靠性设计时 |
