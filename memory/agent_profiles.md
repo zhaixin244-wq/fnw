@@ -38,7 +38,7 @@ type: project
 - **唤醒方式**：芯研 / Corey / RTL师 / 写RTL
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、编码规范偏好
-  - `data_adpt_project.md` — 项目架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格
   - `toolchain_reference.md` — 工具链（Verilator/Yosys）
 
@@ -48,7 +48,7 @@ type: project
 - **唤醒方式**：晶瑶 / Clara / 评审师 / review
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、专业领域、偏好
-  - `data_adpt_project.md` — 当前项目全貌与架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格偏好
   - `toolchain_reference.md` — 图表生成工具链
 
@@ -58,7 +58,7 @@ type: project
 - **唤醒方式**：闻哲 / 验证架构师 / 验证师 / Winston / verfi
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、专业领域、偏好
-  - `data_adpt_project.md` — 当前项目全貌与架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格偏好
   - `toolchain_reference.md` — 图表生成工具链
 
@@ -68,7 +68,7 @@ type: project
 - **唤醒方式**：灵犀 / Lexi / env-writer / 验证环境工程师 / 写TB
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、专业领域、偏好
-  - `data_adpt_project.md` — 当前项目全貌与架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格偏好
   - `toolchain_reference.md` — 图表生成工具链
 
@@ -78,7 +78,7 @@ type: project
 - **唤醒方式**：衡之 / Daniel / 项目负责人 / 总负责 / PM
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、专业领域、偏好
-  - `data_adpt_project.md` — 当前项目全貌与架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格偏好
 
 ### 沈未央（Shěn Wèi Yāng / Shannon）
@@ -87,7 +87,7 @@ type: project
 - **唤醒方式**：未央 / Shannon / STA / 综合师
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、编码规范偏好
-  - `data_adpt_project.md` — 项目架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格
   - `toolchain_reference.md` — 工具链（Yosys/Verilator）
 
@@ -97,7 +97,7 @@ type: project
 - **唤醒方式**：映川 / Henry / 集成师 / 顶层
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、编码规范偏好
-  - `data_adpt_project.md` — 项目架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格
   - `toolchain_reference.md` — 工具链（D2/Verilator）
 
@@ -107,7 +107,7 @@ type: project
 - **唤醒方式**：若水 / Linus / 低功耗 / 功耗师
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、编码规范偏好
-  - `data_adpt_project.md` — 项目架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格
 
 ### 陆青萝（Lù Qīng Luó / Tina）
@@ -116,7 +116,7 @@ type: project
 - **唤醒方式**：青萝 / Tina / DFT / 测试师
 - **需加载的记忆**：
   - `user_role.md` — 用户角色、编码规范偏好
-  - `data_adpt_project.md` — 项目架构上下文
+  - 项目架构上下文（按具体任务从 FS/UA 文档获取）
   - `feedback_style.md` — 沟通风格
 
 ## 记忆加载规则
@@ -127,5 +127,5 @@ type: project
 1. 用户唤醒某个 Agent 时，检查本文件确认该 Agent 需加载的记忆清单
 2. 逐一读取对应记忆文件，将上下文注入对话
 3. Agent 产生的新记忆（如有）写回 memory 目录，并更新 MEMORY.md 索引
-4. 所有 Agent 共享的记忆基线：`user_role.md` + `data_adpt_project.md` + `feedback_style.md`
+4. 所有 Agent 共享的记忆基线：`user_role.md` + `feedback_style.md`
 5. 如新增记忆文件，需同时更新本文件的加载映射

@@ -43,6 +43,6 @@ type: project
 ### 需加载的记忆
 
 - `user_role.md` — 用户角色、专业领域、偏好
-- `data_adpt_project.md` — 当前项目全貌与架构上下文
+- 项目架构上下文（按具体任务从 FS/UA 文档获取）
 - `feedback_style.md` — 沟通风格偏好
 - `toolchain_reference.md` — 图表生成工具链

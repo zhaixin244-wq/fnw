@@ -35,7 +35,7 @@
 │   ├── wiki/                 # LLM 预编译结构化知识（协议/CBB/设计模式）
 │   ├── knowledge/            # 原始协议/CBB 文档
 │   └── tools/                # 工具链（oss-cad-suite 等）
-├── data_adpt_work/           # 数据适配器模块工作区（当前项目）
+├── {module}_work/            # 模块工作区（按具体项目创建）
 │   ├── ds/
 │   │   ├── doc/pr/           # 需求/方案/ADR 文档
 │   │   ├── doc/fs/           # FS 功能规格书 + 图表

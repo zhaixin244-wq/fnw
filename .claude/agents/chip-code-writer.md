@@ -298,7 +298,7 @@ CBB：sync_fifo（深度必须 2 的幂，最接近为 64）
 
   或
 
-  用户选择：自研 → 生成 data_adpt_fifo_custom.v（48 深度）
+  用户选择：自研 → 生成 {module}_fifo_custom.v（48 深度）
 ```
 
 ## CBB 集成流程（标准路径）
