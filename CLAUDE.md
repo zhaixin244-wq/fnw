@@ -51,15 +51,22 @@
 
 ## 核心工作流
 
-芯片设计遵循 **需求探索 → 方案论证 → FS → 微架构 → RTL 实现 → 评审** 的流程：
+芯片设计遵循 **需求探索 → 方案论证 → FS → 微架构 → RTL 实现 → 综合 → 集成 → 验证 → 评审** 的流程：
 
 | 阶段 | 专用 Agent | 输出物 |
 |------|-----------|--------|
+| 项目管理/风险管控 | `chip-project-lead` | 项目全景图、风险登记表、进度报告、汇报材料 |
 | 需求探索/方案论证 | `chip-requirement-arch` | requirement_summary、solution、ADR |
 | FS 功能规格书 | `chip-fs-writer` | {module}_FS_v{X}.md |
 | UA 微架构文档 | `chip-microarch-writer` | {module}_{sub}_microarch_v{X}.md |
-| RTL 代码实现 | `chip-code-writer` | .v / .sv / _sva.sv / _tb.v / .sdc |
+| RTL 代码实现 | `chip-code-writer` | .v / .sv / _sva.sv / _tb.v |
+| 综合/时序分析 | `chip-sta-analyst` | .sdc、综合报告、时序报告、面积报告 |
+| 顶层集成 | `chip-top-integrator` | {module}_top.v、接口检查报告、系统 lint 报告 |
+| 低功耗设计 | `chip-lowpower-designer` | .upf、功耗方案文档、功耗分析报告 |
+| DFT 设计 | `chip-dft-engineer` | DFT 架构文档、DFT 检查报告、MBIST 集成指南 |
 | 架构评审 | `chip-arch-reviewer` | 评审报告 |
+| 验证架构 | `chip-verfi-arch` | 测试点分解、验证环境方案、用例规划、覆盖率模型 |
+| 验证环境/TB 实现 | `chip-env-writer` | UVM 验证环境代码（Agent/Driver/Monitor/Scoreboard/Coverage/Env/Test/TB Top） |
 
 ---
 

@@ -5,14 +5,16 @@
   "file_management": {
     "work_dir": "{module}_work/",
     "entries": [
-      { "type": "RTL 源码",    "path": "{module}_work/rtl/{submodule}.v",                      "desc": "主模块" },
-      { "type": "SVA 断言",    "path": "{module}_work/rtl/{submodule}_sva.sv",                 "desc": "SVA 文件" },
-      { "type": "SDC 约束",    "path": "{module}_work/syn/{submodule}.sdc",                    "desc": "综合约束" },
-      { "type": "TB",          "path": "{module}_work/rtl/{submodule}_tb.v",                   "desc": "仿真 testbench" },
+      { "type": "RTL 源码",    "path": "{module}_work/ds/rtl/{submodule}.v",                   "desc": "主模块" },
+      { "type": "SVA 断言",    "path": "{module}_work/ds/rtl/{submodule}_sva.sv",              "desc": "SVA 文件" },
+      { "type": "SDC 约束",    "path": "{module}_work/run/{module}.sdc",                       "desc": "时序约束（顶层）" },
+      { "type": "文件列表",    "path": "{module}_work/run/{module}.f",                         "desc": "RTL 文件清单" },
+      { "type": "Lint 脚本",   "path": "{module}_work/run/lint.sh",                            "desc": "Verilator lint 脚本" },
+      { "type": "综合脚本",    "path": "{module}_work/run/synth_yosys.tcl",                    "desc": "Yosys 综合脚本" },
+      { "type": "Lint 报告",   "path": "{module}_work/ds/report/lint/lint_summary.log",        "desc": "Lint 检查报告" },
+      { "type": "综合报告",    "path": "{module}_work/ds/report/syn/synth_summary.log",        "desc": "综合检查报告" },
       { "type": "CBB 清单",    "path": "{module}_work/ds/doc/{submodule}_cbb_list.md",         "desc": "CBB 使用清单" },
-      { "type": "Lint 报告",   "path": "{module}_work/ds/report/lint/",                        "desc": "Lint 报告" },
-      { "type": "综合报告",    "path": "{module}_work/ds/report/syn/",                         "desc": "综合报告" },
-      { "type": "中间状态",    "path": "{module}_work/rtl/{module}_impl_state_v{ver}.json",    "desc": "会话恢复" },
+      { "type": "中间状态",    "path": "{module}_work/ds/rtl/{module}_impl_state_v{ver}.json", "desc": "会话恢复" },
       { "type": "修改报告",    "path": "{module}_work/ds/report/modify_report_{YYYYMMDD}_{ver}.md", "desc": "修改现有 RTL 时必生成" }
     ],
     "persistence_rule": "所有阶段产生的代码、脚本必须持久化到模块工作目录中，禁止仅输出到对话"
@@ -35,8 +37,8 @@
   },
 
   "tools": [
-    { "name": "iverilog",        "path": ".claude/tools/oss-cad-suite/bin/iverilog",        "usage": "语法 Lint" },
-    { "name": "yosys",           "path": ".claude/tools/oss-cad-suite/bin/yosys",           "usage": "综合 Lint + 面积估计" },
+    { "name": "verilator",       "path": ".claude/tools/oss-cad-suite/bin/verilator",       "usage": "RTL Lint（--lint-only -Wall）" },
+    { "name": "yosys",           "path": ".claude/tools/oss-cad-suite/bin/yosys",           "usage": "综合检查 + 面积估计" },
     { "name": "stage-runner",    "path": ".claude/shared/flow/stage-runner.sh",             "usage": "输入校验 + metrics 记录" },
     { "name": "change-detect",   "path": ".claude/shared/change-detect.sh",                 "usage": "微架构变更自动检测" },
     { "name": "metrics-summary", "path": ".claude/shared/flow/metrics-summary.sh",          "usage": "全流程性能汇总报告" }

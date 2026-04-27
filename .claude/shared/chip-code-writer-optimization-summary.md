@@ -252,3 +252,48 @@ Agent 执行流程：
 2. **CDC 检查集成**：将 CDC 检查集成到质量门禁中
 3. **覆盖率报告**：添加功能覆盖率报告
 4. **持续集成**：与 CI/CD 流程集成
+
+---
+
+## 七、质量门禁落地修复（2026-04-24）
+
+### 7.1 问题
+
+原 agent 定义中"强制质量门禁"仅为声明性文字，实际执行依赖 `chip-impl-quality-gate` 等 Skill，但这些 Skill **从未创建**（`.claude/skills/` 下无 `chip-impl-*` 文件）。导致：
+- RTL 生成后不自动生成 run 脚本
+- RTL 生成后不执行 Lint 检查
+- RTL 生成后不执行综合检查
+
+### 7.2 修复方案
+
+将质量门禁从"依赖外部 Skill"改为"**内联可执行指令**"：
+
+| 文件 | 修改内容 |
+|------|----------|
+| `chip-code-writer.md` | 新增 `## 质量门禁执行流程（内联）` 章节：Step 1 生成 run 脚本 → Step 2 执行 Lint → Step 3 执行综合 → Step 4 自愈循环。更新代办清单为 10 步 |
+| `impl-flow-stages.json` | `sdc_sva` → `sdc_sva_scripts`（含 run 脚本生成）；`quality_check` 标记 `skill: "inline"`，新增 `inline_steps` |
+| `agent-config.json` | 路径修正：`syn/` → `run/`；工具名：`iverilog` → `verilator`；新增 run 目录条目 |
+| `skills-registry-impl.md` | `chip-impl-quality-gate` 标注"内联在 agent 定义中" |
+
+### 7.3 新流程
+
+```
+RTL 代码实现 (B)
+    ↓
+SVA + Run 脚本生成 (C)  ← 自动生成 .f / .sdc / lint.sh / synth_yosys.tcl
+    ↓
+执行 Lint 检查 (D)      ← 自动运行 Verilator，ALL PASS 才继续
+    ↓
+执行综合检查 (D)        ← 自动运行 Yosys，ALL PASS 才继续
+    ↓
+自检 (D)
+    ↓
+交付 (D)
+```
+
+### 7.4 自愈循环规则
+
+- 最大迭代 10 次，超过暂停等待用户确认
+- 同一错误反复 3 次 → 暂停，输出根因分析
+- 修复范围仅限当前错误，不引入新逻辑
+- 架构冻结：自愈修复不得改变架构设计

@@ -14,7 +14,7 @@
 | `chip-impl-module-structure` | module_structure | 端口提取、子模块划分、文件清单 | 输入确认后 |
 | `chip-impl-rtl-coding` | rtl_impl | RTL 编码（数据通路+控制+CBB+接口） | 结构规划后 |
 | `chip-impl-sdc-sva` | sdc_sva | SDC/SVA/TB 编写 | RTL 完成后 |
-| `chip-impl-quality-gate` | quality_check | Lint+综合门禁+自愈循环 | SDC/SVA 完成后 |
+| *(内联)* chip-impl-quality-gate | quality_check | Lint+综合门禁+自愈循环 | SDC/SVA 完成后。**内联在 agent 定义中，不依赖外部 Skill** |
 | `chip-impl-self-check` | self_check | IC-01~39 + IM-01~08 自检 | 质量门禁通过后 |
 | `chip-impl-delivery` | delivery | 交付物清单验证+打包 | 自检通过后 |
 

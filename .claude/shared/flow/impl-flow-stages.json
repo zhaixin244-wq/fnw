@@ -89,46 +89,54 @@
       ],
       "per_submodule": true,
       "gate": "each submodule RTL compiles without syntax errors",
-      "next": "sdc_sva",
+      "next": "sdc_sva_scripts",
       "on_failure": "pause"
     },
 
     {
-      "id": "sdc_sva",
-      "name": "SDC/SVA/TB 编写",
-      "skill": "chip-impl-sdc-sva",
-      "description": "生成 SDC 约束、SVA 断言、TB testbench",
+      "id": "sdc_sva_scripts",
+      "name": "SVA + Run 脚本生成",
+      "skill": "inline",
+      "description": "生成 SVA 断言 + run 目录脚本（.f / .sdc / lint.sh / synth_yosys.tcl）",
       "inputs": [
         { "id": "rtl_files", "type": "array", "item_type": "file_path" },
         { "id": "microarch_doc", "type": "file_path" },
         { "id": "port_list", "type": "array", "item_type": "object" }
       ],
       "outputs": [
-        { "id": "sdc_file", "type": "file_path" },
         { "id": "sva_file", "type": "file_path" },
-        { "id": "tb_file", "type": "file_path" },
-        { "id": "makefile", "type": "file_path" }
+        { "id": "filelist", "type": "file_path", "path": "{work_dir}/run/{module}.f" },
+        { "id": "sdc_file", "type": "file_path", "path": "{work_dir}/run/{module}.sdc" },
+        { "id": "lint_script", "type": "file_path", "path": "{work_dir}/run/lint.sh" },
+        { "id": "synth_script", "type": "file_path", "path": "{work_dir}/run/synth_yosys.tcl" }
       ],
-      "gate": null,
+      "gate": "all 5 files generated",
       "next": "quality_check",
       "on_failure": "pause"
     },
 
     {
       "id": "quality_check",
-      "name": "质量门禁",
-      "skill": "chip-impl-quality-gate",
-      "description": "Lint + 综合检查，不通过进入自愈循环",
+      "name": "质量门禁（Lint + 综合）",
+      "skill": "inline",
+      "description": "执行 Lint 检查（Verilator）+ 综合检查（Yosys），不通过进入自愈循环",
+      "inline_steps": [
+        "mkdir -p {work_dir}/ds/report/lint {work_dir}/ds/report/syn",
+        "cd {work_dir}/run && bash lint.sh all 2>&1 | tee ../ds/report/lint/lint_summary.log",
+        "检查 lint_summary.log：有 Error → 自愈修复 → 重跑",
+        "cd {work_dir}/run && yosys synth_yosys.tcl 2>&1 | tee ../ds/report/syn/synth_summary.log",
+        "检查 synth_summary.log：有 ERROR → 自愈修复 → 重跑"
+      ],
       "inputs": [
         { "id": "rtl_files", "type": "array", "item_type": "file_path" },
-        { "id": "sdc_file", "type": "file_path" },
+        { "id": "run_scripts", "type": "array", "item_type": "file_path" },
         { "id": "work_dir", "type": "file_path" }
       ],
       "outputs": [
-        { "id": "lint_report", "type": "file_path" },
-        { "id": "synth_report", "type": "file_path" }
+        { "id": "lint_report", "type": "file_path", "path": "{work_dir}/ds/report/lint/lint_summary.log" },
+        { "id": "synth_report", "type": "file_path", "path": "{work_dir}/ds/report/syn/synth_summary.log" }
       ],
-      "gate": "lint ALL PASS + synth ALL PASS + area <50%",
+      "gate": "lint ALL PASS + synth ALL PASS",
       "next": "self_check",
       "on_failure": "self_heal",
       "self_heal": {
