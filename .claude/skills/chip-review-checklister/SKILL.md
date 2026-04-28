@@ -1,6 +1,6 @@
 ---
 name: chip-review-checklister
-description: 架构评审 Checklist 输出与 Schema 级完整性校验。
+description: "Use when reviewing FS, UA, or RTL documents against quality checklists. Triggers on 'review', '评审', '检查清单', 'checklist', 'review report', '评审报告', '自检报告'. Generates structured review checklist and report."
 ---
 
 # Chip Review Checklister
@@ -33,3 +33,32 @@ description: 架构评审 Checklist 输出与 Schema 级完整性校验。
 
 **完整性评分：X/Y (Z%)**
 ```
+
+## 使用示例
+
+**示例 1**：
+- 用户：「评审公共模块的微架构文档」
+- 行为：逐项检查架构完整性、接口精确性、PPA 可行性、CDC 安全等 9 个维度，对 Fail/Open 项标注风险等级，输出评审 Checklist
+
+**示例 2**：
+- 用户：「帮我检查 buf_mgr 的 RTL 可综合性」
+- 行为：聚焦 RTL 可综合性维度，检查编码规范、Clock/Reset 策略、DFT 友好性，输出检查结果和建议
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 文档缺失 | 架构文档路径无效 | 暂停，提示用户提供文档 |
+| 评审维度不适用 | 模块无 CDC/低功耗需求 | 对应维度标记 N/A |
+| 信息不足 | 文档描述过于简略 | 对无法判断项标记 Open，标注 `[REVIEW-NEED-MORE]` |
+
+## 检查点
+
+**检查前**：
+- 确认架构文档路径有效
+- 确认评审维度已明确（全量/聚焦）
+
+**检查后**：
+- 确认 9 个维度均已检查并标注状态
+- 确认 Fail/Open 项已标注风险等级
+- 确认完整性评分已输出

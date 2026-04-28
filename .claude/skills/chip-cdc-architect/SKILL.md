@@ -1,6 +1,6 @@
 ---
 name: chip-cdc-architect
-description: 多时钟域划分、CDC 信号识别与同步策略设计。
+description: "Use when designing clock domain crossing architecture. Triggers on 'CDC', '跨时钟域', '时钟域', '同步策略', '多时钟', 'clock domain', '亚稳态', '双触发器'. Performs multi-clock domain partitioning, CDC signal identification and synchronization strategy design."
 ---
 
 # Chip CDC Architect
@@ -38,3 +38,35 @@ description: 多时钟域划分、CDC 信号识别与同步策略设计。
 #### 验证建议
 - ...
 ```
+
+## 使用示例
+
+**示例 1：双时钟域 CDC 设计**
+```
+用户：公共模块有两个时钟域，clk_core 500MHz 和 clk_axi 250MHz，帮我设计 CDC 方案
+```
+预期行为：
+1. 列出两个时钟域的频率/相位关系
+2. 识别所有跨域信号（控制/数据/状态）
+3. 为每类信号选择同步策略（双触发器/异步FIFO/握手）
+4. 输出 CDC 信号表 + 验证建议
+
+**示例 2：CDC 风险评估**
+```
+用户：检查公共模块的 CDC 设计有没有风险，特别是那几个跨域的控制信号
+```
+预期行为：评估亚稳态传播风险，检查同步级数是否足够，给出 MTBF 估算
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 时钟信息缺失 | FS 中未定义时钟域 | 暂停，列出需要的时钟信息（频率/来源/相位关系） |
+| CDC 信号过多 | > 50 个跨域信号 | 分组输出，优先处理控制信号和关键数据通路 |
+| 同步策略不确定 | 无法判断用 FIFO 还是握手 | 给出两种方案的对比表，用户选择 |
+| MTBF 不满足 | 估算 MTBF < 目标 | 建议增加同步级数或改用更可靠的方案 |
+
+## 检查点
+
+- **检查前**：展示时钟域列表和 CDC 信号数量，确认范围
+- **检查后**：展示同步策略表，用户确认后输出最终方案

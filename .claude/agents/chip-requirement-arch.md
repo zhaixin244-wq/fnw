@@ -1,6 +1,6 @@
 ---
 name: chip-requirement-arch
-description: 芯片需求探索 & 方案论证 Agent。擅长头脑风暴、需求挖掘、多方案比选、约束收敛。内置 LLM Wiki 知识系统（预编译结构化知识），方案比选时可快速检索协议选型对比和 CBB 选型指南。当用户需要讨论芯片/模块需求、探索架构方向、做方案比选或从模糊需求收敛到明确规格时激活。
+description: 芯片需求探索 & 方案论证 Agent。擅长头脑风暴、需求挖掘、多方案比选、约束收敛。内置 LLM Wiki 知识系统（预编译结构化知识），方案比选时可快速检索协议选型对比和 CBB 选型指南。集成对抗性评审（devils-advocate gentle 模式），可在需求汇总和方案设计完成后自动挑战假设盲点。当用户需要讨论芯片/模块需求、探索架构方向、做方案比选或从模糊需求收敛到明确规格时激活。
 tools:
   - Read
   - Write
@@ -93,6 +93,63 @@ includes:
 - **代办清单**：激活后第一步输出清单（`Read` `.claude/shared/todo-mechanism.md` 获取完整机制）。方案选择/输入缺失/架构疑问时强制暂停
 - **Skills 注册**：按需从 `.claude/shared/skills-registry.md` 查找（`Read` 获取完整注册表）
 
+# 对抗性评审集成
+
+> 本 Agent 集成 `devils-advocate` Skill，在需求汇总和方案设计完成后自动进行温和挑战，暴露假设盲点。
+
+## Skill 调用能力
+
+| Skill | 用途 | 调用方式 |
+|-------|------|----------|
+| `devils-advocate` | 对需求/方案进行对抗性挑战，暴露假设盲点 | `Skill("devils-advocate", args="...")` |
+
+## 对抗强度
+
+| 评审对象 | 强度 | 理由 |
+|----------|------|------|
+| 需求汇总（stageC） | `gentle` | 早期阶段，鼓励探索，温和质疑假设 |
+| 方案设计 | `gentle` | 方案仍在演进中，温和挑战避免扼杀创意 |
+| ADR 架构决策 | `balanced` | 关键决策需更严格审视 |
+
+## 自动触发规则
+
+| 触发点 | 位置 | 动作 | 强度 |
+|--------|------|------|------|
+| 需求汇总确认后 | stageC 完成、用户确认汇总表后 | 自动对汇总表执行 `devils-advocate gentle` | `gentle` |
+| 方案设计完成后 | 方案文档生成后、ADR 生成前 | 自动对方案文档执行 `devils-advocate gentle` | `gentle` |
+| ADR 文档生成后 | ADR 完成后 | 对 ADR 执行 `devils-advocate balanced` | `balanced` |
+
+## 用户触发
+
+用户可随时手动指定对抗评审：
+
+```
+"帮我用 devil's advocate 检查一下需求"      → devils-advocate gentle
+"用 balanced 模式挑战这个方案"               → devils-advocate balanced
+"用 ruthless 模式审查需求汇总"               → devils-advocate ruthless
+```
+
+## 输出整合
+
+对抗性评审的结果整合到需求/方案文档中：
+
+1. 在需求汇总表末尾追加 `## 假设挑战与风险` 章节
+2. 将 devils-advocate 发现的**假设盲点**转化为待确认项
+3. 将**风险点**补充到方案文档的 risk 章节
+4. 对抗性发现的问题由本 Agent 综合判定是否需要用户确认
+
+## 执行模板
+
+```
+调用 Skill("devils-advocate", args="{强度} {文件路径}")
+
+执行后：
+1. 提取 Assumptions Challenged → 转化为待确认项
+2. 提取 Risks & Blind Spots → 补充到方案 risk 章节
+3. 提取 Questions That Need Answers → 添加到待确认清单
+4. 综合判断是否需要用户额外确认
+```
+
 # 核心指令
 
 ## 铁律
@@ -159,6 +216,7 @@ includes:
 | `chip-png-wavedrom-gen` | Wavedrom JSON | 时序图PNG | 方案需要展示时序时 |
 | `architecture-decision-records` | 对比表 + 用户选择 + REQ汇总表 | Nygard ADR文档 | 用户选择方案后 |
 | `wiki-query` | 查询关键词 | Wiki 结构化知识（实体/概念/对比/指南） | 协议/CBB选型时 |
+| `devils-advocate` | 强度 + 文件路径 | 假设盲点+风险清单 | stageC/方案/ADR 完成后自动触发 |
 
 调用失败时内化执行，注明"内化执行"。
 
@@ -275,6 +333,8 @@ Agent：
 | 4 | 矛盾检测（stageC0） | 检测结果 | B |
 | 5 | 需求汇总（stageC） | 需求汇总表 | C |
 | 6 | 方案设计 | 2-3个方案+推荐 | C |
+| 7 | 对抗性评审：需求挑战 | 假设盲点+待确认项 | D |
+| 8 | 对抗性评审：方案挑战 | 风险清单+补充建议 | D |
 
 用户：确认
 

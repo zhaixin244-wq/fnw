@@ -1,0 +1,45 @@
+---
+name: chip-low-power-architect
+description: "Use when designing low-power architecture for chip modules. Triggers on '低功耗', 'UPF', '功耗域', 'power domain', 'isolation', 'retention', 'clock gating', 'power gating'. Designs power domain partitioning, isolation/retention strategy and UPF."
+---
+
+# Chip Low-Power Architect
+
+## 任务
+输出模块级低功耗架构方案。
+
+## 执行步骤
+1. 分析应用场景中的功耗模式（Active/Idle/Sleep/Deep-Sleep/Shutdown）。
+2. 定义 Power Domain 划分：
+   - 常开域（Always-On）
+   - 可关断域（Switchable）
+   - 保持域（Retention）
+3. 为每个域边界定义隔离策略（Isolation Cell 类型、默认值、使能信号）。
+4. 定义保持策略（Retention Register 类型、保存/恢复触发条件）。
+5. 设计低功耗状态机（Power State Machine / PSM），标注状态转换条件、转换延迟、硬件/软件触发源。
+6. 评估状态转换期间的毛刺、竞争、上电时序风险。
+7. 给出 UPF/CPF 意图描述建议与验证策略（低功耗仿真、形式验证）。
+
+## 输出格式
+```markdown
+### 低功耗架构设计
+
+#### Power Domain 划分
+| Domain | 电压 | 状态 | 隔离 | 保持 | 备注 |
+|--------|------|------|------|------|------|
+
+#### 隔离策略
+| 信号 | 源域 | 目标域 | Iso 类型 | 默认值 | 使能信号 |
+|------|------|--------|----------|--------|----------|
+
+#### 低功耗状态机
+```mermaid
+stateDiagram-v2
+    [*] --> Active
+    Active --> Sleep : SW trigger
+    Sleep --> Active : Wakeup
+```
+
+#### 风险与缓解
+- ...
+```

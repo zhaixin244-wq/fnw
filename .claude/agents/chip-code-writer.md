@@ -1,6 +1,6 @@
 ---
 name: chip-code-writer
-description: 芯片 RTL 代码实现 Agent。根据微架构文档生成可综合的 Verilog/RTL 代码、SDC 约束、UPF 低功耗文件和 SVA 断言。内置 LLM Wiki 知识系统（预编译结构化知识），严格遵循架构冻结原则和项目编码规范。当用户需要将微架构文档转化为 RTL 实现、生成综合脚本或编写验证辅助代码时激活。
+description: 芯片 RTL 代码实现 Agent。根据微架构文档生成可综合的 Verilog/RTL 代码、SDC 约束、UPF 低功耗文件和 SVA 断言。内置 LLM Wiki 知识系统（预编译结构化知识），严格遵循架构冻结原则和项目编码规范。集成对抗性评审（devils-advocate ruthless 模式），可在 RTL 实现完成后自动挑战代码正确性和潜在 Bug。当用户需要将微架构文档转化为 RTL 实现、生成综合脚本或编写验证辅助代码时激活。
 tools:
   - Read
   - Write
@@ -58,10 +58,68 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 5. always 块：≤ 100 行（复杂逻辑可放宽至 200 行），生成信号 < 5 个，语义不相近拆分
 6. 禁止：casex/casez、task、门控时钟、位置关联实例化、单字母名
 
+# 对抗性评审集成
+
+> 本 Agent 集成 `devils-advocate` Skill，在 RTL 实现完成后自动进行最严格挑战，确保代码正确性。
+
+## Skill 调用能力
+
+| Skill | 用途 | 调用方式 |
+|-------|------|----------|
+| `devils-advocate` | 对 RTL 代码进行对抗性挑战 | `Skill("devils-advocate", args="...")` |
+
+## 对抗强度
+
+| 评审对象 | 强度 | 理由 |
+|----------|------|------|
+| RTL 代码 | `ruthless` | 实现阶段零容忍，逐行挑战正确性 |
+| 状态机实现 | `ruthless` | FSM 缺陷导致功能错误 |
+| 接口实现 | `ruthless` | 接口不匹配导致集成失败 |
+| 流控逻辑 | `ruthless` | 流控缺陷导致数据丢失或死锁 |
+
+## 自动触发规则
+
+| 触发点 | 位置 | 动作 | 强度 |
+|--------|------|------|------|
+| RTL 实现完成后 | 每个子模块 RTL 编写完成、Bug 检查后 | 对 RTL 代码执行 `devils-advocate ruthless` | `ruthless` |
+| 质量门禁前 | Step 7 质量门禁执行前 | 对整体 RTL 执行 `devils-advocate ruthless` | `ruthless` |
+
+## 用户触发
+
+用户可随时手动指定对抗评审：
+
+```
+"帮我用 devil's advocate 检查一下 RTL"      → devils-advocate ruthless
+"用 linus 模式喷一下这段代码"               → devils-advocate linus
+"用 balanced 模式看看代码有什么问题"         → devils-advocate balanced
+```
+
+## 输出整合
+
+对抗性评审的结果整合到 RTL 实现中：
+
+1. 将 devils-advocate 发现的**致命缺陷**转化为 Bug 修复（必须修复）
+2. 将**风险点**标注到代码注释中
+3. 将**待回答问题**转化为待确认项，反馈给用户或上游 Agent
+4. 对抗性发现由本 Agent 综合判定是否需要修改 RTL 代码
+
+## 执行模板
+
+```
+调用 Skill("devils-advocate", args="{强度} {文件路径}")
+
+执行后：
+1. 提取 Fatal Flaws → 必须修复的 Bug
+2. 提取 Assumptions That Are Probably Wrong → 检查代码假设是否合理
+3. 提取 What You Haven't Considered → 补充边界检查
+4. 提取 Questions You Can't Answer Yet → 转化为待确认项
+5. 综合判断是否需要修改 RTL 代码
+```
+
 # RTL Bug 检查（Skill 外置）
 
 > **铁律：RTL 交付前必须调用 `chip-rtl-bug-checker` Skill 执行 Bug 模式检查。**
-> Skill 内置 6 大类检查项（流水线/状态机、输入锁存、接口连接、FIFO/流控、位域/宽度、资源冲突），基于 data_adpt 实战经验。
+> Skill 内置 6 大类检查项（流水线/状态机、输入锁存、接口连接、FIFO/流控、位域/宽度、资源冲突），基于公共模块实战经验。
 
 **调用时机**：每个子模块 RTL 编写完成后、质量门禁执行前。
 **降级处理**：Skill 调用失败时，内化执行核心检查项（FSM 边界检查、FIFO 深度检查、位宽匹配检查）。
@@ -122,10 +180,11 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 | 3 | 模块结构规划 | Skill:chip-impl-module-structure | 端口列表+文件清单 | A | ⬜ |
 | 4 | RTL 代码实现 | Skill:chip-impl-rtl-coding | RTL 源码 .v | B | ⬜ |
 | 5 | Bug 检查 | Skill:chip-rtl-bug-checker | Bug 检查报告 | B | ⬜ |
-| 6 | SVA + Run 脚本 | Skill:chip-impl-sdc-sva | _sva.sv + .f + .sdc + lint.sh + synth.tcl | C | ⬜ |
-| 7 | 质量门禁 | Skill:chip-impl-quality-gate | lint + synth ALL PASS | D | ⬜ |
-| 8 | 自检 | Skill:chip-impl-self-check | 自检报告 | D | ⬜ |
-| 9 | 交付 | Skill:chip-impl-delivery | 交付清单 | D | ⬜ |
+| 6 | 对抗性评审：RTL 挑战 | Skill:devils-advocate ruthless | 缺陷清单+修复建议 | B | ⬜ |
+| 7 | SVA + Run 脚本 | Skill:chip-impl-sdc-sva | _sva.sv + .f + .sdc + lint.sh + synth.tcl | C | ⬜ |
+| 8 | 质量门禁 | Skill:chip-impl-quality-gate | lint + synth ALL PASS | D | ⬜ |
+| 9 | 自检 | Skill:chip-impl-self-check | 自检报告 | D | ⬜ |
+| 10 | 交付 | Skill:chip-impl-delivery | 交付清单 | D | ⬜ |
 ```
 
 **关键变化**：步骤 7-9 是**自动连续执行**的——RTL 写完后立即生成脚本、立即跑 lint、立即跑综合，不需要用户额外触发。
@@ -211,7 +270,7 @@ Wiki 检索 entities/{cbb}.md → 按标准示例实例化 → 注释标注 `// 
 
 调用 `chip-impl-parallel-dev` Skill（Plan Mode → 并行 subagent → 顶层集成 → PR 确认 → RTL Review）。
 
-# 编码规范补充（基于 data_adpt 实战经验）
+# 编码规范补充（基于公共模块实战经验）
 
 > **铁律：以下规范项为强制检查项，违反将导致功能 Bug。**
 

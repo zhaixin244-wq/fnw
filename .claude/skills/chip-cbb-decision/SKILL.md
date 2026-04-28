@@ -1,9 +1,10 @@
 ---
 name: chip-cbb-decision
-description: CBB 抽象决策 Skill。评估某段 RTL 逻辑是否应该抽象为可复用的 CBB 模块，基于接口标准化、参数化能力、功能自包含和复用价值四个维度判断。当 chip-code-writer 在模块结构规划阶段发现可复用逻辑时调用。
+description: "Use when deciding whether to abstract RTL logic as a reusable CBB module. Triggers on 'CBB', '复用', '抽象', '可复用模块', 'CBB决策', 'reuse', 'abstraction'. Evaluates interface standardization, parameterization, self-containment and reuse value."
 tools:
   - Read
   - Grep
+  - Glob
 ---
 
 # CBB 抽象决策器
@@ -77,7 +78,7 @@ tools:
 3. **上下文耦合**：需要访问模块特定的上下文数组
 4. **接口不兼容**：与标准 CBB 接口差异 > 3 个信号
 
-## 执行流程
+## 执行步骤
 
 ```
 读取输入 → 四维度评分 → 检查强制不抽象条件 → 输出决策
@@ -108,7 +109,21 @@ tools:
 
 **决策**：{abstract_to_cbb / keep_inline}
 **理由**：{reason}
+
+### CBB 规格建议（仅 abstract_to_cbb 时输出）
+
+| 字段 | 内容 |
+|------|------|
+| 建议模块名 | `{module}_{type}_cbb` |
+| 参数列表 | `{param1}`, `{param2}`, ... |
+| 接口定义 | {端口列表概要} |
+| 复用场景数 | {N} |
 ```
+
+## 工具列表
+- `Read`：读取现有 CBB 文档和 RTL
+- `Grep`：搜索复用场景和 CBB 引用
+- `Glob`：查找现有 CBB 模块文件
 
 ## 实战案例
 
@@ -119,7 +134,35 @@ tools:
 | sync_fifo | **abstract_to_cbb** | 3.0 | 标准接口、完全参数化、10+ 处复用 |
 | debubble buffer | **keep_inline** | 1.5 | 接口定制化、仅 1 处使用 |
 
-## 降级处理
+## 使用示例
+
+**示例 1：评估仲裁器是否抽象为 CBB**
+```
+用户：4 通道 RR 仲裁器，接口是 req_vec/grant_idx，有 4 处用到，帮我判断要不要抽象成 CBB
+```
+预期行为：接口标准化(3) + 参数可配(3) + 功能自包含(2, 依赖 clk/rst_n) + 复用价值(3) = 总分 2.75 ≈ 2.8 → abstract_to_cbb
+
+**示例 2：评估是否抽象为 CBB**
+```
+用户：dqid 映射逻辑，依赖动态位图，只有 1 处用到
+```
+预期行为：命中强制不抽象条件（位图依赖）→ keep_inline
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 输入信息不完整 | 缺少接口信号或复用场景 | 使用默认评分（各维度 2 分），标注 `[INPUT-INCOMPLETE]` |
+| Wiki 无 CBB 文档 | 无法查到现有 CBB | 基于通用知识判断，标注 `[WIKI-MISSING]` |
+| 评分边界值 | 总分恰好 2.4 | 列出两种决策的利弊，用户选择 |
+| 复用场景不明确 | 用户无法列出具体场景 | 基于接口标准化和参数化评分，降低复用价值权重 |
+
+## 检查点
+
+- **检查前**：展示逻辑描述和接口信号列表，确认输入完整
+- **检查后**：展示四维度评分和决策结论，用户确认后输出 CBB 规格建议
+
+## 降级策略
 
 - 输入信息不完整 → 使用默认评分（各维度 2 分），标注 `[INPUT-INCOMPLETE]`
 - Wiki 无 CBB 文档 → 基于通用知识判断，标注 `[WIKI-MISSING]`

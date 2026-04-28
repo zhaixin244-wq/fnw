@@ -1,6 +1,6 @@
 ---
 name: chip-arbiter-selector
-description: 仲裁策略选择 Skill。基于请求模式、通道数和 QoS 要求，自动选择合适的仲裁策略（Fixed Priority / Round-Robin / WRR），并评估饥饿风险。当 chip-code-writer 在 RTL 编码阶段需要实现仲裁逻辑时调用。
+description: "Use when selecting arbitration strategy for RTL modules. Triggers on '仲裁', 'arbiter', 'round-robin', 'RR', 'WRR', '优先级', '公平性', '饥饿', 'arbiter selector'. Based on request pattern, channel count and QoS, selects Fixed Priority / Round-Robin / WRR and evaluates starvation risk."
 tools:
   - Read
 ---
@@ -56,7 +56,7 @@ tools:
 | **低风险** | 突发流 | 固定优先级 | 无 QoS 要求 | 可用固定优先级 |
 | **无风险** | 突发流 | - | 无并发 | 可用固定优先级 |
 
-## 执行流程
+## 执行步骤
 
 ```
 分析请求模式 → 评估饥饿风险 → 检查 QoS 要求 → 选择策略 → 输出实现要点
@@ -134,7 +134,35 @@ always @(*) begin
 end
 ```
 
-## 降级处理
+## 使用示例
+
+**示例 1：4 通道 RAM 仲裁**
+```
+用户：4 个通道竞争 RAM 访问，请求是持续流，没有 QoS 要求，帮我选仲裁策略
+```
+预期行为：持续流 + 无 QoS → 饥饿风险高 → 推荐 Round-Robin
+
+**示例 2：SRAM 写冲突仲裁**
+```
+用户：W1 和 W2 同时写 SRAM 同地址，协议要求 W2 优先，选什么策略？
+```
+预期行为：协议规定优先级 + 突发流 → 推荐固定优先级（W2 优先）
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 输入信息不完整 | 缺少请求模式或通道数 | 默认选择 RR（最安全），标注 `[INPUT-INCOMPLETE]` |
+| 无法判断请求模式 | 描述模糊 | 默认选择 RR，标注 `[PATTERN-UNKNOWN]` |
+| QoS 要求矛盾 | 多通道 QoS 冲突 | 列出冲突项，建议用户调整 |
+| 通道数为 1 | 无需仲裁 | 提示"单通道无需仲裁"，跳过策略选择 |
+
+## 检查点
+
+- **检查前**：展示请求模式、通道数、QoS 要求，确认输入正确
+- **检查后**：展示推荐策略和饥饿风险等级，用户确认后输出 RTL 实现要点
+
+## 降级策略
 
 - 输入信息不完整 → 默认选择 RR（最安全），标注 `[INPUT-INCOMPLETE]`
 - 无法判断请求模式 → 默认选择 RR，标注 `[PATTERN-UNKNOWN]`

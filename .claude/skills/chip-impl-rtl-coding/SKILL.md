@@ -1,11 +1,11 @@
 ---
 name: chip-impl-rtl-coding
-description: RTL 代码实现 — 逐子模块实现数据通路+控制逻辑+CBB+接口，严格遵循架构冻结铁律
+description: "Use when implementing RTL code for chip submodules. Triggers on 'RTL实现', 'rtl coding', '写rtl', '代码实现', '数据通路', '控制逻辑', 'rtl code'. Implements data path, control logic, CBB integration and interface per submodule, strictly following architecture freeze."
 ---
 
 # RTL 代码实现 Skill
 
-## 职责
+## 任务
 逐子模块实现 RTL 代码：数据通路 → 控制逻辑/FSM → CBB 集成 → 接口逻辑。
 
 ## 输入
@@ -123,3 +123,35 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 ```json
 {"stage_id": "rtl_impl", "duration_ms": 0, "iteration_count": 1}
 ```
+
+## 使用示例
+
+**示例 1**：
+- 用户：「根据公共模块微架构实现 input_if_mod 子模块 RTL」
+- 行为：读取微架构 §5.1 数据通路逐阶段编码，§5.3 实现两段式 FSM，集成 CBB 并标注 `// CBB Ref`，实现 valid/ready 握手逻辑，保存到 `{module}_work/ds/rtl/input_if_mod.v`
+
+**示例 2**：
+- 用户：「帮我补全 buf_mgr 的 FIFO 子模块代码」
+- 行为：从微架构 §5.5 读取 FIFO 配置，按编码规范实现多 1 位指针法满/空判断，异步复位同步释放，组合逻辑赋默认值，保存到对应 `.v` 文件
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 微架构章节缺失 | §5.1/§5.3 无详细设计 | 暂停，标注 `[ARCH-QUESTION]`，等待用户补充 |
+| CBB 文档缺失 | RAG 检索无结果 | 标注 `[CBB-MISSING]`，提示用户确认是否自研 |
+| 架构疑问 | 微架构描述模糊或矛盾 | 暂停标记 `[ARCH-QUESTION]`，不擅自修改架构 |
+| 编码规范冲突 | 微架构要求与编码规范矛盾 | 标注 `[ARCH-DEVIATION]`，以微架构为准 |
+
+## 检查点
+
+**检查前**：
+- 确认微架构文档已读取且 §5 各子章节完整
+- 确认端口列表（来自 module_structure）已就绪
+- 确认 CBB 文档已检索
+
+**检查后**：
+- 确认每个子模块 RTL 文件已保存到 `{module}_work/ds/rtl/`
+- 确认代码遵循编码铁律（时序 `<=`、组合默认值、FSM 两段式等）
+- 确认所有 CBB 实例化有 `// CBB Ref` 注释
+- 确认 metrics 已写入 `{work_dir}/ds/report/metrics/rtl_impl.json`

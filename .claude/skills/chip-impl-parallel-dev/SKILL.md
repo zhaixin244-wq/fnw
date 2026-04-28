@@ -1,20 +1,21 @@
 ---
 name: chip-impl-parallel-dev
-description: 并行开发 — Plan Mode 分析→并行 Subagent 调度→顶层集成→PR/FS/UA 确认
+description: "Use when running parallel RTL development across multiple submodules. Triggers on '并行开发', 'parallel', '多模块并行', '并行subagent', 'parallel dev', '并行调度'. Coordinates Plan Mode analysis, parallel subagent dispatch, top-level integration and PR confirmation."
 ---
 
 # 并行开发 Skill
 
-## 职责
+## 任务
 多模块并行开发流程：分析→调度→集成→确认。
 
 ## 流程
 
 ### Phase 1: Plan Mode 分析
-1. 确认输入：PR/FS/UA 文档
-2. RAG 检索 CBB 依赖
-3. 划分模块，评估依赖关系
-4. 确定并行组（无依赖模块可并行）
+1. 用 `Glob` 搜索 `{module}_work/ds/rtl/*.v` 获取子模块 RTL 文件列表。若文件不存在，暂停并提示用户
+2. 确认输入：PR/FS/UA 文档
+3. RAG 检索 CBB 依赖
+4. 划分模块，评估依赖关系
+5. 确定并行组（无依赖模块可并行）
 
 **输出格式**：
 ```markdown
@@ -122,3 +123,34 @@ fi
 - 各模块 RTL + 质量报告
 - 顶层集成 RTL + 质量报告
 - PR/FS/UA 确认报告
+
+## 使用示例
+
+**示例 1**：
+- 用户：「公共模块有 3 个子模块，帮我并行开发」
+- 行为：分析依赖关系，无依赖模块（如 buf_mgr、ctrl_fsm）编入 Group-A 并行启动 subagent，有依赖模块（如 top_int）编入 Group-B 等待，完成后顶层集成
+
+**示例 2**：
+- 用户：「检查多模块并行开发是否有文件冲突」
+- 行为：扫描各模块工作目录，检查顶层 RTL、CBB 清单、SDC 约束等共享文件是否有并发写入冲突，输出冲突报告
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 子模块依赖环 | 模块间存在循环依赖 | 暂停，输出依赖环图，等待用户重新划分 |
+| 文件锁冲突 | 多 subagent 同时写入同一文件 | Critical 级别暂停，等待用户协调 |
+| Subagent 超时 | 单个模块开发超时无响应 | 记录超时模块，继续其他模块，汇总后重试 |
+| 顶层集成失败 | 子模块接口不一致 | 输出接口差异表，定位不一致模块 |
+
+## 检查点
+
+**检查前**：
+- 确认 PR/FS/UA 文档齐全
+- 确认模块划分和依赖关系已明确
+- 确认各模块工作目录独立
+
+**检查后**：
+- 确认所有子模块 RTL 已生成且 Lint 通过
+- 确认顶层集成 Lint ALL PASS + 面积达标
+- 确认 PR/FS/UA 确认报告已输出

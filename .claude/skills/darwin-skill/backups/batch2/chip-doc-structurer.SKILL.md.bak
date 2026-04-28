@@ -1,0 +1,29 @@
+---
+name: chip-doc-structurer
+description: "Use when designing microarchitecture document structure. Triggers on '文档结构', '章节设计', 'doc structure', '文档模板', '内容权重', '文档组织'. Designs chapter structure and content weight allocation for microarchitecture specifications."
+---
+
+# Chip Doc Structurer
+
+## 任务
+为芯片模块微架构规格书设计完整的文档架构与章节权重。
+
+## 执行步骤
+1. 询问模块名称、版本号（如 v1.0）、目标工艺节点（可选）。
+2. 基于 IEEE/工业实践，生成以下标准章节结构：
+   - 1. 文档控制（版本、作者、评审记录）
+   - 2. 引言（目的、范围、定义与缩略语、参考文档）
+   - 3. 模块概述（定位、应用场景、关键特性）
+   - 4. 接口定义（端口列表、协议、时序）
+   - 5. 微架构设计（数据通路、控制逻辑、状态机）
+   - 6. PPA 规格与预算（延迟、吞吐、功耗、面积）
+   - 7. 风险与缓解（时序、功耗、验证、CDC、低功耗、可靠性）
+   - 8. RTL 实现指导（编码规范、Clock/Reset、可综合性）
+   - 9. 附录（RTM、变更记录、参考文献）
+3. 为每个章节分配内容权重（以百分比表示），并标注必须包含的图表/表格数量建议。
+4. 如果用户提到要从历史版本或相似项目继承模板，说明差异点并给出迁移建议。
+
+## 输出格式
+以 Markdown 表格输出：
+| 章节 | 权重 | 必填图表/表格 | 备注 |
+随后输出完整大纲（带三级标题）。

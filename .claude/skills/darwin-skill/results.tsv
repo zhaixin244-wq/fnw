@@ -1,0 +1,104 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-04-28T10:00	baseline	chip-create-dir	-	59.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-png-interface-gen	-	59.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-traceability-linker	-	60.4	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-rtl-bug-checker	-	60.8	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-budget-allocator	-	61.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-cdc-architect	-	61.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-design-space-explorer	-	61.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-ppa-formatter	-	61.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-reliability-architect	-	61.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:00	baseline	chip-version-diff-generator	-	61.9	baseline	-	initial assessment	dry_run
+2026-04-28T10:15	R1	chip-create-dir	59.9	69.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-png-interface-gen	59.9	72.0	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-traceability-linker	60.4	69.9	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-rtl-bug-checker	60.8	77.8	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-budget-allocator	61.9	71.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-cdc-architect	61.9	71.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-design-space-explorer	61.9	71.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-ppa-formatter	61.9	71.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-reliability-architect	61.9	71.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:15	R1	chip-version-diff-generator	61.9	71.4	keep	D3+D4	added boundary+checkpoints	dry_run
+2026-04-28T10:30	R2	chip-traceability-linker	69.9	70.9	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-rtl-bug-checker	77.8	78.8	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-budget-allocator	71.4	72.4	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-cdc-architect	71.4	72.4	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-design-space-explorer	71.4	72.4	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-ppa-formatter	71.4	72.4	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-reliability-architect	71.4	72.4	keep	D5	added usage examples	dry_run
+2026-04-28T10:30	R2	chip-version-diff-generator	71.4	72.4	keep	D5	added usage examples	dry_run
+2026-04-28T10:45	R3	chip-create-dir	69.4	74.3	keep	D2	restructured workflow steps	dry_run
+2026-04-28T10:45	R3	chip-png-interface-gen	72.0	77.0	keep	D2	restructured workflow steps	dry_run
+2026-04-28T11:00	batch2	chip-arbiter-selector	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-cbb-decision	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-diagram-generator	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-doc-structurer	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-delivery	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-input-triage	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-module-structure	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-parallel-dev	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-quality-gate	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-rtl-coding	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-sdc-sva	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-impl-self-check	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-interface-contractor	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-lint-checker	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-low-power-architect	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-microarch-chart-workflow	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-png-d2-gen	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-png-wavedrom-gen	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-protocol-compliance-checker	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-review-checklister	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-rtl-guideline-generator	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-synthesis-runner	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:00	batch2	chip-cbb-exception-confirm	-	75.0	keep	D3+D4+D5	batch optimization: added boundary+checkpoints+examples	dry_run
+2026-04-28T11:30	D8	chip-arbiter-selector	75.0	77.5	keep	D8	full_test: 8/10, correct RR selection, 5 minor gaps	dry_run
+2026-04-28T11:30	D8	chip-rtl-bug-checker	78.8	81.3	keep	D8	full_test: 7/10, 18 checks covered, 2 minor gaps	dry_run
+2026-04-28T11:30	D8	chip-cdc-architect	72.4	74.9	keep	D8	full_test: 8/10, comprehensive CDC output, 4 gaps	dry_run
+2026-04-28T12:00	D8	chip-png-d2-gen	75.0	72.5	revert	D8	full_test: 7/10, no topology guidance, ext_in/out ambiguity	dry_run
+2026-04-28T12:00	D8	chip-png-wavedrom-gen	75.0	77.5	keep	D8	full_test: 8/10, good templates, output dir undefined	dry_run
+2026-04-28T12:00	D8	chip-cbb-decision	75.0	72.5	revert	D8	full_test: 7/10, math inconsistency 3.0 vs 2.8, missing cbb_spec	dry_run
+2026-04-28T12:00	D8	chip-lint-checker	75.0	67.5	revert	D8	full_test: 6/10, dangling script template, no file-not-found	dry_run
+2026-04-28T12:00	D8	chip-protocol-compliance-checker	75.0	67.5	revert	D8	full_test: 6/10, no RTL path, no Wiki integration, no agent delegation	dry_run
+2026-04-28T12:00	D8	chip-impl-rtl-coding	75.0	77.5	keep	D8	full_test: 8/10, good workflow, missing Step 0 validation	dry_run
+2026-04-28T12:30	D8-fix	chip-lint-checker	67.5	75.0	keep	D8+script+exception	added run_lint.sh template, file-not-found handling, iverilog flags	dry_run
+2026-04-28T12:30	D8-fix	chip-protocol-compliance-checker	67.5	75.0	keep	D8+RTL+Wiki+agent	added RTL path discovery, Wiki/RAG step, mandatory agent ref	dry_run
+2026-04-28T12:30	D8-fix	chip-cbb-decision	72.5	75.0	keep	D8+math+output	fixed example math (2.8→2.75), added cbb_spec output, added Glob tool	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-delivery	75.0	77.5	keep	D8	full_test: 7/10, functional but no sub-module enumeration	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-input-triage	75.0	77.5	keep	D8	full_test: 7/10, functional but path derivation missing	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-module-structure	75.0	77.5	keep	D8	full_test: 7/10, functional but no doc auto-discovery	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-parallel-dev	75.0	77.5	keep	D8	full_test: 7/10, functional but no real agent call syntax	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-quality-gate	75.0	77.5	keep	D8	full_test: 7/10, functional but run script not verified	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-sdc-sva	75.0	77.5	keep	D8	full_test: 7/10, functional but input params undefined	dry_run
+2026-04-28T13:00	D8-batch	chip-impl-self-check	75.0	77.5	keep	D8	full_test: 7/10, functional but no file path derivation	dry_run
+2026-04-28T13:00	D8-batch	chip-interface-contractor	75.0	77.5	keep	D8	full_test: 7/10, functional but no upstream retrieval	dry_run
+2026-04-28T13:00	D8-batch	chip-low-power-architect	75.0	72.5	revert	D8	full_test: 6/10, mermaid vs d2 conflict + missing clock gating step	dry_run
+2026-04-28T13:00	D8-batch	chip-ppa-formatter	75.0	77.5	keep	D8	full_test: 7/10, functional but no constraint inference	dry_run
+2026-04-28T13:00	D8-batch	chip-reliability-architect	75.0	77.5	keep	D8	full_test: 7/10, functional but no ECC depth calculation	dry_run
+2026-04-28T13:00	D8-batch	chip-microarch-chart-workflow	75.0	77.5	keep	D8	full_test: 7/10, functional but no doc path derivation	dry_run
+2026-04-28T13:30	D8-batch2	chip-review-checklister	75.0	77.5	keep	D8	full_test: 7/10, 4 gaps: no checklist mapping, no arch-reviewer boundary	dry_run
+2026-04-28T13:30	D8-batch2	chip-rtl-guideline-generator	75.0	72.5	revert	D8	full_test: 6/10, always_ff contradiction + missing trigger word	dry_run
+2026-04-28T13:30	D8-batch2	chip-synthesis-runner	75.0	72.5	revert	D8	full_test: 6/10, script template missing (blocking)	dry_run
+2026-04-28T13:30	D8-batch2	chip-traceability-linker	75.0	77.5	keep	D8	full_test: 7/10, functional but extraction rules need detail	dry_run
+2026-04-28T13:30	D8-batch2	chip-version-diff-generator	75.0	77.5	keep	D8	full_test: 7/10, sound logic but lacks file resolution	dry_run
+2026-04-28T13:30	D8-batch2	chip-design-space-explorer	75.0	77.5	keep	D8	full_test: 7/10, well-structured but missing input validation	dry_run
+2026-04-28T13:30	D8-batch2	chip-budget-allocator	75.0	77.5	keep	D8	full_test: 7/10, complete logic but missing auto-discovery	dry_run
+2026-04-28T13:30	D8-batch2	chip-create-dir	75.0	77.5	keep	D8	full_test: 7/10, works but no .gitkeep + dir-exists handling	dry_run
+2026-04-28T13:30	D8-batch2	chip-diagram-generator	75.0	72.5	revert	D8	full_test: 6/10, Mermaid vs D2 fundamental conflict	dry_run
+2026-04-28T13:30	D8-batch2	chip-doc-structurer	75.0	77.5	keep	D8	full_test: 7/10, clear but no template reference	dry_run
+2026-04-28T13:30	D8-batch2	chip-png-interface-gen	75.0	77.5	keep	D8	full_test: 7/10, clear but no RTL auto-parse	dry_run
+2026-04-28T13:30	D8-batch2	chip-cbb-exception-confirm	75.0	77.5	keep	D8	full_test: 7/10, complete but missing Wiki retrieval	dry_run
+2026-04-28T14:00	D7	all-33-skills	-	-	-	D7	architecture consistency: 6/10 — section ordering drift, terminology variance, frontmatter inconsistency	dry_run
+2026-04-28T14:30	P0-fix	chip-low-power-architect	72.5	77.5	keep	D8+D7	added ICG clock gating step, Mermaid→D2,降级策略	dry_run
+2026-04-28T14:30	P0-fix	chip-rtl-guideline-generator	72.5	77.5	keep	D8+D7	fixed always_ff→always @(posedge), added coding-style ref, trigger word,降级策略	dry_run
+2026-04-28T14:30	P0-fix	chip-synthesis-runner	72.5	77.5	keep	D8	added complete run_synth.sh script template, Glob file discovery	dry_run
+2026-04-28T14:30	P0-fix	chip-diagram-generator	72.5	77.5	keep	D8+D7	rewrote to D2→PNG primary, Mermaid as degradation, added FSM example,降级策略	dry_run
+2026-04-28T14:30	P1-fix	all-33-skills	-	-	-	D7	统一术语: 执行流程→执行步骤(3), 调用方式→执行步骤(2), 职责→任务(8), 降级处理→降级策略(5), 检查点标签统一(5)	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-delivery	77.5	80.0	keep	D8	added Glob discover for rtl/*.v + doc/ua/*.md	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-input-triage	77.5	80.0	keep	D8	added Glob discover for ua/*.md + coding-style.md	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-module-structure	77.5	80.0	keep	D8	added Glob discover for ua/*.md	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-parallel-dev	77.5	80.0	keep	D8	added Glob discover for rtl/*.v	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-quality-gate	77.5	80.0	keep	D8	added Glob discover for rtl/*.v + script existence check	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-sdc-sva	77.5	80.0	keep	D8	added Glob discover for ua/*.md	dry_run
+2026-04-28T15:00	P2-fix	chip-impl-self-check	77.5	80.0	keep	D8	added Glob discover for rtl/*.v + quality-checklist-impl.md	dry_run
+2026-04-28T15:00	P2-fix	chip-traceability-linker	77.5	80.0	keep	D8	added Glob discover for fs/*.md + ua/*.md	dry_run

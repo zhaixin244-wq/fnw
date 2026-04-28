@@ -1,6 +1,6 @@
 ---
 name: chip-rtl-bug-checker
-description: RTL Bug 模式检查 Skill。基于 data_adpt 实战经验，检查 RTL 代码中的 6 大类常见 Bug 模式（流水线/状态机、输入锁存、接口连接、FIFO/流控、位域/宽度、资源冲突）。当 chip-code-writer 完成 RTL 编码后自动调用，交付前必须通过。
+description: "Use when checking RTL code for common bugs and design issues. Triggers on 'bug', 'rtl bug', '检查rtl', 'rtl检查', 'bug check', 'rtl review', '代码检查', '设计缺陷'. Runs 6-category analysis: pipeline/FSM, input latch, interface, FIFO/flow, bitwidth, resource conflict."
 tools:
   - Read
   - Grep
@@ -9,7 +9,7 @@ tools:
 
 # RTL Bug 检查器
 
-> 基于 data_adpt 实战经验的 RTL Bug 模式检查。chip-code-writer 在每个子模块 RTL 编写完成后调用。
+> 基于公共模块实战经验的 RTL Bug 模式检查。chip-code-writer 在每个子模块 RTL 编写完成后调用。
 
 ## 输入
 
@@ -75,7 +75,7 @@ tools:
 | F2 | alloc/reclaim 冲突时是否有优先级？ | 检查冲突场景的 if-else 优先级 | Critical |
 | F3 | 写冲突是否有互斥逻辑？ | 检查同地址写入的互斥条件 | Critical |
 
-## 执行流程
+## 执行步骤
 
 ```
 读取 RTL 文件 → 第一轮自动化 Grep → 第二轮 LLM 审查 → 汇总结果 → 输出报告
@@ -171,6 +171,20 @@ awk '/^always/{start=NR; block=""} start{block=block"\n"$0} /^end/{if(start){lin
 | **WARN** | 所有 Critical 项通过，Major 项 > 2 个警告 |
 | **FAIL** | 任何 Critical 项失败 |
 
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| RTL 文件不存在 | 路径错误 | 提示用户确认文件路径 |
+| 文件过大 | > 5000 行 | 分模块检查，每次处理一个子模块 |
+| 语法错误 | Verilog 解析失败 | 先报告语法错误，建议修复后再做 Bug 检查 |
+| 检查超时 | 单文件 > 2 分钟 | 跳过当前检查项，标注"超时-待人工确认" |
+
+## 检查点
+
+- **检查前**：展示待检查文件列表和行数，确认范围
+- **检查后**：按严重级别分类展示（Critical / Major / Info），用户确认修复优先级
+
 ## 输出格式
 
 ```markdown
@@ -184,7 +198,28 @@ awk '/^always/{start=NR; block=""} start{block=block"\n"$0} /^end/{if(start){lin
 **总结**：{PASS/WARN/FAIL} | Critical: {N}/{N} | Major: {N}/{N}
 ```
 
-## 降级处理
+## 使用示例
+
+**示例 1：检查单个 RTL 文件**
+```
+用户：帮我检查 ds/rtl/{module}_buf.v 有没有 bug
+```
+预期行为：
+1. 读取文件，执行 6 大类自动 grep 检查
+2. 对 WARN 项进行 LLM 深度审查
+3. 输出 bug 检查报告表格 + 总结
+
+**示例 2：检查多个文件并交叉验证微架构**
+```
+用户：检查 {module} 所有 RTL 文件，微架构文档在 ds/doc/ua/
+```
+预期行为：
+1. 扫描 ds/rtl/ 下所有 .v 文件
+2. 逐文件执行自动化检查
+3. 与微架构文档交叉验证端口、FSM、FIFO 设计
+4. 输出汇总报告
+
+## 降级策略
 
 - Grep 扫描失败 → 跳过自动化检查，全部转为 LLM 审查
 - RTL 文件不可读 → 标注 `[FILE-UNREADABLE]`，跳过该文件

@@ -1,0 +1,31 @@
+---
+name: chip-ppa-formatter
+description: "Use when formatting PPA specification tables. Triggers on 'PPA表', 'PPA格式', 'ppa formatter', '面积表', '功耗表', '性能表', 'PPA规格'. Outputs structured PPA specs with unit normalization and constraint expressions."
+---
+
+# Chip PPA Formatter
+
+## 任务
+以结构化、可量化的方式输出 PPA 规格。
+
+## 执行步骤
+1. 从用户输入或架构描述中提取四类指标：
+   - **Performance**：Latency、Throughput、Frequency、Bandwidth
+   - **Power**：Dynamic Power、Leakage Power、Energy/Op
+   - **Area**：Gate Count、SRAM Size、Physical Area (mm²)
+   - **Quality**：SNR、BER、覆盖率（验证）
+2. 统一单位并标注工艺节点与 PVT 角（如 TT/0.85V/25°C）。
+3. 区分 **Target**（目标值）、**Budget**（预算值）、**Estimated**（估算值）。
+4. 对每项指标给出约束表达式（如 `Latency ≤ 10 cycles @ 1GHz`）。
+5. 如需对比多方案，以表格形式列出各方案的 PPA 得分与帕累托优势。
+
+## 输出格式
+```markdown
+### PPA 规格表（工艺：Xnm | PVT：TT/0.85V/25°C）
+
+| 指标类别 | 指标名 | 数值 | 单位 | 约束类型 | 备注 |
+|----------|--------|------|------|----------|------|
+| Performance | 处理延迟 | ≤ 10 | cycles | Target | @ 1GHz |
+| Power | 动态功耗 | < 10 | mW/GHz | Budget | 典型工况 |
+| Area | 门数 | ~ 150 | kGates | Estimated | 含扫描链 |
+```

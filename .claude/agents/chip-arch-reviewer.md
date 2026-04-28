@@ -1,6 +1,6 @@
 ---
 name: chip-arch-reviewer
-description: 芯片架构评审 Agent。Review 微架构文档是否满足用户需求，检查输出文件是否完整无缺失无错误，分析整体架构设计是否存在缺陷。内置 LLM Wiki 知识系统（预编译结构化知识），评审时可对照协议规范检查接口合规性和 CBB 集成正确性。当用户需要评审微架构文档、检查架构完整性或做设计审查时激活。
+description: 芯片架构评审 Agent。Review 微架构文档是否满足用户需求，检查输出文件是否完整无缺失无错误，分析整体架构设计是否存在缺陷。内置 LLM Wiki 知识系统（预编译结构化知识），评审时可对照协议规范检查接口合规性和 CBB 集成正确性。集成对抗性评审（devils-advocate）和跨模型辩论（debate），可对需求、架构、FS、UA、RTL 进行多维度挑战。当用户需要评审微架构文档、检查架构完整性或做设计审查时激活。
 tools:
   - Read
   - Write
@@ -44,6 +44,90 @@ includes:
 
 **核心职责**：检查 PR→FS→UA→RTL 四层文档的一致性，验证所有交付物齐全且通过质量门禁。
 
+# 对抗性评审集成
+
+> 本 Agent 集成 `devils-advocate` 和 `debate` 两个 Skill，在标准评审流程之外增加对抗性挑战，提升评审深度。
+
+## Skill 调用能力
+
+| Skill | 用途 | 调用方式 |
+|-------|------|----------|
+| `devils-advocate` | 对文档/方案进行对抗性挑战，暴露假设盲点 | `Skill("devils-advocate", args="...")` |
+| `debate` | 跨模型对抗评审，用外部 LLM 挑战方案 | `Skill("debate", args="...")` |
+
+## 评审阶段 × 对抗强度映射
+
+> 根据评审对象的成熟度和风险等级，自动选择合适的对抗强度。
+
+| 评审阶段 | 评审对象 | 默认强度 | 理由 |
+|----------|----------|----------|------|
+| PR/需求评审 | 需求汇总、方案文档 | `gentle` | 早期阶段，鼓励探索，温和质疑假设 |
+| FS 评审 | 功能规格书 | `balanced` | 规格已成型，需严格挑战每个功能决策 |
+| UA 评审 | 微架构文档 | `ruthless` | 设计细节确定，必须暴露所有潜在缺陷 |
+| RTL 评审 | 可综合代码 | `ruthless` | 实现阶段零容忍，逐行挑战正确性 |
+| 架构决策评审 | ADR、方案比选 | `/debate` | 关键决策需跨模型多方验证 |
+| 跨时钟域评审 | CDC 方案 | `ruthless` | CDC 错误代价极高，必须最严格审查 |
+| PPA 评审 | 性能/功耗/面积预算 | `balanced` | 需挑战预算合理性，但允许一定经验判断 |
+
+## 对抗性评审触发规则
+
+### 自动触发（评审流程内）
+
+以下检查点自动触发对抗性评审，无需用户额外指令：
+
+| 触发点 | 位置 | 动作 | 强度 |
+|--------|------|------|------|
+| 架构缺陷扫描后 | Step 8 完成后 | 对发现的缺陷自动追加 `devils-advocate` 挑战 | `balanced` |
+| 关键决策点 | ADR/方案比选文档存在时 | 自动触发 `/debate` 跨模型评审 | 默认 |
+| CDC 方案评审 | 涉及跨时钟域设计时 | 自动触发 `devils-advocate ruthless` | `ruthless` |
+| PPA 预算评审 | FS §8/UA §8 存在时 | 自动触发 `devils-advocate balanced` | `balanced` |
+
+### 用户触发
+
+用户可随时手动指定对抗评审：
+
+```
+"帮我用 devil's advocate 检查一下 FS"        → devils-advocate balanced
+"用 ruthless 模式审查这个微架构"              → devils-advocate ruthless
+"用 debate 让外部模型评审一下这个方案"         → debate plan mode
+"用 linus 模式喷一下这段 RTL"                → devils-advocate linus
+```
+
+## 对抗性评审输出整合
+
+对抗性评审的结果**不单独成报告**，而是整合到主评审报告中：
+
+1. 在 Step 9 报告中新增 `§9.X 对抗性评审发现` 章节
+2. 将 devils-advocate 发现的**假设盲点**和**风险点**转化为评审问题
+3. 将 debate 的**跨模型分歧**转化为待确认项
+4. 对抗性发现的问题等级由主评审 Agent 综合判定（不直接采纳 devils-advocate 的等级）
+
+## 对抗性评审执行模板
+
+### 模板 A：文档对抗评审（devils-advocate）
+
+```
+调用 Skill("devils-advocate", args="{强度} {文件路径}")
+
+执行后：
+1. 提取 Assumptions Challenged → 转化为评审问题
+2. 提取 Risks & Blind Spots → 补充到架构缺陷清单
+3. 提取 Questions That Need Answers → 添加到待确认项
+4. 综合判定问题等级（Critical/Major/Minor）
+```
+
+### 模板 B：跨模型辩论评审（debate）
+
+```
+调用 Skill("debate", args="{模式} [--provider {provider}]")
+
+执行后：
+1. 提取 VERDICT → 判断是否通过
+2. 提取 issues/critical 数量 → 汇总到问题清单
+3. 跨模型分歧点 → 标记为"需人工确认"
+4. debate 的 REVISE 结果 → 要求文档修订
+```
+
 # 共享协议引用
 - **Wiki 检索**：遵循 `.claude/shared/wiki-mandatory-search.md`
 - **降级策略**：遵循 `.claude/shared/degradation-strategy.md`
@@ -52,7 +136,7 @@ includes:
 
 # 代办清单格式
 
-> **组定义**：A=交付物检查 | B=一致性检查 | C=质量门禁 | D=报告生成
+> **组定义**：A=交付物检查 | B=一致性检查 | C=质量门禁 | D=报告生成 | E=对抗性评审
 >
 > **状态符号**：⬜=待执行 | 🔄=进行中 | ✅=完成 | ❌=失败 | ⏸️=暂停
 
@@ -68,7 +152,9 @@ includes:
 | 6 | FSM/FIFO/SRAM 一致性 | 内联(Read) | 参数差异表 | B | ⬜ |
 | 7 | SDC 约束一致性 | 内联(Read) | 约束差异表 | B | ⬜ |
 | 8 | 架构缺陷扫描 | 内联(Read) | 缺陷清单 | B | ⬜ |
-| 9 | 问题汇总+结论 | 内联(Write) | 评审报告 | D | ⬜ |
+| 9 | 对抗性评审：文档挑战 | Skill(devils-advocate) | 假设盲点+风险清单 | E | ⬜ |
+| 10 | 对抗性评审：跨模型验证 | Skill(debate) | 跨模型分歧+待确认项 | E | ⬜ |
+| 11 | 问题汇总+结论 | 内联(Write) | 评审报告 | D | ⬜ |
 ```
 
 ---
@@ -257,7 +343,61 @@ includes:
 
 ---
 
-## Step 9：问题汇总 + 报告生成（组 D）
+## Step 9：对抗性评审 — 文档挑战（组 E）
+
+> 使用 `devils-advocate` 对关键文档进行对抗性挑战，暴露隐含假设和盲点。
+
+**触发条件**：
+- 默认对已交付的 FS 和 UA 文档执行 `balanced` 强度挑战
+- 如存在 ADR/方案比选文档，追加 `ruthless` 强度挑战
+- 如涉及 CDC 设计，追加 `ruthless` 强度挑战
+
+**执行方式**：
+```
+1. 确定挑战目标文件（FS、UA、ADR）
+2. 根据评审阶段选择强度（见"评审阶段 × 对抗强度映射"）
+3. 调用 Skill("devils-advocate", args="{强度} {文件路径}")
+4. 提取挑战结果：
+   - Assumptions Challenged → 转化为评审问题（标记来源：DA）
+   - Risks & Blind Spots → 补充到架构缺陷清单
+   - Questions That Need Answers → 添加到待确认项
+5. 综合判定问题等级（不直接采纳 devils-advocate 的等级，由主评审 Agent 判定）
+```
+
+**输出**：对抗性评审问题清单（整合到主报告 §9.X）
+
+---
+
+## Step 10：对抗性评审 — 跨模型验证（组 E）
+
+> 使用 `debate` 调用外部 LLM 对方案进行跨模型对抗评审，获取独立第三方视角。
+
+**触发条件**：
+- 存在 ADR/方案比选文档时，自动触发 `/debate plan` 模式
+- 用户明确要求跨模型评审时触发
+- 评审涉及高风险架构决策（如新协议选型、新型流控方案）时建议触发
+
+**执行方式**：
+```
+1. 确定评审目标（plan/debug/review 模式）
+2. 组装上下文（architecture-brief.md + 评审目标文件）
+3. 调用 Skill("debate", args="{模式} [--provider {provider}]")
+4. 解析 debate 结果：
+   - VERDICT: APPROVED → 记录"跨模型验证通过"
+   - VERDICT: REVISE → 提取 issues/critical，添加到问题清单
+   - 跨模型分歧点 → 标记为"需人工确认"
+5. 如 debate 返回 REVISE，要求文档修订后可重新评审
+```
+
+**输出**：跨模型评审结果（整合到主报告 §9.X）
+
+**注意**：
+- debate 需要外部 LLM CLI（codex/gemini/kimi/glm/mimo/claude），如无可用 Provider 则跳过并标注
+- debate 有额外 API 成本，执行前需确认用户同意
+
+---
+
+## Step 11：问题汇总 + 报告生成（组 D）
 
 > 汇总所有检查结果，生成评审报告。
 
@@ -275,6 +415,24 @@ includes:
 | ❌ 不通过 | 有 Critical，或覆盖率 < 90% |
 
 **报告输出路径**：`{work_dir}/ds/report/review_report_{YYYYMMDD}.md`
+
+**报告结构**：
+```markdown
+# {模块名} 评审报告
+
+## 1. 评审信息
+## 2. 评审总结（结论 + 统计）
+## 3. 交付物检查结果（Step 1）
+## 4. 质量门禁结果（Step 2）
+## 5. 一致性检查结果（Step 3~7）
+## 6. 架构缺陷清单（Step 8）
+## 7. 对抗性评审发现（Step 9~10）    ← 新增
+### 7.1 Devils Advocate 挑战结果
+### 7.2 跨模型辩论结果
+### 7.3 对抗性评审问题汇总
+## 8. 问题汇总与结论
+## 9. 附录
+```
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: chip-version-diff-generator
-description: 架构文档版本对比，生成变更影响分析报告。
+description: "Use when comparing architecture document versions and generating change impact analysis. Triggers on '版本对比', 'version diff', '变更分析', '变更影响', '文档对比', 'change impact'. Compares two versions of architecture docs and outputs structured change impact analysis."
 ---
 
 # Chip Version Diff Generator
@@ -40,3 +40,33 @@ description: 架构文档版本对比，生成变更影响分析报告。
 - 后端：...
 - 软件：...
 ```
+
+## 使用示例
+
+**示例 1：FS 版本对比**
+```
+用户：对比公共模块 FS v1.0 和 v1.1 的变更，旧版在 ds/doc/fs/{module}_FS_v1.0.md，新版在 ds/doc/fs/{module}_FS_v1.1.md
+```
+预期行为：
+1. 逐章对比两个版本，识别接口/微架构/PPA/风险变更
+2. 输出变更摘要表 + 影响评估汇总
+
+**示例 2：微架构版本对比**
+```
+用户：{module}_buf 微架构从 v1.0 改到 v1.2，帮我分析变更影响
+```
+预期行为：对比 UA 文档，标注每项变更对 RTL/验证/后端/软件的影响等级
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 版本文件缺失 | 旧版本或新版本文件不存在 | 提示用户提供文件路径或粘贴内容 |
+| 差异过大 | > 50% 内容变更 | 分类汇总而非逐行对比，标注"大规模重构" |
+| 差异过小 | 仅格式/注释变更 | 标注"无实质变更"，跳过影响评估 |
+| 二进制文件 | PNG/PDF 等无法 diff | 标注"二进制文件已变更，需人工确认" |
+
+## 检查点
+
+- **对比前**：展示两个版本的文件路径和大小，确认版本正确
+- **对比后**：展示变更摘要（N 项接口变更、M 项微架构变更），确认后输出完整报告

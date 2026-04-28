@@ -1,6 +1,6 @@
 ---
 name: chip-png-d2-gen
-description: 使用D2语言生成芯片架构图、流程图、状态机图的PNG图片（dagre布局）。支持架构框图、数据通路、状态机、流程图。
+description: "Use when generating D2 architecture diagrams, data flow diagrams, or FSM state machine diagrams. Triggers on 'd2', '架构图', '框图', '状态机图', 'diagram', '数据通路图', 'generate d2', '模块连接图'. Compiles .d2 source to PNG using dagre layout."
 ---
 
 # Chip PNG D2 Generator
@@ -13,29 +13,27 @@ description: 使用D2语言生成芯片架构图、流程图、状态机图的PN
 - D2 语言规范：https://d2lang.com
 - 工具路径查找：优先 `<project_root>/.claude/tools/d2/d2.exe`，其次系统 PATH
 
-## 调用方式
+## 执行步骤
 
-### 1. 编写 D2 源文件
-将 `.d2` 文件写入项目输出目录，命名规则：
-- 架构/框图：`{module}_arch.d2` 或 `wd_{name}.d2`
-- 流程图：`wd_{name}_flow.d2`
-- 状态机：`wd_{name}_fsm.d2`
+1. **编写 D2 源文件**：将 `.d2` 文件写入项目输出目录，命名规则：
+   - 架构/框图：`{module}_arch.d2` 或 `wd_{name}.d2`
+   - 流程图：`wd_{name}_flow.d2`
+   - 状态机：`wd_{name}_fsm.d2`
 
-### 2. 生成 PNG
-```bash
-# 单文件：d2 CLI 直接编译（工具路径查找：.claude/tools/d2/d2.exe → 系统 PATH）
-d2 --layout dagre <output_dir>/input.d2 <output_dir>/output.png
+2. **生成 PNG**：
+   ```bash
+   # 单文件：d2 CLI 直接编译（工具路径查找：.claude/tools/d2/d2.exe → 系统 PATH）
+   d2 --layout dagre <output_dir>/input.d2 <output_dir>/output.png
 
-# 批量（通过 wavedrom skill 的 gen_wavedrom.js，处理所有 wd_*.d2 + wd_*.json）
-node .claude/skills/chip-png-wavedrom-gen/gen_wavedrom.js <output_dir>
-```
+   # 批量（通过 wavedrom skill 的 gen_wavedrom.js，处理所有 wd_*.d2 + wd_*.json）
+   node .claude/skills/chip-png-wavedrom-gen/gen_wavedrom.js <output_dir>
+   ```
+   `<output_dir>` 为项目中存放图表源文件和输出 PNG 的目录。
 
-`<output_dir>` 为项目中存放图表源文件和输出 PNG 的目录。
-
-### 3. 在文档中引用
-```markdown
-![描述](filename.png)
-```
+3. **在文档中引用**：
+   ```markdown
+   ![描述](filename.png)
+   ```
 
 ## D2 编写规范
 
@@ -155,3 +153,33 @@ error -> idle: "rst"
 - 架构框图用 `direction: right`
 - 状态机用 `direction: right`
 - 命令行加 `--layout dagre` 确保有向图布局
+
+## 使用示例
+
+**示例 1**：
+- 用户：「为公共模块生成架构框图」
+- 行为：编写 `{module}_arch.d2`（外部输入/输出 + 功能模块 + 数据通路连线），执行 `d2 --layout dagre` 编译为 PNG，验证输出
+
+**示例 2**：
+- 用户：「帮我画 buf_mgr 的 FSM 状态机图」
+- 行为：从微架构 §5.3 读取状态定义，编写 `wd_buf_mgr_fsm.d2`（IDLE/WORK/ERROR 状态 + 转移条件），编译为 PNG
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| D2 语法错误 | .d2 文件有语法问题 | 输出 d2 编译错误信息，定位错误行 |
+| d2 CLI 不可用 | d2 不在 PATH 且无本地安装 | 暂停，提示安装 d2 CLI |
+| 保留字冲突 | 节点 ID 使用了 `link` 等保留字 | 自动替换为 `chain_link` 等替代方案 |
+| PNG 未生成 | 编译成功但文件不存在 | 检查输出目录权限，重试 |
+
+## 检查点
+
+**检查前**：
+- 确认 d2 CLI 可用
+- 确认输出目录存在
+
+**检查后**：
+- 确认 .d2 源文件已保存
+- 确认 .png 文件已生成且非空
+- 确认配色和形状符合规范

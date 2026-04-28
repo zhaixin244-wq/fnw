@@ -1,6 +1,6 @@
 ---
 name: chip-microarch-chart-workflow
-description: 微架构图表生成工作流。封装 D2/Wavedrom/Interface 图表的生成、编译、验证流程。供 chip-microarch-writer 调用，确保图表强制生成。
+description: "Use when generating microarchitecture charts (D2, Wavedrom, Interface diagrams). Triggers on '图表生成', 'chart workflow', 'D2编译', 'wavedrom编译', '接口图', '图表工作流', 'generate charts'. Orchestrates D2/Wavedrom/Interface chart generation, compilation and validation."
 tools:
   - Read
   - Write
@@ -16,9 +16,9 @@ tools:
 
 ```json
 {
-  "module": "data_adpt",
+  "module": "{module}",
   "submodule": "input_if_mod",
-  "output_dir": "data_adpt_work/ds/doc/ua/tmp",
+  "output_dir": "{module}_work/ds/doc/ua/tmp",
   "charts": ["arch", "datapath", "fsm", "timing", "intf"]
 }
 ```
@@ -100,7 +100,38 @@ for f in {output_dir}/wd_*.json; do
 done
 ```
 
-## 降级处理
+## 使用示例
+
+**示例 1**：
+- 用户：「为公共模块的 input_if_mod 生成全套微架构图表」
+- 行为：依次生成架构图（.d2→.png）、数据通路图、状态机图、时序图（.json→.png）、端口图，验证所有 PNG 存在
+
+**示例 2**：
+- 用户：「只帮我编译 output_ctrl 的状态机图」
+- 行为：读取 `wd_output_ctrl_fsm.d2`，调用 `d2 --layout dagre` 编译为 PNG，验证输出文件存在
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| D2 编译失败 | .d2 语法错误或 d2 CLI 不可用 | 保留 .d2 源文件，标注 `[D2-DEGRADED]`，降级为文本描述 |
+| Wavedrom 解析失败 | .json 格式错误或 wavedrom-cli 不可用 | 保留 .json，标注错误位置，降级为文本时序表 |
+| 源文件缺失 | .d2 或 .json 文件不存在 | 跳过该图表，标注 `[CHART-MISSING]` |
+| PNG 未生成 | 编译成功但 PNG 文件不存在 | 检查输出目录权限，重试一次 |
+
+## 检查点
+
+**检查前**：
+- 确认输出目录 `{output_dir}/` 存在
+- 确认图表源文件（.d2/.json）已生成
+- 确认 d2/wavedrom-cli 工具可用
+
+**检查后**：
+- 确认所有 `wd_*.d2` 有对应 `.png`
+- 确认所有 `wd_*.json` 有对应 `.png`
+- 确认验证清单无 MISSING 项
+
+## 降级策略
 
 | 场景 | 处理方式 |
 |------|----------|

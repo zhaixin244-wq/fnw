@@ -1,6 +1,6 @@
 ---
 name: chip-create-dir
-description: 初始化芯片模块工作目录结构，创建 ds（设计）和 dv（验证）两级目录树，包含文档、RTL、仿真、报告等标准子目录。
+description: "Use when initializing chip module workspace directory structure. Triggers on '创建目录', '初始化目录', '目录结构', 'workspace', '工作目录', 'create dir'. Creates ds (design) and dv (verification) directory trees with standard subdirectories."
 ---
 
 # Chip Create Directory
@@ -11,14 +11,18 @@ description: 初始化芯片模块工作目录结构，创建 ds（设计）和 
 ## 依赖
 - 无外部依赖，纯目录创建
 
-## 调用方式
+## 执行步骤
 
+1. **确认模块名**：用户输入 `<module_name>`（必填），如 `axi_bridge`、`pcie_ctrl`。命名规范：字母+数字+下划线。
+2. **确认父目录**：用户输入 `[parent_dir]`（可选），默认当前目录 `.`。
+3. **检查目录是否已存在**：若 `<module_name>_work/` 已存在，提示用户选择：覆盖/跳过/重命名。
+4. **执行创建**：运行脚本或手动 `mkdir -p` 创建完整目录树。
+5. **验证结果**：运行 `tree` 或 `ls -R` 确认所有目录存在。
+
+**调用命令**：
 ```bash
 bash .claude/skills/chip-create-dir/init_workdir.sh <module_name> [parent_dir]
 ```
-
-- `<module_name>`：模块名（必填），如 `axi_bridge`、`pcie_ctrl`
-- `[parent_dir]`：父目录（可选），默认当前目录 `.`
 
 ## 目录结构
 
@@ -58,3 +62,17 @@ bash .claude/skills/chip-create-dir/init_workdir.sh axi_bridge /d/work/project
 ```
 
 创建完成后输出目录树摘要。
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| 脚本不存在 | `init_workdir.sh` 找不到 | 用 `mkdir -p` 手动创建目录结构，输出创建日志 |
+| 目录已存在 | 目标 `_work` 目录已存在 | 提示用户：覆盖/跳过/重命名，等待确认 |
+| 权限不足 | `mkdir` 失败 | 提示权限问题，建议 `chmod` 或换目录 |
+| 模块名非法 | 含空格/特殊字符 | 提示命名规范（字母+数字+下划线），等待修正 |
+
+## 检查点
+
+- **创建前**：展示即将创建的目录结构，用户确认后执行
+- **创建后**：展示 `tree` 输出，确认所有目录存在

@@ -1,0 +1,36 @@
+---
+name: chip-reliability-architect
+description: "Use when assessing reliability risks and designing mitigation. Triggers on '可靠性', 'SEU', '老化', 'IR Drop', 'EM', '热设计', 'reliability', 'ECC', 'TMR'. Evaluates SEU/aging/IR Drop/EM/thermal risks and proposes mitigation strategies."
+---
+
+# Chip Reliability Architect
+
+## 任务
+评估架构层面的可靠性风险并给出缓解方案。
+
+## 评估维度
+1. **SEU（单粒子翻转）**：SRAM/寄存器是否需要 ECC、奇偶校验、三模冗余（TMR）？
+2. **老化（Aging/BTI/HCI）**：关键路径是否留有足够时序裕量（Aging Margin）？
+3. **电压降（IR Drop）**：高功耗密度区域的电源网络是否足够强健？
+4. **电迁移（EM）**：高速/高电流信号的金属宽度与过孔数量是否满足 EM 规则？
+5. **热热点（Thermal）**：功耗分布是否均匀，是否有局部过热风险？
+6. **ESD/Latch-up**：IO 环和电源钳位架构是否满足目标规范？
+
+## 执行步骤
+1. 根据目标应用（消费级/工业级/汽车级/航天级）确定可靠性等级与标准（如 AEC-Q100、JEDEC）。
+2. 针对每个维度进行定性/定量评估。
+3. 给出架构级缓解措施（冗余、裕量、电源网络建议、热管理）。
+4. 输出可靠性设计检查清单与关键决策记录。
+
+## 输出格式
+```markdown
+### 可靠性风险评估
+
+| 风险项 | 等级 | 评估依据 | 缓解方案 | 架构决策 |
+|--------|------|----------|----------|----------|
+| SEU | Medium | 128KB SRAM 无保护 | 增加 SECDED ECC | Arch-Rel-001 |
+| Aging | High | 关键路径裕量 < 10% | 增加 20% Aging Margin | Arch-Rel-002 |
+
+### 关键决策记录（KDR）
+- **KDR-001**：...
+```

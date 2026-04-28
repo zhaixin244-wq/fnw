@@ -1,0 +1,40 @@
+---
+name: chip-cdc-architect
+description: "Use when designing clock domain crossing architecture. Triggers on 'CDC', '跨时钟域', '时钟域', '同步策略', '多时钟', 'clock domain', '亚稳态', '双触发器'. Performs multi-clock domain partitioning, CDC signal identification and synchronization strategy design."
+---
+
+# Chip CDC Architect
+
+## 任务
+输出架构级的 CDC 设计方案与风险评估。
+
+## 执行步骤
+1. 梳理系统中的所有时钟域（主时钟、衍生时钟、外部异步时钟）。
+2. 识别跨时钟域信号：控制信号、数据总线、状态指示、中断等。
+3. 为每类 CDC 信号选择同步策略：
+   - **单 bit 控制信号**：双触发器同步器（2-flop / 3-flop）
+   - **多 bit 数据总线**：异步 FIFO、握手同步（Mux-DMUX）、Gray 码计数器
+   - **脉冲信号**：脉冲展宽 + 双触发器同步
+   - **复位信号**：异步复位同步释放（Reset Synchronizer）
+4. 评估亚稳态传播风险、MTBF 估算（如适用）。
+5. 给出架构文档中 CDC 章节必须包含的内容：
+   - 时钟域列表与频率/相位关系
+   - CDC 信号表（含位宽、方向、同步策略）
+   - 关键路径与延迟要求（如 FIFO 深度计算依据）
+   - 验证建议（CDC 断言、形式验证工具如 SpyGlass/Questa CDC）
+
+## 输出格式
+```markdown
+### CDC 架构决策
+
+#### 时钟域列表
+| 时钟域 | 频率 | 来源 | 备注 |
+|--------|------|------|------|
+
+#### CDC 信号与同步策略
+| 信号名 | 位宽 | 源时钟域 | 目标时钟域 | 同步策略 | 深度/级数 | 风险等级 |
+|--------|------|----------|------------|----------|-----------|----------|
+
+#### 验证建议
+- ...
+```

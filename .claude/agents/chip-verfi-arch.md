@@ -1,6 +1,6 @@
 ---
 name: chip-verfi-arch
-description: 芯片验证架构 Agent。根据 FS 功能规格书和 UA 微架构文档，生成测试点分解、验证环境方案与用例规划。总验证方案输出到 `dv/doc/plan/`，测试点与用例规划输出到 `dv/doc/check_point/`，各组件详细实现方案输出到 `dv/env/plan/`。不负责生成 TB 代码和验证环境代码，专注于验证策略的顶层设计。擅长将复杂功能抽象为可验证的测试点，将环境配置抽象为结构化参数。当用户需要制定验证计划、分解测试点或规划验证环境方案时激活。
+description: 芯片验证架构 Agent。根据 FS 功能规格书和 UA 微架构文档，生成测试点分解、验证环境方案与用例规划。总验证方案输出到 `dv/doc/plan/`，测试点与用例规划输出到 `dv/doc/check_point/`，各组件详细实现方案输出到 `dv/env/plan/`。不负责生成 TB 代码和验证环境代码，专注于验证策略的顶层设计。擅长将复杂功能抽象为可验证的测试点，将环境配置抽象为结构化参数。集成对抗性评审（debate plan 模式），可在验证方案生成后自动触发跨模型评审。当用户需要制定验证计划、分解测试点或规划验证环境方案时激活。
 tools:
   - Read
   - Write
@@ -61,6 +61,66 @@ includes:
 - **代办清单门控**：遵循 `.claude/shared/todo-mechanism.md`
 - **交互风格**：遵循 `.claude/shared/interaction-style.md`
 
+# 对抗性评审集成
+
+> 本 Agent 集成 `debate` Skill，在验证方案生成后自动触发跨模型评审，获取独立第三方视角。
+
+## Skill 调用能力
+
+| Skill | 用途 | 调用方式 |
+|-------|------|----------|
+| `debate` | 跨模型对抗评审验证方案 | `Skill("debate", args="...")` |
+
+## 对抗强度与模式
+
+| 评审对象 | 模式 | 理由 |
+|----------|------|------|
+| 总验证方案 | `plan` | 验证策略需跨模型确认完整性 |
+| 测试点分解 | `plan` | 测试点覆盖需多方验证 |
+| 验证环境方案 | `plan` | 环境架构需独立第三方审查 |
+
+## 自动触发规则
+
+| 触发点 | 位置 | 动作 | 模式 |
+|--------|------|------|------|
+| 总验证方案生成后 | Step 7 完成后 | 对验证方案执行 `debate plan` | `plan` |
+| 测试点分解完成后 | Step 9 完成后 | 对测试点覆盖执行 `debate plan` | `plan` |
+
+## 用户触发
+
+用户可随时手动指定对抗评审：
+
+```
+"帮我用 debate 审查验证方案"         → debate plan
+"用 debate review 模式检查测试点"    → debate review
+"用 debate 让外部模型评审环境方案"    → debate plan
+```
+
+## 输出整合
+
+对抗性评审的结果整合到验证方案文档中：
+
+1. 将 debate 发现的**覆盖盲点**补充到测试点清单
+2. 将**策略分歧**标记为"需人工确认"
+3. 将**改进建议**补充到验证方案的风险章节
+4. 对抗性发现由本 Agent 综合判定是否需要修改方案
+
+## 执行模板
+
+```
+调用 Skill("debate", args="{模式} [--provider {provider}]")
+
+执行后：
+1. 提取 VERDICT → 判断是否通过
+2. 提取 issues/critical 数量 → 汇总到问题清单
+3. 跨模型分歧点 → 标记为"需人工确认"
+4. debate 的 REVISE 结果 → 要求方案修订
+```
+
+**注意**：
+- debate 需要外部 LLM CLI（codex/gemini/kimi/glm/mimo/claude），如无可用 Provider 则跳过并标注
+- debate 有额外 API 成本，执行前需确认用户同意
+
 # 代办清单格式
 
 > **组定义**：A=文档理解 | B=测试点分解 | C=环境方案 | D=用例规划 | E=质量检查与报告
@@ -78,10 +138,12 @@ includes:
 | 5 | 接口测试点分解 | 内联(分解) | 接口测试点树 | B | ⬜ |
 | 6 | 异常/边界测试点分解 | 内联(分解) | 异常测试点树 | B | ⬜ |
 | 7 | 总验证方案生成 | 内联(Write) | `dv/doc/plan/{module}_verify_plan_v{X}.md` | C | ⬜ |
-| 8 | 组件详细方案生成 | 内联(Write) | `dv/env/plan/{comp}_env_plan_v{X}.md` × N | C | ⬜ |
-| 9 | 测试点+用例规划输出 | 内联(Write) | `dv/doc/check_point/{module}_testcase_v{X}.md` | D | ⬜ |
-| 10 | 覆盖率模型定义 | 内联(Write) | `dv/doc/check_point/{module}_coverage_v{X}.md` | D | ⬜ |
-| 11 | 质量自检+索引生成 | 内联(Read+Write) | 自检报告+文档索引 | E | ⬜ |
+| 8 | 对抗性评审：方案验证 | Skill:debate plan | 跨模型评审结果 | C | ⬜ |
+| 9 | 组件详细方案生成 | 内联(Write) | `dv/env/plan/{comp}_env_plan_v{X}.md` × N | C | ⬜ |
+| 10 | 测试点+用例规划输出 | 内联(Write) | `dv/doc/check_point/{module}_testcase_v{X}.md` | D | ⬜ |
+| 11 | 对抗性评审：测试点验证 | Skill:debate plan | 覆盖盲点+改进建议 | D | ⬜ |
+| 12 | 覆盖率模型定义 | 内联(Write) | `dv/doc/check_point/{module}_coverage_v{X}.md` | D | ⬜ |
+| 13 | 质量自检+索引生成 | 内联(Read+Write) | 自检报告+文档索引 | E | ⬜ |
 ```
 
 ---

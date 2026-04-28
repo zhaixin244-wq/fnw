@@ -1,0 +1,70 @@
+---
+name: chip-synthesis-runner
+description: "Use when running Yosys synthesis on Verilog/RTL code. Triggers on '综合', 'synthesis', 'yosys', 'synth', '面积', 'timing', 'Fmax', '综合报告', '面积估计'. Runs Yosys and generates synthesis report with area and critical path info."
+---
+
+# Chip Synthesis Runner
+
+## 任务
+使用 yosys 对 RTL 代码执行综合，验证可综合性并输出面积/资源估计。使用 oss-cad-suite 工具链。
+
+## 目录约定
+
+| 项目 | 路径 |
+|------|------|
+| Syn 脚本 | `{module}_work/ds/run/run_synth.sh` |
+| 报告目录 | `{module}_work/ds/report/syn/` |
+| oss-cad-suite | `.claude/tools/oss-cad-suite/` |
+
+## 工具路径
+
+| 工具 | 路径 | 用途 |
+|------|------|------|
+| yosys | `.claude/tools/oss-cad-suite/bin/yosys` | RTL 综合、面积估计、资源分析 |
+
+## 执行步骤
+
+1. **前置条件**：chip-lint-checker 全部阶段通过
+2. **确定输入**：顶层模块名、RTL 文件列表
+3. **生成脚本**：在 `{module}_work/ds/run/` 下生成 `run_synth.sh`（模板见下方脚本模板）
+4. **创建报告目录**：`mkdir -p {module}_work/ds/report/syn/`
+5. **执行**：`cd {module}_work && bash ds/run/run_synth.sh {top} {rtl_files}`
+6. **解析报告**：读取 `ds/report/syn/` 下的日志文件，与微架构 §8 PPA 预估对比
+
+## 两阶段输出报告
+
+| 文件 | 阶段 | 内容 |
+|------|------|------|
+| `1_synth_verify.log` | 阶段 1 | 综合验证日志 |
+| `1_synth_check.log` | 阶段 1 | stat（cmos 通用面积） |
+| `2_synth_flat.log` | 阶段 2 | flatten 综合日志 |
+| `2_area_stat.log` | 阶段 2 | 面积统计 |
+| `synth_summary.log` | 汇总 | PASS/FAIL + 面积汇总 |
+
+## PPA 对比规则
+
+```
+综合面积 vs 微架构预估：
+  差异 < 20%  → Pass
+  差异 20~50% → Major，需分析原因
+  差异 > 50%  → Critical，暂停确认
+```
+
+## 降级策略
+
+| 场景 | 行为 |
+|------|------|
+| yosys 不可用 | 内化执行面积估算，标注 `[SYNTH-MANUAL]` |
+| 综合失败 | 保留 yosys 日志，逐条分析 error，标注 `[SYNTH-FAIL]` |
+| 无工艺库 | 使用 `-tech cmos` 通用估计，标注无目标工艺 |
+
+## 调用时机
+
+| 时机 | 触发条件 | 与 chip-code-writer 流程的关系 |
+|------|----------|-------------------------------|
+| Lint 通过后 | chip-lint-checker 全部阶段通过 | quality_check 阶段，Lint 之后 |
+| 面积评估 | 需要验证 PPA 预估 | quality_check 或 sdc_sva 阶段 |
+| 修复后复检 | 面积差异 > 50% | 优化后重新执行 |
+
+## CBB Ref
+- oss-cad-suite: `.claude/tools/oss-cad-suite/`（yosys v0.64+68）

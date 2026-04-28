@@ -1,6 +1,6 @@
 ---
 name: chip-png-wavedrom-gen
-description: 使用Wavedrom JSON格式生成芯片时序图PNG。支持信号分组、cycle标注、多通道并行时序展示。
+description: "Use when generating Wavedrom timing diagrams as PNG images. Triggers on '时序图', 'wavedrom', 'timing diagram', '波形图', '时序分析图', 'generate wavedrom'. Compiles Wavedrom JSON to PNG using wavedrom-cli."
 ---
 
 # Chip PNG Wavedrom Generator
@@ -14,26 +14,24 @@ description: 使用Wavedrom JSON格式生成芯片时序图PNG。支持信号分
 - D2 CLI（如需处理 `.d2` 文件）：见 `chip-png-d2-gen/requirements.txt`
 - 工具路径：chromium 路径通过 `CHROME_PATH` 环境变量或脚本内默认值配置
 
-## 调用方式
+## 执行步骤
 
-### 1. 编写 JSON 源文件
-将 `.json` 文件写入项目输出目录，命名规则：`wd_{描述}.json`
+1. **编写 JSON 源文件**：将 `.json` 文件写入项目输出目录，命名规则：`wd_{描述}.json`
 
-### 2. 生成 PNG
-```bash
-# 单文件：wavedrom-cli 生成 SVG，playwright 截图生成 PNG
-npx wavedrom --input <output_dir>/wd_xxx.json > <output_dir>/wd_xxx.svg
+2. **生成 PNG**：
+   ```bash
+   # 单文件：wavedrom-cli 生成 SVG，playwright 截图生成 PNG
+   npx wavedrom --input <output_dir>/wd_xxx.json > <output_dir>/wd_xxx.svg
 
-# 批量（通过 gen_wavedrom.js，处理所有 wd_*.json + wd_*.d2）
-node .claude/skills/chip-png-wavedrom-gen/gen_wavedrom.js <output_dir>
-```
+   # 批量（通过 gen_wavedrom.js，处理所有 wd_*.json + wd_*.d2）
+   node .claude/skills/chip-png-wavedrom-gen/gen_wavedrom.js <output_dir>
+   ```
+   `<output_dir>` 为项目中存放图表源文件和输出 PNG 的目录。
 
-`<output_dir>` 为项目中存放图表源文件和输出 PNG 的目录。
-
-### 3. 在文档中引用
-```markdown
-![描述](wd_xxx.png)
-```
+3. **在文档中引用**：
+   ```markdown
+   ![描述](wd_xxx.png)
+   ```
 
 ## Wavedrom JSON 格式规范
 
@@ -154,3 +152,34 @@ node .claude/skills/chip-png-wavedrom-gen/gen_wavedrom.js <output_dir>
 {name: 'ready',  wave: '0.10.10.'},
 {name: 'bp',     wave: '0.10....'},
 ```
+
+## 使用示例
+
+**示例 1**：
+- 用户：「为公共模块的 AXI 读通道生成时序图」
+- 行为：编写 `wd_axi_read.json`（arvalid/araddr/rvalid/rdata 信号 + cycle 标注），执行 wavedrom-cli + playwright 生成 PNG
+
+**示例 2**：
+- 用户：「帮我画 buf_mgr 的 Valid-Ready 握手时序」
+- 行为：编写 `wd_buf_mgr_handshake.json`（valid/ready/data 信号 + 握手波形），编译为 PNG
+
+## 异常处理
+
+| 场景 | 触发条件 | 处理动作 |
+|------|----------|----------|
+| JSON 格式错误 | .json 语法问题 | 输出解析错误信息，定位错误位置 |
+| wavedrom-cli 不可用 | Node.js 或依赖包缺失 | 暂停，提示 `npm install` |
+| playwright 无 chromium | 浏览器未安装 | 提示安装 chromium 或配置 `CHROME_PATH` |
+| wave 符号数量不匹配 | data 数组与 wave 中 `2` 数量不一致 | 标注不匹配信号，提示修正 |
+
+## 检查点
+
+**检查前**：
+- 确认 Node.js 和 wavedrom-cli 可用
+- 确认 playwright/chromium 可用
+- 确认输出目录存在
+
+**检查后**：
+- 确认 .json 源文件已保存
+- 确认 .png 文件已生成且非空
+- 确认信号分组和 cycle 标注正确

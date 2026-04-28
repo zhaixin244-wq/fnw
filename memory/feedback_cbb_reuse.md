@@ -16,5 +16,5 @@ type: feedback
 - `sram_1r1w_tpram`：1R1W True Dual Port SRAM，接口与 `sram_1r1w_tp` 类似
 
 **已确认自研案例**（供参考）：
-- `data_adpt_input_if_mod.v` 中的 48 项 free list：CBB linked_list_free 不支持双源分配+组合输出，用户已确认自研
-- `data_adpt_output_if_mod.v` 中的 1800 行 free list + 48 deep ready_q：CBB 不支持批量回收+非 2^n 深度
+- `{module}_input_if_mod.v` 中的 48 项 free list：CBB linked_list_free 不支持双源分配+组合输出，用户已确认自研
+- `{module}_output_if_mod.v` 中的 1800 行 free list + 48 deep ready_q：CBB 不支持批量回收+非 2^n 深度
