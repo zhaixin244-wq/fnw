@@ -1,0 +1,55 @@
+{
+  "runtime": "server-beta",
+  "pid": 11796,
+  "port": 37954,
+  "host": "127.0.0.1",
+  "startedAt": "2026-05-13T15:17:17.994Z",
+  "bootstrap": {
+    "initialized": true,
+    "schemaVersion": 1,
+    "appliedAt": "2026-05-13T15:08:19.362Z"
+  },
+  "boundaries": {
+    "queueManager": {
+      "status": "active",
+      "reason": "BullMQ-backed queue manager wired",
+      "details": {
+        "engine": "bullmq",
+        "mode": "external",
+        "host": "172.27.119.229",
+        "port": 6379,
+        "prefix": "claude_mem_37777",
+        "lanes": [
+          {
+            "kind": "event",
+            "name": "server_beta_generate_event"
+          },
+          {
+            "kind": "event-batch",
+            "name": "server_beta_generate_event_batch"
+          },
+          {
+            "kind": "summary",
+            "name": "server_beta_generate_summary"
+          },
+          {
+            "kind": "reindex",
+            "name": "server_beta_reindex"
+          }
+        ]
+      }
+    },
+    "generationWorkerManager": {
+      "status": "disabled",
+      "reason": "no server generation provider configured; set CLAUDE_MEM_SERVER_PROVIDER and the matching API key to enable."
+    },
+    "providerRegistry": {
+      "status": "disabled",
+      "reason": "Phase 5 keeps the provider registry boundary as inert; per-call providers are owned by the generation worker manager."
+    },
+    "eventBroadcaster": {
+      "status": "disabled",
+      "reason": "Phase 2 boundary only; SSE/event broadcasting is not wired."
+    }
+  }
+}

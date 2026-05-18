@@ -43,16 +43,16 @@ description: "Use when allocating PPA budgets top-down to submodules. Triggers o
 
 **示例 1：系统级 PPA 拆解**
 ```
-用户：帮我把公共模块的 PPA 目标拆到子模块，目标延迟 10 cycles @ 1GHz，面积 150kGates，功耗 15mW
+用户：帮我把 data_adpt 的 PPA 目标拆到子模块，目标延迟 10 cycles @ 1GHz，面积 150kGates，功耗 15mW
 ```
 预期行为：
-1. 列出公共模块的子模块（buf、crc、align 等）
+1. 列出 data_adpt 的子模块（buf、crc、align 等）
 2. 按流水线级数分配延迟，按逻辑复杂度分配面积，按活动因子分配功耗
 3. 输出闭合检查，超预算项标红
 
 **示例 2：检查预算闭合**
 ```
-用户：检查公共模块各子模块的 PPA 预算是否闭合
+用户：检查 data_adpt 各子模块的 PPA 预算是否闭合
 ```
 预期行为：汇总各子模块预算，与系统目标对比，输出闭合率
 

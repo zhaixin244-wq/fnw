@@ -50,7 +50,7 @@ description: "Use when checking RTL implementation input completeness before cod
 ## 使用示例
 
 **示例 1**：
-- 用户：「公共模块微架构文档已就绪，帮我检查输入是否完整」
+- 用户：「data_adpt 微架构文档已就绪，帮我检查输入是否完整」
 - 行为：读取微架构文档，检查 §3~§13 完整性，确认编码规范路径，检查 CBB 清单和协议文档，输出 `input_status: complete/partial/vague`
 
 **示例 2**：

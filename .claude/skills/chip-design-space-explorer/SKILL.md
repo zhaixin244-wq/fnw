@@ -38,7 +38,7 @@ description: "Use when exploring PPA design space for optimal solutions. Trigger
 
 **示例 1：FIFO 深度 DSE**
 ```
-用户：帮我探索公共模块的 FIFO 深度设计空间，突发量 32 beats，生产者速率 1B/cycle，消费者速率 0.5B/cycle
+用户：帮我探索 data_adpt 的 FIFO 深度设计空间，突发量 32 beats，生产者速率 1B/cycle，消费者速率 0.5B/cycle
 ```
 预期行为：
 1. 以 FIFO 深度为设计旋钮（16/32/64/128）
@@ -47,7 +47,7 @@ description: "Use when exploring PPA design space for optimal solutions. Trigger
 
 **示例 2：流水线级数 DSE**
 ```
-用户：公共模块的处理路径可以做 3/4/5 级流水线，帮我比选最优方案
+用户：data_adpt 的处理路径可以做 3/4/5 级流水线，帮我比选最优方案
 ```
 预期行为：枚举 3 个设计点，计算延迟/吞吐/面积/功耗，标注帕累托最优解
 

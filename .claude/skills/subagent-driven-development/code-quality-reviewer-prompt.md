@@ -1,26 +1,26 @@
-# Code Quality Reviewer Prompt Template
+# 代码质量审查者提示词模板
 
-Use this template when dispatching a code quality reviewer subagent.
+分派代码质量审查子智能体时使用此模板。
 
-**Purpose:** Verify implementation is well-built (clean, tested, maintainable)
+**目的：** 验证实现是否构建良好（整洁、有测试、可维护）
 
-**Only dispatch after spec compliance review passes.**
+**仅在规格合规性审查通过后才分派。**
 
 ```
 Task tool (superpowers:code-reviewer):
-  Use template at requesting-code-review/code-reviewer.md
+  使用模板 requesting-code-review/code-reviewer.md
 
-  WHAT_WAS_IMPLEMENTED: [from implementer's report]
-  PLAN_OR_REQUIREMENTS: Task N from [plan-file]
-  BASE_SHA: [commit before task]
-  HEAD_SHA: [current commit]
-  DESCRIPTION: [task summary]
+  WHAT_WAS_IMPLEMENTED: [来自实现者的报告]
+  PLAN_OR_REQUIREMENTS: [plan-file] 中的任务 N
+  BASE_SHA: [任务开始前的提交]
+  HEAD_SHA: [当前提交]
+  DESCRIPTION: [任务摘要]
 ```
 
-**In addition to standard code quality concerns, the reviewer should check:**
-- Does each file have one clear responsibility with a well-defined interface?
-- Are units decomposed so they can be understood and tested independently?
-- Is the implementation following the file structure from the plan?
-- Did this implementation create new files that are already large, or significantly grow existing files? (Don't flag pre-existing file sizes — focus on what this change contributed.)
+**除标准代码质量关注点外，审查者还应检查：**
+- 每个文件是否有单一明确的职责和定义清晰的接口？
+- 各单元是否拆分得足以独立理解和测试？
+- 实现是否遵循了计划中的文件结构？
+- 本次实现是否创建了已经很大的新文件，或显著增大了现有文件？（不要标记已有的文件大小问题——聚焦于本次变更带来的影响。）
 
-**Code reviewer returns:** Strengths, Issues (Critical/Important/Minor), Assessment
+**代码审查者返回：** 优点、问题（关键/重要/次要）、评估结论

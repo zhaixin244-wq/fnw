@@ -76,10 +76,8 @@ function decodeFrame(buffer) {
 const PORT = process.env.BRAINSTORM_PORT || (49152 + Math.floor(Math.random() * 16383));
 const HOST = process.env.BRAINSTORM_HOST || '127.0.0.1';
 const URL_HOST = process.env.BRAINSTORM_URL_HOST || (HOST === '127.0.0.1' ? 'localhost' : HOST);
-const SESSION_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
-const CONTENT_DIR = path.join(SESSION_DIR, 'content');
-const STATE_DIR = path.join(SESSION_DIR, 'state');
-let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
+const SCREEN_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
+const OWNER_PID = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 
 const MIME_TYPES = {
   '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
@@ -114,10 +112,10 @@ function wrapInFrame(content) {
 }
 
 function getNewestScreen() {
-  const files = fs.readdirSync(CONTENT_DIR)
+  const files = fs.readdirSync(SCREEN_DIR)
     .filter(f => f.endsWith('.html'))
     .map(f => {
-      const fp = path.join(CONTENT_DIR, f);
+      const fp = path.join(SCREEN_DIR, f);
       return { path: fp, mtime: fs.statSync(fp).mtime.getTime() };
     })
     .sort((a, b) => b.mtime - a.mtime);
@@ -144,7 +142,7 @@ function handleRequest(req, res) {
     res.end(html);
   } else if (req.method === 'GET' && req.url.startsWith('/files/')) {
     const fileName = req.url.slice(7);
-    const filePath = path.join(CONTENT_DIR, path.basename(fileName));
+    const filePath = path.join(SCREEN_DIR, path.basename(fileName));
     if (!fs.existsSync(filePath)) {
       res.writeHead(404);
       res.end('Not found');
@@ -232,7 +230,7 @@ function handleMessage(text) {
   touchActivity();
   console.log(JSON.stringify({ source: 'user-event', ...event }));
   if (event.choice) {
-    const eventsFile = path.join(STATE_DIR, 'events');
+    const eventsFile = path.join(SCREEN_DIR, '.events');
     fs.appendFileSync(eventsFile, JSON.stringify(event) + '\n');
   }
 }
@@ -260,33 +258,32 @@ const debounceTimers = new Map();
 // ========== Server Startup ==========
 
 function startServer() {
-  if (!fs.existsSync(CONTENT_DIR)) fs.mkdirSync(CONTENT_DIR, { recursive: true });
-  if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
+  if (!fs.existsSync(SCREEN_DIR)) fs.mkdirSync(SCREEN_DIR, { recursive: true });
 
   // Track known files to distinguish new screens from updates.
   // macOS fs.watch reports 'rename' for both new files and overwrites,
   // so we can't rely on eventType alone.
   const knownFiles = new Set(
-    fs.readdirSync(CONTENT_DIR).filter(f => f.endsWith('.html'))
+    fs.readdirSync(SCREEN_DIR).filter(f => f.endsWith('.html'))
   );
 
   const server = http.createServer(handleRequest);
   server.on('upgrade', handleUpgrade);
 
-  const watcher = fs.watch(CONTENT_DIR, (eventType, filename) => {
+  const watcher = fs.watch(SCREEN_DIR, (eventType, filename) => {
     if (!filename || !filename.endsWith('.html')) return;
 
     if (debounceTimers.has(filename)) clearTimeout(debounceTimers.get(filename));
     debounceTimers.set(filename, setTimeout(() => {
       debounceTimers.delete(filename);
-      const filePath = path.join(CONTENT_DIR, filename);
+      const filePath = path.join(SCREEN_DIR, filename);
 
       if (!fs.existsSync(filePath)) return; // file was deleted
       touchActivity();
 
       if (!knownFiles.has(filename)) {
         knownFiles.add(filename);
-        const eventsFile = path.join(STATE_DIR, 'events');
+        const eventsFile = path.join(SCREEN_DIR, '.events');
         if (fs.existsSync(eventsFile)) fs.unlinkSync(eventsFile);
         console.log(JSON.stringify({ type: 'screen-added', file: filePath }));
       } else {
@@ -300,10 +297,10 @@ function startServer() {
 
   function shutdown(reason) {
     console.log(JSON.stringify({ type: 'server-stopped', reason }));
-    const infoFile = path.join(STATE_DIR, 'server-info');
+    const infoFile = path.join(SCREEN_DIR, '.server-info');
     if (fs.existsSync(infoFile)) fs.unlinkSync(infoFile);
     fs.writeFileSync(
-      path.join(STATE_DIR, 'server-stopped'),
+      path.join(SCREEN_DIR, '.server-stopped'),
       JSON.stringify({ reason, timestamp: Date.now() }) + '\n'
     );
     watcher.close();
@@ -312,8 +309,8 @@ function startServer() {
   }
 
   function ownerAlive() {
-    if (!ownerPid) return true;
-    try { process.kill(ownerPid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+    if (!OWNER_PID) return true;
+    try { process.kill(OWNER_PID, 0); return true; } catch (e) { return false; }
   }
 
   // Check every 60s: exit if owner process died or idle for 30 minutes
@@ -323,27 +320,14 @@ function startServer() {
   }, 60 * 1000);
   lifecycleCheck.unref();
 
-  // Validate owner PID at startup. If it's already dead, the PID resolution
-  // was wrong (common on WSL, Tailscale SSH, and cross-user scenarios).
-  // Disable monitoring and rely on the idle timeout instead.
-  if (ownerPid) {
-    try { process.kill(ownerPid, 0); }
-    catch (e) {
-      if (e.code !== 'EPERM') {
-        console.log(JSON.stringify({ type: 'owner-pid-invalid', pid: ownerPid, reason: 'dead at startup' }));
-        ownerPid = null;
-      }
-    }
-  }
-
   server.listen(PORT, HOST, () => {
     const info = JSON.stringify({
       type: 'server-started', port: Number(PORT), host: HOST,
       url_host: URL_HOST, url: 'http://' + URL_HOST + ':' + PORT,
-      screen_dir: CONTENT_DIR, state_dir: STATE_DIR
+      screen_dir: SCREEN_DIR
     });
     console.log(info);
-    fs.writeFileSync(path.join(STATE_DIR, 'server-info'), info + '\n');
+    fs.writeFileSync(path.join(SCREEN_DIR, '.server-info'), info + '\n');
   });
 }
 

@@ -47,9 +47,9 @@ description: "Use when generating interface port PNG diagrams from Verilog modul
 
 **示例 1：生成模块端口图**
 ```
-用户：帮我生成公共模块的接口端口图
+用户：帮我生成 data_adpt 模块的接口端口图
 ```
-预期行为：读取模块端口声明，生成 `wd_intf_{module}.png`（左侧 input、右侧 output、信号名+位宽+方向箭头）
+预期行为：读取模块端口声明，生成 `wd_intf_data_adpt.png`（左侧 input、右侧 output、信号名+位宽+方向箭头）
 
 **示例 2：生成子模块端口图**
 ```

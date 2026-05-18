@@ -16,9 +16,9 @@ tools:
 
 ```json
 {
-  "module": "{module}",
+  "module": "data_adpt",
   "submodule": "input_if_mod",
-  "output_dir": "{module}_work/ds/doc/ua/tmp",
+  "output_dir": "work/data_adpt_work/ds/doc/ua/tmp",
   "charts": ["arch", "datapath", "fsm", "timing", "intf"]
 }
 ```
@@ -103,7 +103,7 @@ done
 ## 使用示例
 
 **示例 1**：
-- 用户：「为公共模块的 input_if_mod 生成全套微架构图表」
+- 用户：「为 data_adpt 的 input_if_mod 生成全套微架构图表」
 - 行为：依次生成架构图（.d2→.png）、数据通路图、状态机图、时序图（.json→.png）、端口图，验证所有 PNG 存在
 
 **示例 2**：

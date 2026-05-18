@@ -51,7 +51,7 @@ description: "Use when checking module interface protocol compliance. Triggers o
 ## 使用示例
 
 **示例 1**：
-- 用户：「检查公共模块的 AXI4 Slave 接口是否合规」
+- 用户：「检查 data_adpt 的 AXI4 Slave 接口是否合规」
 - 行为：确认 AXI4 协议和 Slave 角色，逐条核对握手规则（READY 不依赖 VALID）、突发传输（Burst Type/Length）、WLAST 匹配等，输出合规检查报告
 
 **示例 2**：

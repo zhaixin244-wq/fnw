@@ -43,9 +43,9 @@ description: "Use when generating chip module diagrams (block diagrams, timing d
 
 **示例 1：生成模块框图（D2）**
 ```
-用户：帮我画公共模块的模块框图，包含 buf、crc、align 三个子模块
+用户：帮我画 data_adpt 的模块框图，包含 buf、crc、align 三个子模块
 ```
-预期行为：生成 `wd_{module}_arch.d2`，使用 D2 语法定义子模块节点和信号连线，`d2 --layout dagre` 编译为 PNG
+预期行为：生成 `wd_data_adpt_arch.d2`，使用 D2 语法定义子模块节点和信号连线，`d2 --layout dagre` 编译为 PNG
 
 **示例 2：生成握手时序图（Wavedrom）**
 ```
@@ -63,7 +63,7 @@ description: "Use when generating chip module diagrams (block diagrams, timing d
 
 **示例 1：生成模块框图**
 ```
-用户：帮我画公共模块的模块框图，包含 buf、crc、align 三个子模块
+用户：帮我画 data_adpt 的模块框图，包含 buf、crc、align 三个子模块
 ```
 预期行为：生成 Mermaid graph TB 源码，标注信号流向和数据宽度
 

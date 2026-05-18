@@ -9,7 +9,7 @@ tools:
 
 # RTL Bug 检查器
 
-> 基于公共模块实战经验的 RTL Bug 模式检查。chip-code-writer 在每个子模块 RTL 编写完成后调用。
+> 基于 data_adpt 实战经验的 RTL Bug 模式检查。chip-code-writer 在每个子模块 RTL 编写完成后调用。
 
 ## 输入
 
@@ -202,7 +202,7 @@ awk '/^always/{start=NR; block=""} start{block=block"\n"$0} /^end/{if(start){lin
 
 **示例 1：检查单个 RTL 文件**
 ```
-用户：帮我检查 ds/rtl/{module}_buf.v 有没有 bug
+用户：帮我检查 ds/rtl/data_adpt_buf.v 有没有 bug
 ```
 预期行为：
 1. 读取文件，执行 6 大类自动 grep 检查
@@ -211,7 +211,7 @@ awk '/^always/{start=NR; block=""} start{block=block"\n"$0} /^end/{if(start){lin
 
 **示例 2：检查多个文件并交叉验证微架构**
 ```
-用户：检查 {module} 所有 RTL 文件，微架构文档在 ds/doc/ua/
+用户：检查 data_adpt 所有 RTL 文件，微架构文档在 ds/doc/ua/
 ```
 预期行为：
 1. 扫描 ds/rtl/ 下所有 .v 文件

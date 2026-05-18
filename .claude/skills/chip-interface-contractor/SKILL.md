@@ -28,7 +28,7 @@ description: "Use when defining module interface contracts. Triggers on '接口�
 ## 使用示例
 
 **示例 1**：
-- 用户：「为公共模块的上游 AXI4 接口定义接口契约」
+- 用户：「为 data_adpt 的上游 AXI4 接口定义接口契约」
 - 行为：确认 AXI4 协议和 Slave 角色，生成端口列表表格（信号名/方向/位宽/时钟域/复位值），定义时序参数（setup/hold），生成 SVA 断言模板
 
 **示例 2**：

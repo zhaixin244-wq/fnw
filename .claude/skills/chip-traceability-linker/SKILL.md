@@ -32,7 +32,7 @@ Markdown 表格：
 
 **示例 1：从 FS 和 UA 构建 RTM**
 ```
-用户：帮我为公共模块建立需求追溯矩阵，FS 在 ds/doc/fs/{module}_FS_v1.0.md，UA 在 ds/doc/ua/
+用户：帮我为 data_adpt 模块建立需求追溯矩阵，FS 在 ds/doc/fs/data_adpt_FS_v1.0.md，UA 在 ds/doc/ua/
 ```
 预期行为：
 1. 读取 FS 中所有 REQ-XXX 需求
@@ -41,7 +41,7 @@ Markdown 表格：
 
 **示例 2：检查遗漏项**
 ```
-用户：检查公共模块的 RTM 有没有未覆盖的需求
+用户：检查 data_adpt 的 RTM 有没有未覆盖的需求
 ```
 预期行为：扫描 RTM，列出所有状态为"未分配"或"待设计"的需求项
 

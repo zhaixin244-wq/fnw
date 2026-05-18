@@ -39,7 +39,7 @@ description: "Use when assessing reliability risks and designing mitigation. Tri
 
 **示例 1：消费级 SoC 可靠性评估**
 ```
-用户：评估公共模块的可靠性风险，目标是消费级，工艺 28nm，有 64KB SRAM
+用户：评估 data_adpt 模块的可靠性风险，目标是消费级，工艺 28nm，有 64KB SRAM
 ```
 预期行为：
 1. 按消费级标准（JEDEC）评估 SEU/Aging/IR Drop/EM/Thermal

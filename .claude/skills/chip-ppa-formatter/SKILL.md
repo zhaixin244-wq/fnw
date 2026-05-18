@@ -34,7 +34,7 @@ description: "Use when formatting PPA specification tables. Triggers on 'PPA表'
 
 **示例 1：格式化 PPA 目标**
 ```
-用户：帮我格式化公共模块的 PPA 规格，工艺 28nm，目标延迟 10 cycles @ 1GHz，面积 150kGates，功耗 15mW
+用户：帮我格式化 data_adpt 的 PPA 规格，工艺 28nm，目标延迟 10 cycles @ 1GHz，面积 150kGates，功耗 15mW
 ```
 预期行为：
 1. 提取指标，统一单位

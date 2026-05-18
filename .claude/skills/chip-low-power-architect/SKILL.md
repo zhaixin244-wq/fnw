@@ -54,7 +54,7 @@ description: "Use when designing low-power architecture for chip modules. Trigge
 ## 使用示例
 
 **示例 1**：
-- 用户：「为公共模块设计低功耗架构方案」
+- 用户：「为 data_adpt 设计低功耗架构方案」
 - 行为：分析功耗模式（Active/Sleep），定义 Always-On 和可关断域，设计隔离策略和保持策略，输出功耗状态机和 UPF 意图
 
 **示例 2**：

@@ -1,0 +1,10 @@
+{
+  "appliedAt": "2026-05-13T04:54:43.333Z",
+  "backupPath": "C:\\Users\\link_\\.claude-mem\\backups\\claude-mem-pre-12.4.3-2026-05-13T04-54-43-324Z.db",
+  "chromaWiped": false,
+  "counts": {
+    "observerSessions": 0,
+    "observerCascadeRows": 0,
+    "stuckPendingMessages": 0
+  }
+}

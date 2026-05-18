@@ -19,6 +19,11 @@
 | 顶层集成/接口对齐 | `chip-top-integrator` | 顶层集成、接口对齐、系统lint、连线检查 | 手动编写顶层模块或手动进行接口对齐 |
 | 低功耗设计/UPF | `chip-lowpower-designer` | 低功耗、UPF、功耗域、clock gating、power gating、isolation | 手动编写 UPF 文件或手动进行功耗分析 |
 | DFT 设计/扫描链/MBIST | `chip-dft-engineer` | DFT、扫描链、MBIST、LBIST、ATPG、测试向量 | 手动编写 DFT 方案或手动进行测试插入 |
+| 驱动架构规划 | `chip-sw-driver` | 驱动架构、API设计、寄存器映射方案、驱动分层 | 手动设计驱动架构或 API 接口 |
+| 固件代码实现 | `chip-firmware-writer` | 编写驱动、生成头文件、固件代码、驱动测试、HAL实现 | 手动编写驱动代码、寄存器头文件或固件测试程序 |
+| 软件验证/测试 | `chip-sw-verifier` | 驱动测试、单元测试、集成测试、Mock、覆盖率、回归测试 | 手动编写驱动测试代码或测试框架 |
+| 软件代码审查 | `chip-sw-reviewer` | 代码审查、静态分析、安全审查、编码规范检查 | 手动进行代码审查或静态分析 |
+| 软件性能分析 | `chip-sw-profiler` | 性能分析、延迟测量、吞吐分析、瓶颈定位、性能优化 | 手动进行性能分析或优化 |
 | 项目管理/风险管控/汇报 | `chip-project-lead` | 项目管理、风险评估、进度跟踪、汇报、协调、门控检查 | 手动编写项目计划或风险报告（由项目总负责人统筹） |
 
 ---

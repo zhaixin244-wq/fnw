@@ -109,7 +109,7 @@ cat "$REPORT_DIR/2_area_stat.log" >> "$REPORT_DIR/synth_summary.log"
 ## 使用示例
 
 **示例 1**：
-- 用户：「公共模块 Lint 已通过，跑综合」
+- 用户：「data_adpt Lint 已通过，跑综合」
 - 行为：生成 `run_synth.sh`，执行两阶段综合（验证 + flatten），输出 `synth_summary.log`，与微架构 §8 PPA 预估对比面积差异
 
 **示例 2**：

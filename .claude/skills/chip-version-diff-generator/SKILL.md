@@ -45,7 +45,7 @@ description: "Use when comparing architecture document versions and generating c
 
 **示例 1：FS 版本对比**
 ```
-用户：对比公共模块 FS v1.0 和 v1.1 的变更，旧版在 ds/doc/fs/{module}_FS_v1.0.md，新版在 ds/doc/fs/{module}_FS_v1.1.md
+用户：对比 data_adpt FS v1.0 和 v1.1 的变更，旧版在 ds/doc/fs/data_adpt_FS_v1.0.md，新版在 ds/doc/fs/data_adpt_FS_v1.1.md
 ```
 预期行为：
 1. 逐章对比两个版本，识别接口/微架构/PPA/风险变更
@@ -53,7 +53,7 @@ description: "Use when comparing architecture document versions and generating c
 
 **示例 2：微架构版本对比**
 ```
-用户：{module}_buf 微架构从 v1.0 改到 v1.2，帮我分析变更影响
+用户：data_adpt_buf 微架构从 v1.0 改到 v1.2，帮我分析变更影响
 ```
 预期行为：对比 UA 文档，标注每项变更对 RTL/验证/后端/软件的影响等级
 

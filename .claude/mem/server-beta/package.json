@@ -1,0 +1,19 @@
+{
+  "name": "server-beta",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bullmq": "^5.76.8",
+    "ioredis": "^5.10.1",
+    "pg": "^8.20.0",
+    "zod": "^4.4.3"
+  }
+}

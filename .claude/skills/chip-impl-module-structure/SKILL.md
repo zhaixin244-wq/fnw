@@ -52,7 +52,7 @@ description: "Use when planning RTL module structure from microarchitecture docs
 ## 使用示例
 
 **示例 1**：
-- 用户：「根据公共模块微架构文档规划模块结构」
+- 用户：「根据 data_adpt 微架构文档规划模块结构」
 - 行为：读取微架构 §4.1 提取端口列表，§5 确定子模块实例化，生成文件清单（.v/_sva.sv/_intf.sv/.sdc/_tb.v），创建工作目录
 
 **示例 2**：

@@ -51,12 +51,12 @@ description: "Use when verifying RTL implementation deliverables completeness be
 ## 使用示例
 
 **示例 1**：
-- 用户：「公共模块 RTL 已完成，请执行交付物完整性检查」
-- 行为：读取 `{module}_work/` 目录，逐项检查 10 项交付物（RTL .v、CBB 清单、SDC、SVA、Lint 报告、综合报告等），输出交付清单表格及状态
+- 用户：「data_adpt 模块 RTL 已完成，请执行交付物完整性检查」
+- 行为：读取 `work/data_adpt_work/` 目录，逐项检查 10 项交付物（RTL .v、CBB 清单、SDC、SVA、Lint 报告、综合报告等），输出交付清单表格及状态
 
 **示例 2**：
 - 用户：「帮我确认 buf_mgr 的 Lint 和综合报告是否通过」
-- 行为：检查 `buf_mgr_work/ds/report/lint/lint_summary.log` 是否 ALL PASS，检查 `synth_summary.log` 是否 ALL PASS + 面积达标，输出结果
+- 行为：检查 `work/buf_mgr_work/ds/report/lint/lint_summary.log` 是否 ALL PASS，检查 `synth_summary.log` 是否 ALL PASS + 面积达标，输出结果
 
 ## 异常处理
 

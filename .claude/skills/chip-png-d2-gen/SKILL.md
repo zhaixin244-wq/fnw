@@ -157,8 +157,8 @@ error -> idle: "rst"
 ## 使用示例
 
 **示例 1**：
-- 用户：「为公共模块生成架构框图」
-- 行为：编写 `{module}_arch.d2`（外部输入/输出 + 功能模块 + 数据通路连线），执行 `d2 --layout dagre` 编译为 PNG，验证输出
+- 用户：「为 data_adpt 生成架构框图」
+- 行为：编写 `data_adpt_arch.d2`（外部输入/输出 + 功能模块 + 数据通路连线），执行 `d2 --layout dagre` 编译为 PNG，验证输出
 
 **示例 2**：
 - 用户：「帮我画 buf_mgr 的 FSM 状态机图」

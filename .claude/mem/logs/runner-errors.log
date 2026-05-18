@@ -1,0 +1,30 @@
+[bun-runner] empty stdin payload received — issue #2188
+  script: --version
+  payload byte length: 0
+  payload type: null (no data event or stream error)
+  platform: win32
+  shell: C:\Program Files\Git\usr\bin\bash.exe
+  stdin TTY: undefined
+  timestamp: 2026-05-14T03:07:53.265Z
+  CLAUDE_PLUGIN_ROOT: C:/Users/link_/.claude/omc
+
+[bun-runner] empty stdin payload received — issue #2188
+  script: C:/Users/link_/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs
+  payload byte length: 0
+  payload type: null (no data event or stream error)
+  platform: win32
+  shell: C:\Program Files\Git\usr\bin\bash.exe
+  stdin TTY: undefined
+  timestamp: 2026-05-14T03:07:53.446Z
+  CLAUDE_PLUGIN_ROOT: C:/Users/link_/.claude/omc
+
+[bun-runner] empty stdin payload received — issue #2188
+  script: C:/Users/link_/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs
+  payload byte length: 0
+  payload type: null (no data event or stream error)
+  platform: win32
+  shell: C:\Program Files\Git\bin\bash.exe
+  stdin TTY: undefined
+  timestamp: 2026-05-14T05:11:33.646Z
+  CLAUDE_PLUGIN_ROOT: C:/Users/link_/.claude/omc
+

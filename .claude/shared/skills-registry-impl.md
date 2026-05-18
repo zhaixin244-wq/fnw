@@ -47,6 +47,7 @@
 | `chip-traceability-linker` | RTM 需求追溯矩阵 | 编写 CBB 清单时 |
 | `chip-lint-checker` | iverilog + yosys 三阶段 Lint | Lint 检查时 |
 | `chip-synthesis-runner` | yosys 综合验证 + 面积估计 | 综合检查时 |
+| `chip-doc-scorer` | FS/UA/RTL 多维度量化评分（100分制）+ 跨文档一致性 + 风险加权 + 改进闭环 | 文档评分、版本对比、质量改进时 |
 
 ## 上下文管理 Skills
 

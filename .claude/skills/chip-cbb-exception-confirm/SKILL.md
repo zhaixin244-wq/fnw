@@ -62,7 +62,7 @@ CBB 能力：{CBB值}
 
 **示例 1**：
 - 用户：「标准 sync_fifo CBB 深度只支持 16，我需要 32，怎么办」
-- 行为：输出差异表（CBB 深度 16 vs 需求 32），逐项询问用户是否接受 CBB 或自研，用户选择自研后生成 `{module}_sync_fifo_custom.v`
+- 行为：输出差异表（CBB 深度 16 vs 需求 32），逐项询问用户是否接受 CBB 或自研，用户选择自研后生成 `data_adpt_sync_fifo_custom.v`
 
 **示例 2**：
 - 用户：「arbiter CBB 不支持 WRR 策略，帮我确认是否需要自研」

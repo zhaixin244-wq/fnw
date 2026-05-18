@@ -43,7 +43,7 @@ description: "Use when designing clock domain crossing architecture. Triggers on
 
 **示例 1：双时钟域 CDC 设计**
 ```
-用户：公共模块有两个时钟域，clk_core 500MHz 和 clk_axi 250MHz，帮我设计 CDC 方案
+用户：data_adpt 模块有两个时钟域，clk_core 500MHz 和 clk_axi 250MHz，帮我设计 CDC 方案
 ```
 预期行为：
 1. 列出两个时钟域的频率/相位关系
@@ -53,7 +53,7 @@ description: "Use when designing clock domain crossing architecture. Triggers on
 
 **示例 2：CDC 风险评估**
 ```
-用户：检查公共模块的 CDC 设计有没有风险，特别是那几个跨域的控制信号
+用户：检查 data_adpt 的 CDC 设计有没有风险，特别是那几个跨域的控制信号
 ```
 预期行为：评估亚稳态传播风险，检查同步级数是否足够，给出 MTBF 估算
 

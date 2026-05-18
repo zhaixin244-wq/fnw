@@ -62,7 +62,7 @@ description: "Use when generating SDC constraints, SVA assertions or testbench f
 ## 使用示例
 
 **示例 1**：
-- 用户：「为公共模块生成 SDC 约束和 SVA 断言」
+- 用户：「为 data_adpt 生成 SDC 约束和 SVA 断言」
 - 行为：从微架构 §6 提取时钟定义生成 `create_clock`/`set_input_delay`/`set_output_delay`，从 §10 提取验证场景生成握手/数据稳定性断言，保存到对应目录
 
 **示例 2**：

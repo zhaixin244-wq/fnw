@@ -32,7 +32,7 @@ description: "Use when designing microarchitecture document structure. Triggers 
 
 **示例 1：设计微架构文档结构**
 ```
-用户：帮我设计公共模块的微架构文档结构
+用户：帮我设计 data_adpt 模块的微架构文档结构
 ```
 预期行为：生成 9 章标准结构 + 权重分配 + 必填图表清单
 

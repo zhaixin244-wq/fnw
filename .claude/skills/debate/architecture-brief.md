@@ -25,12 +25,14 @@
 │   ├── knowledge/            # 原始协议/CBB 文档
 │   ├── skills/               # Skill 定义（含 devils-advocate、debate）
 │   └── tools/                # 工具链（oss-cad-suite 等）
-├── {module}_work/           # 数据适配器模块工作区（当前项目）
-│   ├── ds/
-│   │   ├── doc/pr/           # 需求/方案/ADR 文档
-│   │   ├── doc/fs/           # FS 功能规格书 + 图表
-│   │   ├── doc/ua/           # 微架构文档 + 图表
-│   │   └── rtl/              # RTL 代码
+├── work/                     # 项目工作区
+│   ├── data_adpt_work/       # 数据适配器模块工作区（当前项目）
+│   │   ├── ds/
+│   │   │   ├── doc/pr/       # 需求/方案/ADR 文档
+│   │   │   ├── doc/fs/       # FS 功能规格书 + 图表
+│   │   │   ├── doc/ua/       # 微架构文档 + 图表
+│   │   │   └── rtl/          # RTL 代码
+│   └── pcie_rtag_ctrl/       # PCIe RTAG 控制器项目
 ├── doc/                      # 项目级文档
 ├── memory/                   # 跨会话记忆
 └── requirements.txt          # Python 依赖

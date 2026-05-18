@@ -98,7 +98,7 @@ exit $FAILURES
 ## 使用示例
 
 **示例 1**：
-- 用户：「公共模块 RTL 写完了，跑一下 Lint」
+- 用户：「data_adpt RTL 写完了，跑一下 Lint」
 - 行为：生成 `run_lint.sh`，依次执行 iverilog 语法检查、yosys 组合环路检测、yosys 综合可行性检查，输出三阶段报告和 `lint_summary.log`
 
 **示例 2**：

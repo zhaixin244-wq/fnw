@@ -37,7 +37,7 @@ description: "Use when reviewing FS, UA, or RTL documents against quality checkl
 ## 使用示例
 
 **示例 1**：
-- 用户：「评审公共模块的微架构文档」
+- 用户：「评审 data_adpt 的微架构文档」
 - 行为：逐项检查架构完整性、接口精确性、PPA 可行性、CDC 安全等 9 个维度，对 Fail/Open 项标注风险等级，输出评审 Checklist
 
 **示例 2**：

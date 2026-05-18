@@ -136,7 +136,7 @@ Lint → ALL PASS? → Synthesis → ALL PASS? → 通过
 ## 使用示例
 
 **示例 1**：
-- 用户：「公共模块 RTL 写完了，跑一下质量门禁」
+- 用户：「data_adpt RTL 写完了，跑一下质量门禁」
 - 行为：Step 0 检测工具可用性，Step 1 执行 Lint 检查，Step 2 执行综合检查，失败则进入自愈循环修复，最终输出 lint_report 和 synth_report
 
 **示例 2**：

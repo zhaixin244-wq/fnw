@@ -44,6 +44,7 @@
 | `chip-rtl-guideline-generator` | 5 维编码规范（Clock/Reset/DFT/SVA） | 生成 RTL 实现指导时 |
 | `chip-protocol-compliance-checker` | 协议合规逐条核对 | 检查总线接口合规性时 |
 | `chip-review-checklister` | 9 维度评审清单 + 完整性评分 | 架构评审时 |
+| `chip-doc-scorer` | FS/UA/RTL 多维度量化评分（100分制）+ 跨文档一致性 + 风险加权 + 改进闭环 | 文档阶段性质量评估、版本对比、质量改进时 |
 | `chip-version-diff-generator` | 版本间架构变更对比 | 有历史版本需要对比时 |
 
 ### 计划与执行

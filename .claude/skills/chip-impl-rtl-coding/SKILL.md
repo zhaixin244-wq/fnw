@@ -127,8 +127,8 @@ ABSOLUTELY NO ARCHITECTURE MODIFICATION IN RTL
 ## 使用示例
 
 **示例 1**：
-- 用户：「根据公共模块微架构实现 input_if_mod 子模块 RTL」
-- 行为：读取微架构 §5.1 数据通路逐阶段编码，§5.3 实现两段式 FSM，集成 CBB 并标注 `// CBB Ref`，实现 valid/ready 握手逻辑，保存到 `{module}_work/ds/rtl/input_if_mod.v`
+- 用户：「根据 data_adpt 微架构实现 input_if_mod 子模块 RTL」
+- 行为：读取微架构 §5.1 数据通路逐阶段编码，§5.3 实现两段式 FSM，集成 CBB 并标注 `// CBB Ref`，实现 valid/ready 握手逻辑，保存到 `work/data_adpt_work/ds/rtl/input_if_mod.v`
 
 **示例 2**：
 - 用户：「帮我补全 buf_mgr 的 FIFO 子模块代码」

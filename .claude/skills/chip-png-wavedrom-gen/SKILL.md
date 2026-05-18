@@ -156,7 +156,7 @@ description: "Use when generating Wavedrom timing diagrams as PNG images. Trigge
 ## 使用示例
 
 **示例 1**：
-- 用户：「为公共模块的 AXI 读通道生成时序图」
+- 用户：「为 data_adpt 的 AXI 读通道生成时序图」
 - 行为：编写 `wd_axi_read.json`（arvalid/araddr/rvalid/rdata 信号 + cycle 标注），执行 wavedrom-cli + playwright 生成 PNG
 
 **示例 2**：

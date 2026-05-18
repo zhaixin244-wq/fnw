@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 # Stop the brainstorm server and clean up
-# Usage: stop-server.sh <session_dir>
+# Usage: stop-server.sh <screen_dir>
 #
 # Kills the server process. Only deletes session directory if it's
 # under /tmp (ephemeral). Persistent directories (.superpowers/) are
 # kept so mockups can be reviewed later.
 
-SESSION_DIR="$1"
+SCREEN_DIR="$1"
 
-if [[ -z "$SESSION_DIR" ]]; then
-  echo '{"error": "Usage: stop-server.sh <session_dir>"}'
+if [[ -z "$SCREEN_DIR" ]]; then
+  echo '{"error": "Usage: stop-server.sh <screen_dir>"}'
   exit 1
 fi
 
-STATE_DIR="${SESSION_DIR}/state"
-PID_FILE="${STATE_DIR}/server.pid"
+PID_FILE="${SCREEN_DIR}/.server.pid"
 
 if [[ -f "$PID_FILE" ]]; then
   pid=$(cat "$PID_FILE")
@@ -43,11 +42,11 @@ if [[ -f "$PID_FILE" ]]; then
     exit 1
   fi
 
-  rm -f "$PID_FILE" "${STATE_DIR}/server.log"
+  rm -f "$PID_FILE" "${SCREEN_DIR}/.server.log"
 
   # Only delete ephemeral /tmp directories
-  if [[ "$SESSION_DIR" == /tmp/* ]]; then
-    rm -rf "$SESSION_DIR"
+  if [[ "$SCREEN_DIR" == /tmp/* ]]; then
+    rm -rf "$SCREEN_DIR"
   fi
 
   echo '{"status": "stopped"}'
