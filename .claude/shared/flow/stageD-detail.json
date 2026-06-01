@@ -1,0 +1,777 @@
+{
+  "version": "1.0",
+  "description": "stageD 方案细化 - D0~D14 子阶段详细规则。每个子阶段通过 brainstorming 技能与用户深入交互，沟通记录沉淀到 ADR。",
+
+  "stageD_meta": {
+    "name": "方案细化",
+    "iron_rule": "NO PPA CLAIMS WITHOUT QUANTITATIVE EVIDENCE",
+    "entry_condition": "stageC 需求汇总表已确认并冻结",
+    "exit_condition": "D0~D14 全部完成（或跳过）+ 用户确认方案文档",
+    "execution_mode": "步进模式（默认），每个 D 子阶段独立执行，完成后暂停等待确认",
+    "adr_record": "每个 D 子阶段的头脑风暴沟通记录追加到 ADR 文档的「方案细化记录」章节",
+    "edge_case_handling": {
+      "description": "极端输入（有效信息 <50 字）的处理策略",
+      "detection": "input_triage 判定为 vague 且用户首条消息有效信息 <50 字时触发",
+      "strategy": [
+        "1. 输出信息不足提示：「您的输入信息较少，我需要了解更多才能准确采集需求。请提供以下信息：」",
+        "2. 提供快速模板选择：「请选择模块类型：A)数据通路 B)控制管理 C)接口桥接 D)存储管理 E)安全隔离 F)低功耗管理」",
+        "3. 用户选择后，加载对应领域的 domain_exploration_questions 进行引导",
+        "4. 渐进式探索：先定方向（stage0）→ 再细化（stageA）→ 再逐项确认（stageB）",
+        "5. 如果用户仍无法提供足够信息，标注为「假设条件」并在方案文档中明确列出"
+      ],
+      "fast_template_questions": {
+        "数据通路": ["数据从哪来？到哪去？", "数据粒度多大？需要什么处理？", "延迟要求？"],
+        "控制管理": ["管理什么资源？多少个？", "调度策略？", "配置接口？"],
+        "接口桥接": ["两侧分别是什么协议？", "需要转换什么？", "数据速率？"],
+        "存储管理": ["存什么数据？多大容量？", "读写模式？", "几个访问源？"],
+        "安全隔离": ["隔离边界在哪？", "安全等级？", "需要保护什么？"],
+        "低功耗管理": ["几个功耗域？", "唤醒条件？", "状态转换？"]
+      },
+      "fallback": "3 轮引导后仍无足够信息 → 使用行业默认值，全部标注为「假设值-待确认」"
+    }
+  },
+
+  "adr_brainstorm_record_format": {
+    "description": "每个 D 子阶段完成后，将沟通记录追加到 ADR 文档",
+    "section_template": "### {D_id}: {D_name}\n\n**分析结论**：{前置分析结论}\n\n**头脑风暴记录**：\n{Q&A 列表}\n\n**方案决策**：{最终选择及理由}\n\n**待确认项**：{如有}",
+    "file_target": "<module>_work/ds/doc/pr/{module}_ADR_v{版本号}.md",
+    "append_section": "## 方案细化记录",
+    "rules": [
+      "每次问答以「- Q: {问题}」和「- A: {回答}」格式记录",
+      "每个 D 子阶段结束后追加一个完整章节",
+      "方案决策必须引用具体 REQ 编号",
+      "跳过的 D 子阶段标注跳过原因",
+      "每个 D 子阶段的 Q&A 记录不少于 min_qa_pairs 条（默认 3 条），不足时主动追问补充"
+    ],
+    "simple_module_enhancement": {
+      "description": "简单模块（预估行数 <500）的记录深度增强，不降低 Q&A 质量",
+      "trigger": "D0 子模块划分中任一子模块预估行数 <500 时激活",
+      "rules": [
+        "min_qa_pairs 不降低，仍使用默认值",
+        "每个 D 子阶段的 Q&A 必须额外覆盖：为什么选这个方案、有没有更简单的替代方案、验证重点是什么",
+        "简单模块的方案决策也必须引用 REQ 编号",
+        "简单模块的 ADR 记录不能因为模块简单而省略"
+      ]
+    },
+    "min_qa_pairs": {
+      "default": 3,
+      "overrides": {
+        "D0": 4,
+        "D1": 3,
+        "D2": 3,
+        "D3": 3,
+        "D4": 3,
+        "D5": 2,
+        "D6": 4,
+        "D7": 4,
+        "D8": 3,
+        "D9": 3,
+        "D10": 3,
+        "D11": 3,
+        "D12": 3,
+        "D13": 2,
+        "D14": 3
+      }
+    }
+  },
+
+  "sub_stages": [
+    {
+      "id": "D0",
+      "name": "初始架构方案 + RTL 行数估算",
+      "description": "通过头脑风暴与用户沟通，确定架构拓扑方向，估算 RTL 总行数。如果总行数 > 3000 行，跳转 E 阶段做子模块划分；否则继续 D0 子模块划分。",
+      "trigger_condition": "默认触发",
+      "depends_on": [],
+      "input_analysis": {
+        "source": ["stageC 需求汇总表", "stageC0 矛盾检测结果"],
+        "analysis_steps": [
+          "1. 回顾需求汇总表中所有 Must 级 REQ",
+          "2. 分析矛盾检测结果中的调和方案",
+          "3. 提取关键约束：频率/面积/功耗/接口/数据流特征"
+        ]
+      },
+      "brainstorm_focus": [
+        "模块整体架构拓扑方向（集中式 vs 分布式）",
+        "关键数据通路路径",
+        "初步 PPA 预算分配",
+        "RTL 总行数估算（功能逻辑+接口逻辑+控制逻辑+存储逻辑）"
+      ],
+      "domain_exploration_questions": {
+        "description": "vague 输入时的领域引导问题列表，确保 stage0 探索深度",
+        "mandatory_questions": [
+          "这个模块在 SoC 中的角色是什么？（主控/从设备/桥接/加速器）",
+          "上游和下游分别是什么模块？数据怎么流过来、流过去？",
+          "这个模块最核心的功能用一句话描述是什么？",
+          "有没有类似的模块可以参考？（已有 IP / 开源实现 / 行业方案）"
+        ],
+        "conditional_questions": {
+          "数据搬运类": ["数据粒度多大？突发长度？速率要求？"],
+          "控制管理类": ["管理多少个通道/资源？调度公平性要求？"],
+          "接口桥接类": ["两侧接口协议分别是什么？需要转换什么？"],
+          "安全隔离类": ["隔离的边界在哪？安全等级要求？"],
+          "低功耗类": ["有几个功耗域？唤醒延迟要求？"]
+        },
+        "depth_requirement": "vague 输入时必须完成全部 mandatory_questions + 至少 2 个 conditional_questions 才能离开 stage0"
+      },
+      "output": {
+        "solution_section": "§3 架构概述",
+        "deliverables": [
+          "架构拓扑方向（集中式/分布式/混合式）",
+          "RTL 总行数估算表",
+          "关键约束列表"
+        ]
+      },
+      "rtl_estimation": {
+        "description": "RTL 总行数估算",
+        "formula": "功能逻辑行数 + 接口逻辑行数 + 控制逻辑行数 + 存储逻辑行数",
+        "estimation_rules": {
+          "functional_logic": "功能点数量 × 每个功能点平均行数（500~2000）",
+          "interface_logic": "接口数量 × 每个接口平均行数（200~800）",
+          "control_logic": "状态机状态数 × 每个状态平均行数（100~500）",
+          "storage_logic": "SRAM/FIFO 数量 × 每个实例平均行数（100~400）"
+        },
+        "threshold": 3000,
+        "action_if_exceeded": {
+          "condition": "RTL 总行数 > 3000",
+          "action": "跳转 E 阶段（子模块划分 + 需求梳理）",
+          "reason": "模块规模过大，需要先做子模块划分"
+        },
+        "action_if_within": {
+          "condition": "RTL 总行数 ≤ 3000",
+          "action": "继续 D0 子模块划分，然后进入 D1~D14",
+          "reason": "模块规模适中，可直接细化"
+        }
+      },
+      "skip_condition": null
+    },
+    {
+      "id": "D1",
+      "name": "接口细节与时序",
+      "description": "通过头脑风暴与用户沟通接口细节与接口时序，确定如何实现接口设计。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D0"],
+      "input_analysis": {
+        "source": ["D0 子模块列表", "stageC REQ-002 接口协议"],
+        "analysis_steps": [
+          "1. 回顾 D0 子模块列表中的接口定义",
+          "2. 分析 REQ-002 确认的接口协议类型",
+          "3. 检查各子模块对外接口的协议匹配性"
+        ]
+      },
+      "brainstorm_focus": [
+        "各接口的协议选择（Valid-Ready / 请求-应答 / 寄存器映射 / 自定义）",
+        "接口时序参数（setup/hold/latency）",
+        "握手信号的 valid/ready 依赖关系",
+        "接口位宽与数据粒度匹配",
+        "多主/多从场景的仲裁策略"
+      ],
+      "output": {
+        "solution_section": "§4 接口定义",
+        "deliverables": [
+          "各子模块端口列表",
+          "接口时序图（Wavedrom）",
+          "握手协议定义"
+        ]
+      },
+      "skip_condition": null
+    },
+    {
+      "id": "D2",
+      "name": "数据流细化",
+      "description": "通过头脑风暴与用户沟通，细化模块的数据流细节。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D0"],
+      "input_analysis": {
+        "source": ["D0 架构框图", "stageC REQ-003 数据流特征"],
+        "analysis_steps": [
+          "1. 回顾 D0 架构框图中的数据通路",
+          "2. 分析 REQ-003 确认的数据速率/突发长度/数据粒度",
+          "3. 标记关键数据路径和潜在瓶颈点"
+        ]
+      },
+      "brainstorm_focus": [
+        "数据从输入到输出的完整路径",
+        "每个阶段的数据格式和位宽变化",
+        "数据处理延迟（每阶段 cycles）",
+        "数据打包/拆包策略",
+        "错误数据的处理路径（丢弃/重传/标记）"
+      ],
+      "output": {
+        "solution_section": "§5.1 数据通路",
+        "deliverables": [
+          "数据流图（D2 数据通路图）",
+          "各阶段数据格式表",
+          "端到端延迟分析"
+        ]
+      },
+      "skip_condition": null
+    },
+    {
+      "id": "D3",
+      "name": "控制流细化",
+      "description": "通过头脑风暴与用户沟通，细化模块的控制流细节。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D2"],
+      "input_analysis": {
+        "source": ["D2 数据流图", "D0 子模块列表"],
+        "analysis_steps": [
+          "1. 回顾 D2 数据流中的控制点",
+          "2. 识别需要控制信号的每个阶段",
+          "3. 分析控制信号的产生源和传播路径"
+        ]
+      },
+      "brainstorm_focus": [
+        "状态机设计（状态数量/编码方式/转移条件）",
+        "控制信号的产生和传播逻辑",
+        "使能/禁用/复位控制策略",
+        "错误处理状态机",
+        "配置寄存器对控制流的影响"
+      ],
+      "output": {
+        "solution_section": "§5.2 控制逻辑 + §5.3 状态机",
+        "deliverables": [
+          "状态机图（D2 FSM 图）",
+          "控制信号列表",
+          "状态转移条件表"
+        ]
+      },
+      "skip_condition": null
+    },
+    {
+      "id": "D4",
+      "name": "寄存器功能设计",
+      "description": "通过头脑风暴与用户沟通，细化寄存器功能设计方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D1"],
+      "input_analysis": {
+        "source": ["stageC REQ 汇总表", "D1 接口定义"],
+        "analysis_steps": [
+          "1. 从 REQ 汇总表中提取所有配置/状态/控制相关需求",
+          "2. 分析 D1 中 APB/寄存器映射接口定义",
+          "3. 确定寄存器读写属性和访问权限"
+        ]
+      },
+      "brainstorm_focus": [
+        "寄存器地址映射方案",
+        "每个寄存器的位域定义和读写属性",
+        "W1C/W0C/W1S 等特殊写行为",
+        "寄存器复位值设计",
+        "状态寄存器的更新时机",
+        "中断寄存器的设计"
+      ],
+      "output": {
+        "solution_section": "§7 寄存器定义",
+        "deliverables": [
+          "地址映射表",
+          "每个寄存器的位域定义表",
+          "寄存器读写时序说明"
+        ]
+      },
+      "skip_condition": "无 APB/寄存器映射接口时跳过"
+    },
+    {
+      "id": "D5",
+      "name": "面积优化方案",
+      "description": "通过头脑风暴与用户沟通，细化面积优化方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D0"],
+      "input_analysis": {
+        "source": ["D0 子模块列表", "stageC REQ-004 面积预算"],
+        "analysis_steps": [
+          "1. 回顾 D0 各子模块预估面积",
+          "2. 对比 REQ-004 面积预算",
+          "3. 识别面积超标的子模块"
+        ]
+      },
+      "brainstorm_focus": [
+        "资源共享策略（加法器/乘法器/比较器复用）",
+        "存储优化（SRAM vs 寄存器阵列选择）",
+        "逻辑压缩和编码优化",
+        "流水线级数 vs 面积权衡",
+        "子模块合并/拆分的面积影响"
+      ],
+      "output": {
+        "solution_section": "§8.3 面积指标（补充优化策略）",
+        "deliverables": [
+          "面积优化策略表",
+          "优化前后面积对比",
+          "资源复用方案"
+        ]
+      },
+      "skip_condition": "面积预算充裕（< 50% 使用率）时可简化"
+    },
+    {
+      "id": "D6",
+      "name": "Memory 使用分析",
+      "description": "通过头脑风暴与用户沟通，分析模块中 memory 的使用方法。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D2"],
+      "input_analysis": {
+        "source": ["D2 数据流图", "D0 子模块列表"],
+        "analysis_steps": [
+          "1. 从 D2 数据流中识别所有存储点",
+          "2. 分析每个存储点的容量需求",
+          "3. 确定存储类型（SRAM/寄存器阵列/FIFO）"
+        ]
+      },
+      "brainstorm_focus": [
+        "SRAM 端口类型选择（1R1W / 2P / 1RW）",
+        "SRAM 位宽和深度确定",
+        "填充内容和初始化策略",
+        "读写策略（写优先/读优先/bypass）",
+        "多源写冲突处理（仲裁/队列/优先级）",
+        "SRAM ECC/Parity 保护需求"
+      ],
+      "calculation_template": {
+        "description": "SRAM 参数量化计算模板，每次 D6 头脑风暴必须填充",
+        "sram_instance": {
+          "name": "实例名称",
+          "type": "1R1W / 2P / 1RW",
+          "width": "位宽计算：数据粒度 × 并行度",
+          "depth": "深度计算：突发量 × 安全系数（≥1.5），向上取 2 的幂",
+          "capacity": "容量 = 位宽 × depth（bit）",
+          "read_latency": "读延迟（cycles）",
+          "write_latency": "写延迟（cycles）",
+          "conflict_policy": "同地址同周期写：W2 优先 / W1 反压 / 仲裁",
+          "ecc": "无 / Parity / SECDED"
+        },
+        "mandatory_fields": ["width", "depth", "conflict_policy"]
+      },
+      "output": {
+        "solution_section": "§13.5 存储设计（SRAM 部分）",
+        "deliverables": [
+          "SRAM 实例列表（名称/类型/位宽/深度/用途）",
+          "多源冲突仲裁方案",
+          "读写时序约束"
+        ]
+      },
+      "skip_condition": "模块无 SRAM 使用时跳过"
+    },
+    {
+      "id": "D7",
+      "name": "FIFO/Buffer 设计",
+      "description": "通过头脑风暴与用户沟通，细化 FIFO/Buffer 的使用方法。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D2", "D10"],
+      "input_analysis": {
+        "source": ["D2 数据流图", "D10 反压方案"],
+        "analysis_steps": [
+          "1. 从 D2 数据流中识别需要缓冲的位置",
+          "2. 分析 D10 反压方案中的 FIFO 需求",
+          "3. 计算每个 FIFO 的理论深度"
+        ]
+      },
+      "brainstorm_focus": [
+        "FIFO 深度计算（基于流控模型，非拍脑袋）",
+        "同步 FIFO vs 异步 FIFO 选择",
+        "多源读写解冲突策略",
+        "FIFO 填充内容和数据格式",
+        "读写策略（写优先/读优先/bypass）",
+        "FIFO 满/空阈值和告警机制",
+        "溢出/下溢处理策略"
+      ],
+      "calculation_template": {
+        "description": "FIFO 深度量化计算模板，每次 D7 头脑风暴必须填充",
+        "fifo_instance": {
+          "name": "实例名称",
+          "type": "同步 / 异步（Gray码/握手）",
+          "width": "位宽 = 数据粒度",
+          "depth_formula": "深度 = B_max + D_fb × (R_prod / R_cons)",
+          "B_max": "最大突发量（beats）",
+          "D_fb": "反馈延迟（cycles）：反压从下游传播到上游的延迟",
+          "R_prod": "生产者速率（beats/cycle）",
+          "R_cons": "消费者速率（beats/cycle）",
+          "depth_with_margin": "含 50% 裕量，向上取 2 的幂",
+          "full_threshold": "满阈值（通常 = depth - 1 或 depth - 反压延迟）",
+          "empty_threshold": "空阈值（通常 = 0 或 1）",
+          "overflow_policy": "溢出策略：丢弃新数据 / 反压上游 / 覆盖旧数据",
+          "underflow_policy": "下溢策略：输出默认值 / 保持 / 报错"
+        },
+        "mandatory_fields": ["depth_formula", "B_max", "D_fb", "R_prod", "R_cons", "depth_with_margin"]
+      },
+      "output": {
+        "solution_section": "§13.5 存储设计（FIFO 部分）",
+        "deliverables": [
+          "FIFO 实例列表（名称/类型/位宽/深度/用途）",
+          "深度计算依据",
+          "满/空判断逻辑"
+        ]
+      },
+      "skip_condition": "模块无 FIFO/Bufffer 使用时跳过"
+    },
+    {
+      "id": "D8",
+      "name": "链表设计",
+      "description": "通过头脑风暴与用户沟通，细化链表使用方法。",
+      "trigger_condition": "需求涉及描述符管理/缓冲区管理/队列管理",
+      "depends_on": ["D6"],
+      "input_analysis": {
+        "source": ["D6 Memory 使用方案", "D2 数据流图"],
+        "analysis_steps": [
+          "1. 识别需要链表管理的数据结构",
+          "2. 分析 D6 中共享 SRAM 的分配方案",
+          "3. 确定链表操作的并发需求"
+        ]
+      },
+      "brainstorm_focus": [
+        "单通道 vs 多通道链表架构",
+        "共享 SRAM 大小和分配策略",
+        "多源读写解冲突（头/尾指针分离）",
+        "链表节点格式和 next 指针设计",
+        "空闲链表管理（初始化/回收/泄漏检测）",
+        "链表遍历和搜索策略"
+      ],
+      "output": {
+        "solution_section": "§13.5 存储设计（链表部分）",
+        "deliverables": [
+          "链表架构图",
+          "节点格式定义",
+          "并发访问仲裁方案"
+        ]
+      },
+      "skip_condition": "模块无链表管理需求时跳过"
+    },
+    {
+      "id": "D9",
+      "name": "调度策略",
+      "description": "通过头脑风暴与用户沟通，细化调度策略。",
+      "trigger_condition": "需求涉及多通道/多源/仲裁",
+      "depends_on": ["D0"],
+      "input_analysis": {
+        "source": ["D0 子模块列表", "stageC REQ 汇总表"],
+        "analysis_steps": [
+          "1. 识别所有需要仲裁/调度的资源",
+          "2. 分析各请求源的特征（速率/优先级/突发性）",
+          "3. 确定公平性/优先级需求"
+        ]
+      },
+      "brainstorm_focus": [
+        "调度策略选择（Fixed/RR/WRR/DRR/混合）",
+        "公平性实现方案",
+        "优先级分级和动态调整",
+        "多到一调度（多通道汇聚到单资源）",
+        "通道间调度（共享资源分配）",
+        "调度粒度（包级/拍级/事务级）"
+      ],
+      "output": {
+        "solution_section": "§13.4 调度策略",
+        "deliverables": [
+          "调度策略对比表",
+          "公平性分析",
+          "仲裁器设计参数"
+        ]
+      },
+      "skip_condition": "单通道/单源模块可跳过"
+    },
+    {
+      "id": "D10",
+      "name": "反压细节",
+      "description": "通过头脑风暴与用户沟通，细化反压机制。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D2"],
+      "input_analysis": {
+        "source": ["D2 数据流图", "D1 接口定义"],
+        "analysis_steps": [
+          "1. 从 D2 数据流中识别所有反压点",
+          "2. 分析 D1 接口中的 ready 信号依赖",
+          "3. 绘制端到端反压传播路径"
+        ]
+      },
+      "brainstorm_focus": [
+        "分链路反压设计（每条数据通路的反压策略）",
+        "通道反压设计（多通道间的反压隔离）",
+        "Credit 控制主动反压（信用计数/归零反压/回收时机）",
+        "反压传播路径（下游 → 本级 → 上游）",
+        "反压对性能的影响分析",
+        "死锁预防策略"
+      ],
+      "credit_calculation_template": {
+        "description": "Credit 流控量化计算模板，涉及 Credit 方案时必须填充",
+        "credit_instance": {
+          "name": "资源名称",
+          "credit_type": "字节 Credit / 拍 Credit / 事务 Credit",
+          "max_credit": "最大 Credit = $clog2(MAX)+1 位",
+          "initial_credit": "初始 Credit（APB 配置或固定值）",
+          "consume_rule": "消耗规则：每发一拍/字节/事务 credit_cnt--",
+          "reclaim_rule": "回收规则：收到下游完成响应后 credit_cnt++",
+          "backpressure_rule": "反压规则：credit_cnt == 0 时立即禁止发送",
+          "overflow_guard": "溢出保护：credit_cnt 不可超过 initial_credit"
+        },
+        "mandatory_fields": ["max_credit", "consume_rule", "reclaim_rule", "backpressure_rule"]
+      },
+      "output": {
+        "solution_section": "§13.2 流控机制",
+        "deliverables": [
+          "反压传播路径图",
+          "Credit 计数方案",
+          "反压性能影响分析"
+        ]
+      },
+      "skip_condition": "纯寄存器配置模块（无数据流）可跳过"
+    },
+    {
+      "id": "D11",
+      "name": "异步处理",
+      "description": "通过头脑风暴与用户沟通，细化多时钟域的异步处理方案。",
+      "trigger_condition": "REQ-011 确认为多时钟域",
+      "depends_on": ["D0"],
+      "input_analysis": {
+        "source": ["stageC REQ-011 CDC 策略", "stageC0 CDC 约束模板"],
+        "analysis_steps": [
+          "1. 回顾 REQ-011 确认的时钟域列表",
+          "2. 分析 CDC 约束模板中的信号分组",
+          "3. 识别跨时钟域的关键信号"
+        ]
+      },
+      "brainstorm_focus": [
+        "快到慢域信号同步（展宽/握手/异步FIFO）",
+        "慢到快域信号同步（双触发器/采样策略）",
+        "同频异相时钟域处理",
+        "跨域数据通路的同步策略选择",
+        "跨域控制信号的同步策略",
+        "复位域划分和复位同步"
+      ],
+      "output": {
+        "solution_section": "§7 时钟与复位 / CDC",
+        "deliverables": [
+          "时钟域划分图",
+          "CDC 信号列表和同步策略",
+          "复位域划分方案"
+        ]
+      },
+      "skip_condition": "单时钟域模块跳过"
+    },
+    {
+      "id": "D12",
+      "name": "时序优化",
+      "description": "通过头脑风暴与用户沟通，细化时序有风险的逻辑的优化方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D2", "D3"],
+      "input_analysis": {
+        "source": ["D2 数据流图", "D3 控制逻辑", "stageC REQ-001 频率"],
+        "analysis_steps": [
+          "1. 从 D2/D3 中识别关键路径",
+          "2. 估算组合逻辑级数",
+          "3. 对比 REQ-001 频率约束的时序预算"
+        ]
+      },
+      "brainstorm_focus": [
+        "关键路径识别和延迟估算",
+        "流水线插入策略（哪些位置可以插寄存器）",
+        "逻辑重定时（retiming）方案",
+        "组合逻辑拆分和平衡",
+        "多周期路径约束",
+        "面积 vs 时序权衡"
+      ],
+      "output": {
+        "solution_section": "§6 关键时序分析",
+        "deliverables": [
+          "关键路径列表",
+          "时序优化策略表",
+          "SDC 约束建议"
+        ]
+      },
+      "skip_condition": "低频模块（< 100MHz）且无关键路径时可简化"
+    },
+    {
+      "id": "D13",
+      "name": "DFX 功能",
+      "description": "通过头脑风暴与用户沟通，确定需要哪些 DFX（Design for X）功能。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D0"],
+      "input_analysis": {
+        "source": ["stageC REQ-008 DFT", "stageC REQ-009 可靠性"],
+        "analysis_steps": [
+          "1. 回顾 REQ-008 DFT 需求",
+          "2. 回顾 REQ-009 可靠性需求",
+          "3. 确定 DFX 功能范围"
+        ]
+      },
+      "brainstorm_focus": [
+        "DFT 功能（扫描链/MBIST/LBIST/ATPG）",
+        "调试功能（ trace/断点/性能计数器）",
+        "可观测性（关键信号可读/状态可查询）",
+        "可配置性（运行时参数调整）",
+        "错误注入和测试接口",
+        "在线诊断功能"
+      ],
+      "security_enhanced_questions": {
+        "trigger": "REQ-018 或 REQ-024/025 确认有安全需求时自动激活",
+        "questions": [
+          "安全隔离级别要求？（物理隔离/逻辑隔离/软件隔离）",
+          "是否需要侧信道防护？（功耗分析/时序分析防护）",
+          "故障注入检测需求？（电压毛刺/时钟毛刺/激光注入）",
+          "安全审计日志记录哪些事件？",
+          "安全降级策略？（检测到攻击后的行为：锁定/告警/降级运行）"
+        ]
+      },
+      "output": {
+        "solution_section": "§11 DFT 设计 + §12 可靠性设计（DFX 部分）",
+        "deliverables": [
+          "DFX 功能列表",
+          "DFT 扫描链方案",
+          "调试接口定义"
+        ]
+      },
+      "skip_condition": "用户明确不需要 DFX 时跳过"
+    },
+    {
+      "id": "D14",
+      "name": "异常检测功能",
+      "description": "通过头脑风暴与用户沟通，确定需要哪些异常检测功能。",
+      "trigger_condition": "默认触发",
+      "depends_on": ["D2", "D3", "D10"],
+      "input_analysis": {
+        "source": ["D2 数据流", "D3 控制逻辑", "D10 反压方案"],
+        "analysis_steps": [
+          "1. 从数据流中识别异常场景（溢出/下溢/超时/死锁）",
+          "2. 从控制逻辑中识别非法状态/卡死场景",
+          "3. 从反压方案中识别反压异常场景"
+        ]
+      },
+      "brainstorm_focus": [
+        "超时检测（握手超时/处理超时/响应超时）",
+        "溢出/下溢检测（FIFO/SRAM/Credit）",
+        "死锁检测（反压环路/资源争用）",
+        "数据完整性校验（CRC/ECC/Parity）",
+        "状态异常检测（非法状态/卡死/活锁）",
+        "异常响应策略（报错/复位/降级/告警）",
+        "异常统计和日志记录"
+      ],
+      "security_enhanced_questions": {
+        "trigger": "REQ-018 或 REQ-024/025 确认有安全需求时自动激活",
+        "questions": [
+          "入侵检测机制？（异常访问模式/频率阈值/地址范围检查）",
+          "安全审计日志存储方式和保留策略？",
+          "检测到安全事件后的响应链？（记录→告警→锁定→恢复）",
+          "安全相关计数器/状态是否需要防篡改保护？",
+          "安全模块自身的可靠性保障？（看门狗/冗余/自检）"
+        ]
+      },
+      "output": {
+        "solution_section": "§12 可靠性设计（异常检测部分）",
+        "deliverables": [
+          "异常场景列表",
+          "检测机制和阈值",
+          "异常响应策略表"
+        ]
+      },
+      "skip_condition": null
+    }
+  ],
+
+  "conditional_skip_rules": {
+    "description": "根据需求汇总表自动判断哪些 D 子阶段可跳过",
+    "rules": [
+      { "stage": "D4", "condition": "REQ-002 无 APB/寄存器映射接口", "action": "skip" },
+      { "stage": "D6", "condition": "模块无 SRAM 使用（纯寄存器实现）", "action": "skip" },
+      { "stage": "D7", "condition": "模块无 FIFO/Buffer 需求", "action": "skip" },
+      { "stage": "D8", "condition": "模块无描述符/缓冲区/队列管理", "action": "skip" },
+      { "stage": "D9", "condition": "单通道/单源模块", "action": "skip" },
+      { "stage": "D10", "condition": "纯寄存器配置模块（无数据流）", "action": "skip" },
+      { "stage": "D11", "condition": "REQ-011 未确认多时钟域", "action": "skip" },
+      { "stage": "D13", "condition": "用户明确表示「不需要 DFX/DFT/调试功能」", "action": "skip", "note": "仅当用户使用明确否定表达时跳过。REQ-008 确认有 DFT 需求或 REQ-009 确认有可靠性需求时禁止跳过" }
+    ],
+    "skip_output": "跳过的 D 子阶段在 ADR 文档中标注：「### D{id}: {name}\n**状态**：跳过\n**原因**：{skip_reason}\n**影响**：{impact}\n**替代方案**：{alternative}」"
+  },
+
+  "substage_depth_requirements": {
+    "description": "D 子阶段执行深度要求",
+    "min_qa_pairs": {
+      "default": 3,
+      "D0": 4, "D1": 3, "D2": 3, "D3": 3, "D4": 3,
+      "D5": 2, "D6": 4, "D7": 4, "D8": 3, "D9": 3,
+      "D10": 3, "D11": 3, "D12": 3, "D13": 2, "D14": 3
+    },
+    "enforcement": "每个 D 子阶段的 Q&A 记录必须达到 min_qa_pairs 数量，不足时主动追问补充"
+  },
+
+  "conditional_skip_enhancement": {
+    "description": "D 子阶段跳过判断逻辑增强",
+    "verification_rules": {
+      "D4": "检查 stageC 需求汇总表是否包含 REQ-002",
+      "D6": "检查 stageD D0 子模块列表是否包含 SRAM",
+      "D7": "检查 stageD D0 子模块列表是否包含 FIFO",
+      "D8": "检查 stageD D0 子模块列表是否包含链表",
+      "D9": "检查 stageC 需求汇总表通道数",
+      "D10": "检查 stageC 需求汇总表是否有数据流需求",
+      "D11": "检查 stageC 需求汇总表 REQ-011 状态",
+      "D13": "检查 stageC 需求汇总表 REQ-008/009 状态"
+    }
+  },
+
+  "specialist_orchestration_trigger": {
+    "description": "D0 完成后触发专项 Agent 编排",
+    "trigger_point": "D0 完成且用户确认初始架构方案后",
+    "orchestration_ref": ".claude/shared/flow/specialist-orchestration.json",
+    "note": "专项 Agent 输出回流到方案文档对应章节，由后续 D 子阶段整合"
+  },
+
+  "e_stage": {
+    "description": "子模块分解与需求梳理（递归分解 + 头脑风暴确认 + 树形 todolist）",
+    "detail_source": ".claude/shared/flow/e-stage-detail.json",
+    "trigger_condition": "D0 阶段估算 RTL 总行数 > 3000 行",
+    "exit_condition": "所有叶子节点子模块预估行数 < 3000 行",
+    "execution_steps": [
+      "1. 基于 D0 架构拓扑方向，使用头脑风暴 skill 与用户确认划分原则",
+      "2. 按确认的划分原则划分子模块",
+      "3. 为每个子模块估算 RTL 行数",
+      "4. 检查：任意子模块 > 3000 行？是→递归分解（重复步骤 1-4），否→标记为叶子节点",
+      "5. 所有递归完成后，一次性生成树形 todolist",
+      "6. 读取 stageC 需求汇总表，为每个叶子节点梳理需求（达到 C 阶段出口文档质量标准）",
+      "7. 输出子模块需求矩阵（全局 REQ 映射 + 独立 E-REQ + 规格自检）",
+      "8. 用户逐个子模块确认",
+      "9. 用户选择先细化哪个子模块",
+      "10. 对选中的子模块独立执行 D0~D14 流程（D0 检查是否需要再次递归）",
+      "11. 更新 todolist 状态，选择下一个子模块",
+      "12. 重复步骤 9-11，直到所有叶子节点完成"
+    ],
+    "output": {
+      "solution_section": "§E 子模块需求矩阵",
+      "deliverables": [
+        "树形子模块 todolist（e_stage_tree_todolist.md）",
+        "子模块需求矩阵（e_stage_submodule_matrix.md）",
+        "执行日志（e_stage_execution_log.md）"
+      ]
+    },
+    "submodule_d_stage_rules": {
+      "D0": {
+        "action": "估算行数",
+        "if_over_3000": "递归进入 E 阶段",
+        "if_under_3000": "跳过，直接进入 D1"
+      },
+      "D1~D14": "按标准流程执行，输入来自 E 阶段子模块需求矩阵"
+    }
+  },
+
+  "f_stage": {
+    "description": "顶层集成",
+    "trigger_condition": "所有子模块的 D 阶段完成",
+    "execution_steps": [
+      "1. 收集所有子模块的方案文档",
+      "2. 检查子模块间接口一致性",
+      "3. 生成顶层模块连线",
+      "4. 执行系统级 Lint",
+      "5. 生成模块连接拓扑图",
+      "6. 输出顶层方案文档"
+    ],
+    "output": {
+      "solution_section": "§14 顶层集成",
+      "deliverables": [
+        "顶层模块连线文件",
+        "模块连接拓扑图",
+        "系统级 Lint 报告"
+      ]
+    }
+  },
+
+  "adversarial_review_trigger": {
+    "description": "D14 完成后触发对抗性评审",
+    "trigger_point": "D14 完成且用户确认方案文档后",
+    "reviews": [
+      { "type": "devils-advocate", "strength": "gentle", "target": "方案文档", "description": "温和挑战方案假设" },
+      { "type": "devils-advocate", "strength": "balanced", "target": "ADR 文档", "description": "挑战架构决策" }
+    ],
+    "optional": "用户可显式要求 debate 跨模型审查"
+  }
+}

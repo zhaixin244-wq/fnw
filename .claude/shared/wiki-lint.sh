@@ -3,9 +3,9 @@
 # 用法: bash .claude/shared/wiki-lint.sh [--fix]
 # 检查项: 孤立页面、死链接、缺失交叉引用、索引不一致、空页面、过期声明、格式不一致、来源追溯缺失
 
-WIKI_DIR=".claude/wiki"
+WIKI_DIR="tools/claude-obsidian/wiki"
 INDEX_FILE="$WIKI_DIR/index.md"
-REPORT_FILE="$WIKI_DIR/lint-report.md"
+REPORT_FILE="$WIKI_DIR/meta/lint-report.md"
 FIX_MODE=false
 [[ "$1" == "--fix" ]] && FIX_MODE=true
 
@@ -43,21 +43,42 @@ echo ""
 # ─────────────────────────────────────────────
 echo "--- 检查 1: 索引一致性 ---"
 if [[ -f "$INDEX_FILE" ]]; then
-    # 提取 index.md 中引用的所有 .md 文件路径
-    grep -oP '\(([^)]+\.md)\)' "$INDEX_FILE" | tr -d '()' | sort -u > /tmp/wiki_index_refs.txt
+    # 提取 index.md 中引用的所有 .md 文件路径（支持 [text](path.md) 和 [[wikilink]] 两种格式）
+    {
+        grep -oP '\(([^)]+\.md)\)' "$INDEX_FILE" | tr -d '()'
+        grep -oP '\[\[([^\]]+\.md)\]\]' "$INDEX_FILE" | sed 's/\[\[//;s/\]\]//'
+        # 也匹配不带 .md 后缀的 wikilink（Obsidian 可省略后缀），排除已有其他后缀的
+        grep -oP '\[\[([^\]]+)\]\]' "$INDEX_FILE" | sed 's/\[\[//;s/\]\]//' | grep -v '\.' | sed 's/$/.md/'
+    } | sort -u > /tmp/wiki_index_refs.txt
     # 提取实际存在的 wiki 页面（排除 index.md 自身和 hot.md/lint-report.md）
     find "$WIKI_DIR" -name "*.md" ! -name "index.md" ! -name "hot.md" ! -name "lint-report.md" | sed "s|^$WIKI_DIR/||" | sort -u > /tmp/wiki_actual_files.txt
 
     # 在 index 中但不存在的文件
     while IFS= read -r ref; do
-        if [[ ! -f "$WIKI_DIR/$ref" ]]; then
-            log_error "索引引用不存在: $ref"
+        # 对于带路径分隔符的引用，直接检查；对于纯文件名，递归查找
+        if [[ "$ref" == *"/"* ]]; then
+            if [[ ! -f "$WIKI_DIR/$ref" ]]; then
+                log_error "索引引用不存在: $ref"
+            fi
+        else
+            # 递归查找 .md 文件；如果没找到，也尝试不带后缀的匹配（如 .canvas）
+            if ! find "$WIKI_DIR" -name "$ref" -print -quit 2>/dev/null | grep -q .; then
+                ref_noext="${ref%.md}"
+                if ! find "$WIKI_DIR" -name "${ref_noext}.*" -print -quit 2>/dev/null | grep -q .; then
+                    log_error "索引引用不存在: $ref"
+                fi
+            fi
         fi
     done < /tmp/wiki_index_refs.txt
 
     # 存在但不在 index 中的文件
     while IFS= read -r file; do
-        if ! grep -q "$file" "$INDEX_FILE" 2>/dev/null; then
+        # 检查多种格式：完整路径、不带后缀的路径、纯文件名 wikilink
+        path_noext="${file%.md}"
+        basename_noext=$(basename "$file" .md)
+        if ! grep -qF "$file" "$INDEX_FILE" 2>/dev/null && \
+           ! grep -qF "[[$path_noext]]" "$INDEX_FILE" 2>/dev/null && \
+           ! grep -qF "[[$basename_noext]]" "$INDEX_FILE" 2>/dev/null; then
             log_warn "文件未在索引中: $file"
         fi
     done < /tmp/wiki_actual_files.txt
@@ -73,14 +94,24 @@ fi
 echo "--- 检查 2: 死链接 ---"
 DEAD_LINKS=0
 find "$WIKI_DIR" -name "*.md" | while read -r file; do
-    # 提取 [text](path) 格式的链接
-    grep -oP '\[([^\]]*)\]\(([^)]+)\)' "$file" | grep -oP '\(([^)]+)\)' | tr -d '()' | while read -r link; do
+    # 提取 [text](path) 格式的本地文件链接（排除 URL 和学术引用）
+    # 只匹配包含 / 或 . 的链接目标（文件路径特征），排除纯文本引用如 "2025"
+    grep -oP '\[[^\]]*\]\(([^)]+)\)' "$file" | grep -oP '\(([^)]+)\)' | tr -d '()' | while read -r link; do
         # 跳过 URL 和锚点
         [[ "$link" == http* ]] && continue
         [[ "$link" == "#"* ]] && continue
+        # 只检查含路径分隔符的本地文件引用，跳过纯文本（学术引用误匹配）
+        [[ "$link" != *"/"* ]] && continue
+        # 跳过含反斜杠的转义引用
+        [[ "$link" == *\\* ]] && continue
         # 解析相对路径
         target="$(dirname "$file")/$link"
         target="${target%#*}"  # 去掉锚点
+        # 如果相对路径不存在，尝试 vault root（Obsidian _attachments/ 路径）
+        if [[ ! -f "$target" && "$link" == _attachments/* ]]; then
+            target="$WIKI_DIR/../$link"
+            target="${target%#*}"
+        fi
         if [[ ! -f "$target" ]]; then
             log_error "死链接: $file -> $link"
             ((DEAD_LINKS++))

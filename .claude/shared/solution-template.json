@@ -18,11 +18,23 @@
   },
 
   "single_solution_elements": [
-    { "element": "架构框图", "requirement": "D2 模块图 + 数据通路（通过 chip-png-d2-gen 生成，d2 --layout dagre 编译为 PNG），标注信号宽度" },
+    { "element": "架构框图", "requirement": "D0 产出：模块图 + 数据通路（通过 chip-png-d2-gen 生成，d2 --layout dagre 编译为 PNG），标注信号宽度" },
+    { "element": "子模块列表", "requirement": "D0 产出：名称/职责/预估行数/关键接口，单模块 ≤3000 行 RTL" },
+    { "element": "接口定义", "requirement": "D1 产出：端口列表 + 接口时序图（Wavedrom）" },
+    { "element": "数据通路", "requirement": "D2 产出：数据流图 + 各阶段数据格式 + 端到端延迟" },
+    { "element": "控制逻辑", "requirement": "D3 产出：状态机图 + 控制信号列表" },
+    { "element": "寄存器定义", "requirement": "D4 产出：地址映射表 + 位域定义（条件：有 APB 接口）" },
+    { "element": "面积优化", "requirement": "D5 产出：优化策略 + 前后对比" },
+    { "element": "存储设计", "requirement": "D6~D8 产出：SRAM/FIFO/链表实例列表 + 深度计算依据" },
+    { "element": "调度策略", "requirement": "D9 产出：仲裁方案 + 公平性分析（条件：多通道）" },
+    { "element": "流控机制", "requirement": "D10 产出：反压路径图 + Credit 方案" },
+    { "element": "CDC 方案", "requirement": "D11 产出：时钟域划分 + 同步策略（条件：多时钟域）" },
+    { "element": "时序优化", "requirement": "D12 产出：关键路径列表 + SDC 约束建议" },
+    { "element": "DFX 功能", "requirement": "D13 产出：DFT/调试/诊断功能列表" },
+    { "element": "异常检测", "requirement": "D14 产出：异常场景列表 + 检测机制 + 响应策略" },
     { "element": "PPA预估", "requirement": "量化：延迟cycles、面积kGates、功耗mW。无法量化标注'目标值，待综合验证'" },
     { "element": "需求覆盖", "requirement": "列出覆盖的REQ编号及对应设计决策" },
-    { "element": "风险点", "requirement": "≥1条具体技术风险" },
-    { "element": "接口假设", "requirement": "列出所有接口假设" }
+    { "element": "风险点", "requirement": "≥1条具体技术风险" }
   ],
 
   "area_estimation_ref": ".claude/shared/flow/area-estimation.json",
@@ -71,7 +83,7 @@
   },
 
   "arch_review_integration": {
-    "description": "方案设计阶段自动应用架构评审经验准则。按模块类型筛选适用类别，按需加载。",
+    "description": "D14 完成后自动应用架构评审经验准则。按模块类型筛选适用类别，按需加载。",
     "data_source": ".claude/shared/arch-review-rules.json（索引） → .claude/shared/arch-review/*.json（按类别）",
     "execution_steps": [
       "1. 方案设计完成后 Read arch-review-rules.json（索引文件）",
@@ -84,7 +96,21 @@
     "output_append": "在每个方案的【风险点】章节追加架构评审结果：\n| 检查项 | 结果 | 说明 |\n|--------|------|------|\n| CP-01 SRAM端口 | ✅/⚠️/❌ | {说明} |\n| ... | ... | ... |"
   },
 
+  "adr_brainstorm_record": {
+    "description": "每个 D 子阶段的头脑风暴沟通记录追加到 ADR 文档",
+    "file_target": "<module>_work/ds/doc/pr/{module}_ADR_v{版本号}.md",
+    "append_section": "## 方案细化记录",
+    "section_template": "### {D_id}: {D_name}\n\n**分析结论**：{前置分析结论}\n\n**头脑风暴记录**：\n{Q&A 列表}\n\n**方案决策**：{最终选择及理由}\n\n**待确认项**：{如有}",
+    "rules": [
+      "每次问答以「- Q: {问题}」和「- A: {回答}」格式记录",
+      "每个 D 子阶段结束后追加一个完整章节",
+      "方案决策必须引用具体 REQ 编号",
+      "跳过的 D 子阶段标注跳过原因"
+    ]
+  },
+
   "skills_to_call": [
+    "brainstorming",
     "chip-design-space-explorer",
     "chip-ppa-formatter"
   ]

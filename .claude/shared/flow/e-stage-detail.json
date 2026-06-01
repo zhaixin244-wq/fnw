@@ -1,0 +1,146 @@
+{
+  "version": "2.0",
+  "description": "E 阶段详细规则 - 支持多层级子模块分解、头脑风暴确认、树形 todolist",
+
+  "e_stage_definition": {
+    "name": "子模块分解与需求梳理",
+    "description": "递归分解大型模块直到每个子模块 <3000 行，每次划分使用头脑风暴确认，生成树形 todolist 跟踪执行状态",
+    "trigger_condition": "D0 阶段估算 RTL 总行数 > 3000 行",
+    "exit_condition": "所有叶子节点子模块预估行数 < 3000 行",
+    "max_recursion_depth": 5,
+    "execution_mode": "先完成所有递归分解，再逐个子模块确认"
+  },
+
+  "brainstorm_for_decomposition": {
+    "description": "每次子模块划分都使用头脑风暴 skill 与用户确认划分原则",
+    "skill": "brainstorming",
+    "mandatory_questions": [
+      "这个模块应该按什么原则划分？（功能域/数据通路/控制通路/混合）",
+      "划分后的子模块之间接口应该如何定义？",
+      "有没有特殊的隔离需求？（安全/功耗/时钟域）",
+      "这个划分方案的 trade-off 是什么？"
+    ],
+    "output_format": "## 头脑风暴记录\n\n**划分原则**：{用户确认的划分原则}\n\n**Q&A 记录**：\n- Q: {问题}\n- A: {回答}\n\n**划分决策**：{最终划分方案及理由}"
+  },
+
+  "recursive_decomposition": {
+    "description": "递归分解规则",
+    "entry_condition": "当前模块预估行数 > 3000 行",
+    "decomposition_steps": [
+      "1. 分析当前模块的功能域和数据通路",
+      "2. 使用头脑风暴 skill 与用户确认划分原则",
+      "3. 按确认的划分原则划分子模块",
+      "4. 为每个子模块估算 RTL 行数",
+      "5. 检查：任意子模块 > 3000 行？",
+      "   - 是 → 对该子模块递归执行分解（重复步骤 1-5）",
+      "   - 否 → 标记为叶子节点"
+    ],
+    "recursion_termination": "所有叶子节点预估行数 < 3000 行",
+    "post_recursion": "所有递归完成后，生成树形 todolist"
+  },
+
+  "todolist_generation": {
+    "description": "所有递归分解完成后生成树形 todolist",
+    "timing": "所有 E~D0 递归完成后，一次性生成完整 todolist",
+    "content": [
+      "树形结构展示所有子模块（包括递归层级）",
+      "每个叶子节点的执行顺序",
+      "每个叶子节点的预估行数和状态",
+      "子模块间依赖关系"
+    ]
+  },
+
+  "tree_todolist": {
+    "description": "树形子模块 todolist",
+    "structure": {
+      "root": "顶层模块",
+      "nodes": "子模块（可递归）",
+      "leaves": "叶子节点（预估行数 < 3000 行）"
+    },
+    "node_fields": {
+      "id": "唯一标识（层级路径，如 1.2.3）",
+      "name": "子模块名称",
+      "level": "层级（0=顶层，1=一级子模块，2=二级子模块...）",
+      "parent_id": "父节点 ID",
+      "estimated_lines": "预估 RTL 行数",
+      "status": "状态（pending/in_progress/completed/skipped）",
+      "execution_order": "执行顺序（同层级内的顺序）",
+      "dependencies": "依赖的其他子模块",
+      "global_req": "映射的全局 REQ",
+      "local_req": "本地 E-REQ"
+    },
+    "output_format": "## 树形子模块 Todolist\n\n```\n顶层模块 (3000+ 行)\n├── 子模块 A (800 行) [pending] ← 执行顺序 1\n│   ├── 孙模块 A1 (400 行) [pending] ← 执行顺序 1.1\n│   └── 孙模块 A2 (400 行) [pending] ← 执行顺序 1.2\n├── 子模块 B (1200 行) [pending] ← 执行顺序 2\n└── 子模块 C (1000 行) [pending] ← 执行顺序 3\n```"
+  },
+
+  "submodule_requirements": {
+    "description": "子模块需求梳理（达到 C 阶段出口文档质量标准）",
+    "quality_standard": "每个子模块进入 D 阶段的文档必须达到 stageC 出口文档质量标准",
+    "stageC_quality_requirements": [
+      "REQ 编号连续无跳号（E-REQ-001 起）",
+      "每个 REQ 对应一个可验证功能点",
+      "优先级分级（Must/Should/Could）",
+      "接口定义完整（端口名/方向/位宽/功能）",
+      "规格自检 5 项通过",
+      "下游 Agent 可直接消费"
+    ],
+    "input": {
+      "parent_module": "父模块的需求汇总表",
+      "decomposition_result": "子模块划分结果"
+    },
+    "processing_steps": [
+      "1. 读取父模块的需求汇总表",
+      "2. 将全局 REQ 分配到各个子模块",
+      "3. 为每个子模块梳理独立需求（E-REQ），编号从 E-REQ-001 起连续",
+      "4. 定义子模块间接口（端口名/方向/位宽/功能）",
+      "5. 执行规格自检 5 项（占位符/内部一致性/范围/模糊性/REQ覆盖度）",
+      "6. 输出子模块需求矩阵（达到 C 阶段出口文档质量标准）"
+    ],
+    "output_format": {
+      "section_template": "### {子模块名}\n\n**全局 REQ 映射**：\n| 全局 REQ | 子模块功能点 | 优先级 |\n|----------|-------------|--------|\n| REQ-XXX | {功能点} | Must |\n\n**独立需求（E-REQ）**：\n| E-REQ | 需求描述 | 来源 | 优先级 |\n|-------|----------|------|--------|\n| E-001 | {描述} | {来源} | Must |\n\n**接口定义**：\n| 端口名 | 方向 | 位宽 | 功能 |\n|--------|------|------|------|\n| {端口} | I/O | {位宽} | {功能} |"
+    }
+  },
+
+  "submodule_d_stage_execution": {
+    "description": "子模块 D 阶段执行规则",
+    "trigger": "用户确认子模块需求矩阵后，选择某个子模块进入细化",
+    "execution_rules": {
+      "D0": {
+        "skip": true,
+        "reason": "子模块架构已在 E 阶段确定"
+      },
+      "D1_D14": {
+        "execute": true,
+        "input": "E 阶段子模块需求矩阵",
+        "recursion": "如果子模块 D0 估算行数 > 3000，递归进入 E 阶段"
+      }
+    },
+    "recursion_check": {
+      "description": "子模块 D0 阶段检查是否需要递归",
+      "condition": "子模块 D0 估算行数 > 3000",
+      "action": "对该子模块递归执行 E 阶段",
+      "termination": "叶子节点预估行数 < 3000"
+    }
+  },
+
+  "execution_tracking": {
+    "description": "执行状态跟踪",
+    "tracking_rules": [
+      "每个子模块执行前更新 todolist 状态为 in_progress",
+      "每个子模块执行后更新 todolist 状态为 completed",
+      "递归分解时更新树形结构",
+      "所有叶子节点 completed 后触发 F 阶段"
+    ],
+    "status_transitions": {
+      "pending": "等待执行",
+      "in_progress": "正在执行",
+      "completed": "执行完成",
+      "skipped": "跳过（条件不满足）"
+    }
+  },
+
+  "output_files": {
+    "tree_todolist": "e_stage_tree_todolist.md",
+    "submodule_matrix": "e_stage_submodule_matrix.md",
+    "execution_log": "e_stage_execution_log.md"
+  }
+}

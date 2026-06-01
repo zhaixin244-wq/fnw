@@ -1,89 +1,164 @@
 ---
 name: wiki-query
-description: 从 LLM Wiki 知识库查询协议/CBB/架构信息。基于预编译的结构化知识页面，比传统 RAG 更高效。
-version: 2.0.0
-model: sonnet
-triggers:
-  - /wiki-query
-  - /rag-query
-  - wiki query
-  - 查询wiki
-  - 查找协议
-  - 查找CBB
+description: "Answer questions using the Obsidian wiki vault. Reads hot cache first, then index, then relevant pages. Synthesizes answers with citations. Files good answers back as wiki pages. Supports quick, standard, and deep modes. Triggers on: what do you know about, query:, what is, explain, summarize, find in wiki, search the wiki, based on the wiki, wiki query quick, wiki query deep."
+allowed-tools: Read Glob Grep
 ---
 
-# Wiki Query — LLM Wiki 结构化知识检索
+# wiki-query: Query the Wiki
 
-基于 LLM Wiki 系统的结构化知识检索。Wiki 是预编译的知识页面集合，存储在 `.claude/wiki/` 目录。
+The wiki has already done the synthesis work. Read strategically, answer precisely, and file good answers back so the knowledge compounds.
 
-## 检索流程
+---
 
-### Step 1：读取索引
+## Query Modes
 
-```bash
-Read .claude/wiki/index.md
+Three depths. Choose based on the question complexity.
+
+| Mode | Trigger | Reads | Token cost | Best for |
+|------|---------|-------|------------|---------|
+| **Quick** | `query quick: ...` or simple factual Q | hot.md + index.md only | ~1,500 | "What is X?", date lookups, quick facts |
+| **Standard** | default (no flag) | hot.md + index + 3-5 pages | ~3,000 | Most questions |
+| **Deep** | `query deep: ...` or "thorough", "comprehensive" | Full wiki + optional web | ~8,000+ | "Compare A vs B across everything", synthesis, gap analysis |
+
+---
+
+## Quick Mode
+
+Use when the answer is likely in the hot cache or index summary.
+
+1. Read `wiki/hot.md`. If it answers the question, respond immediately.
+2. If not, read `wiki/index.md`. Scan descriptions for the answer.
+3. If found in index summary, respond and do not open any pages.
+4. If not found, say "Not in quick cache. Run as standard query?"
+
+Do not open individual wiki pages in quick mode.
+
+---
+
+## Standard Query Workflow
+
+1. **Read** `wiki/hot.md` first. It may already have the answer or directly relevant context.
+2. **Read** `wiki/index.md` to find the most relevant pages (scan for titles and descriptions).
+3. **Read** those pages. Follow wikilinks to depth-2 for key entities. No deeper.
+4. **Synthesize** the answer in chat. Cite sources with wikilinks: `(Source: [[Page Name]])`.
+5. **Offer to file** the answer: "This analysis seems worth keeping. Should I save it as `wiki/questions/answer-name.md`?"
+6. If the question reveals a **gap**: say "I don't have enough on X. Want to find a source?"
+
+---
+
+## Deep Mode
+
+Use for synthesis questions, comparisons, or "tell me everything about X."
+
+1. Read `wiki/hot.md` and `wiki/index.md`.
+2. Identify all relevant sections (concepts, entities, sources, comparisons).
+3. Read every relevant page. No skipping.
+4. If wiki coverage is thin, offer to supplement with web search.
+5. Synthesize a comprehensive answer with full citations.
+6. Always file the result back as a wiki page. Deep answers are too valuable to lose.
+
+---
+
+## Token Discipline
+
+Read the minimum needed:
+
+| Start with | Cost (approx) | When to stop |
+|------------|---------------|--------------|
+| hot.md | ~500 tokens | If it has the answer |
+| index.md | ~1000 tokens | If you can identify 3-5 relevant pages |
+| 3-5 wiki pages | ~300 tokens each | Usually sufficient |
+| 10+ wiki pages | expensive | Only for synthesis across the entire wiki |
+
+If hot.md has the answer, respond without reading further.
+
+---
+
+## Index Format Reference
+
+The master index (`wiki/index.md`) looks like:
+
+```markdown
+## Domains
+- [[Domain Name]]: description (N sources)
+
+## Entities
+- [[Entity Name]]: role (first: [[Source]])
+
+## Concepts
+- [[Concept Name]]: definition (status: developing)
+
+## Sources
+- [[Source Title]]: author, date, type
+
+## Questions
+- [[Question Title]]: answer summary
 ```
 
-在索引中定位相关条目（实体/概念/对比/指南）。
+Scan the section headers first to determine which sections to read.
 
-### Step 2：读取 Wiki 页面
+---
 
-```bash
-Read .claude/wiki/{category}/{name}.md
+## Domain Sub-Index Format
+
+Each domain folder has a `_index.md` for focused lookups:
+
+```markdown
+---
+type: meta
+title: "Entities Index"
+updated: YYYY-MM-DD
+---
+# Entities
+
+## People
+- [[Person Name]]: role, org
+
+## Organizations
+- [[Org Name]]: what they do
+
+## Products
+- [[Product Name]]: category
 ```
 
-Wiki 页面包含预编译的结构化知识：核心特性、接口信号、关键参数、应用场景、设计注意事项。
+Use sub-indexes when the question is scoped to one domain. Avoid reading the full master index for narrow queries.
 
-### Step 3：深入原始文档（按需）
+---
 
-仅当 wiki 信息不足时：
+## Filing Answers Back
 
-```bash
-Read .claude/knowledge/{domain}/{name}.md
+Good answers compound into the wiki. Don't let insights disappear into chat history.
+
+When filing an answer:
+
+```yaml
+---
+type: question
+title: "Short descriptive title"
+question: "The exact query as asked."
+answer_quality: solid
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+tags: [question, <domain>]
+related:
+  - "[[Page referenced in answer]]"
+sources:
+  - "[[wiki/sources/relevant-source.md]]"
+status: developing
+---
 ```
 
-## 查询模式
+Then write the answer as the page body. Include citations. Link every mentioned concept or entity.
 
-| 模式 | 命令示例 | 说明 |
-|------|----------|------|
-| **实体查询** | `/wiki-query AXI4` | 读取 entities/axi4.md |
-| **选型对比** | `/wiki-query 仲裁器选型` | 读取 comparisons/arbiter-selection.md |
-| **概念查询** | `/wiki-query CDC 策略` | 读取 concepts/cdc-strategy.md |
-| **指南查询** | `/wiki-query AXI4 集成` | 读取 guides/axi4-integration-guide.md |
+After filing, add an entry to `wiki/index.md` under Questions and append to `wiki/log.md`.
 
-## 快速定位表
+---
 
-| 关键词 | Wiki 页面路径 |
-|--------|--------------|
-| AXI4 / AXI / 总线 | entities/axi4.md |
-| APB / 外设总线 | entities/apb.md |
-| SPI / I2C / UART | entities/spi.md / i2c.md / uart.md |
-| PCIe / USB / MIPI | entities/pcie.md / usb.md / mipi.md |
-| FIFO / 同步FIFO | entities/sync_fifo.md |
-| 异步FIFO / CDC | entities/async_fifo.md |
-| 仲裁器 / arbiter | entities/arbiter.md |
-| 交叉开关 / crossbar | entities/crossbar.md |
-| 选型 / 对比 | comparisons/*.md |
-| 设计模式 / 概念 | concepts/*.md |
-| 集成指南 | guides/*.md |
+## Gap Handling
 
-## 响应格式
+If the question cannot be answered from the wiki:
 
-- 摘要而非原始内容
-- 标注信息来源（wiki 页面名或原始文档路径）
-- 过时信息标记（wiki 页面 >30 天未更新）
-- 无结果时明确说明，不编造
-
-## Token 节约原则
-
-1. **必须先读 index.md**，禁止无差别 Glob 全目录
-2. **Wiki 页面优先**，仅在信息不足时读原始文档
-3. **已读过的页面不重复读取**（同一对话内）
-4. **对比页面已包含选型信息**，无需逐一读取实体页面
-
-## Wiki 维护
-
-当查询产生有价值的结果时，考虑回写为新 wiki 页面：
-- 新的对比分析 → comparisons/
-- 新的设计概念 → concepts/
-- 新的集成经验 → guides/
+1. Say clearly: "I don't have enough in the wiki to answer this well."
+2. Identify the specific gap: "I have nothing on [subtopic]."
+3. Suggest: "Want to find a source on this? I can help you search or process one."
+4. Do not fabricate. Do not answer from training data if the question is about the specific domain in this wiki.

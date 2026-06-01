@@ -8,7 +8,7 @@
     "L2_stageB": [".claude/shared/requirement-checklist.json", ".claude/shared/flow/stageB-detail.json", ".claude/shared/flow/protocol-mapping.json"],
     "L2_stageC0": [".claude/shared/flow/stageC0-detail.json", ".claude/shared/conflict-detection-rules.json"],
     "L2_stageC": [".claude/shared/flow/stageC-detail.json"],
-    "L2_solution": [".claude/shared/solution-template.json"],
+    "L2_stageD": [".claude/shared/flow/stageD-detail.json", ".claude/shared/solution-template.json"],
     "L2_arch_review": [".claude/shared/arch-review-rules.json（索引）→ 按需 Read 1-2 个类别文件"],
     "L3_ephemeral": ["eda-tool-interfaces.json（仅首次 Read）", "Wiki 检索结果（用完即弃）"],
     "file_registry": ".claude/shared/flow/file-registry.json"
@@ -61,7 +61,7 @@
         "target": "<module>_work/ds/doc/pr/{module}_intermediate_state_v{版本号}.json",
         "schema": {
           "module_name": "string",
-          "current_stage": "stageB/stageC0/stageC/solution_design",
+          "current_stage": "stageB/stageC0/stageC/stageD",
           "completed_reqs": [{ "req_id": "REQ-XXX", "status": "confirmed/default/skipped", "value": "确认值" }],
           "pending_reqs": ["REQ-XXX"],
           "stage0_summary": "string",
@@ -115,7 +115,7 @@
     },
 
     "change_handling": {
-      "steps": ["记录变更日志", "重走变更项stageB", "stageC汇总", "重新确认", "方案阶段则重新生成方案"],
+      "steps": ["记录变更日志", "重走变更项stageB", "stageC汇总", "重新确认", "方案阶段则重走受影响的D子阶段"],
       "incremental_diff": {
         "description": "变更时仅重检受影响的矛盾检测规则，避免全量重跑",
         "mapping_source": ".claude/shared/flow/req-to-rules-mapping.json",
@@ -123,17 +123,19 @@
       }
     },
 
-    "solution_design": {
-      "name": "方案设计",
-      "iron_rule": "NO PPA CLAIMS WITHOUT QUANTITATIVE EVIDENCE",
-      "data_source": ".claude/shared/solution-template.json"
-    },
-
-    "adr": {
-      "name": "ADR记录",
-      "trigger": "用户在2+方案间做选择时",
-      "format": "Nygard",
-      "skill": "architecture-decision-records"
+    "stageD": {
+      "name": "方案细化",
+      "iron_rule": "NO PPA CLAIMS WITHOUT QUANTITATIVE EVIdENCE",
+      "description": "将方案设计拆分为 D0~D14 共 15 个子阶段，每个子阶段通过 brainstorming 与用户深入交互，沟通记录沉淀到 ADR",
+      "detail_source": ".claude/shared/flow/stageD-detail.json",
+      "data_source": ".claude/shared/solution-template.json",
+      "sub_stages": ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14"],
+      "default_execution_mode": "步进模式",
+      "adr_record": "每个 D 子阶段的头脑风暴沟通记录追加到 ADR 文档「方案细化记录」章节",
+      "adr_format": "Nygard",
+      "adr_skill": "architecture-decision-records",
+      "specialist_trigger": "D0 完成后触发专项 Agent 编排（详见 specialist-orchestration.json）",
+      "adversarial_trigger": "D14 完成后触发对抗性评审（devils-advocate gentle + balanced）"
     },
 
     "exception_handling": [
@@ -141,11 +143,12 @@
       { "scenario": "用户不了解某约束", "action": "按not_applicable_rules处理" },
       { "scenario": "用户频繁变更≥3次", "action": "维护变更日志，每次重走对应项" },
       { "scenario": "信息不足且用户无法补充", "action": "标注为假设条件" },
-      { "scenario": "用户跳过确认直接出方案", "action": "警告后执行，未确认项标注[未确认]" }
+      { "scenario": "用户跳过确认直接出方案", "action": "1.列出所有未确认项 2.标注为「假设值-待确认」3.在方案文档和ADR中单独记录假设条件 4.方案完成后要求用户逐项确认假设", "force_completion": true }
     ]
   },
 
   "skill_contracts": [
+    { "skill": "brainstorming", "input": "D子阶段主题+前置结论", "output": "头脑风暴沟通记录+方案决策", "fallback": "内化执行，记录标注'内化执行'" },
     { "skill": "chip-design-space-explorer", "input": "REQ汇总表+方案数量", "output": "2-3个候选方案", "fallback": "手动生成，PPA标注待验证" },
     { "skill": "chip-ppa-formatter", "input": "原始PPA数据", "output": "结构化PPA表", "fallback": "直接输出原始数据" },
     { "skill": "architecture-decision-records", "input": "对比表+选择+REQ汇总", "output": "Nygard ADR", "fallback": "手动生成" },

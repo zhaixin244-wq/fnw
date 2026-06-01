@@ -1,23 +1,9 @@
 {
   "processes": {
     "worker": {
-      "pid": 7640,
+      "pid": 25816,
       "type": "worker",
-      "startedAt": "2026-05-15T03:26:53.838Z"
-    },
-    "sdk:21:4852": {
-      "pid": 4852,
-      "type": "sdk",
-      "sessionId": 21,
-      "startedAt": "2026-05-18T08:11:09.090Z",
-      "pgid": 4852
-    },
-    "sdk:22:12560": {
-      "pid": 12560,
-      "type": "sdk",
-      "sessionId": 22,
-      "startedAt": "2026-05-18T08:14:10.242Z",
-      "pgid": 12560
+      "startedAt": "2026-05-30T04:35:36.989Z"
     }
   }
 }

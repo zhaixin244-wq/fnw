@@ -29,6 +29,35 @@
     "infer_from_function": "按stageA第2问功能描述推断。需要则追问配置；不需要则标注按通用方案选型。"
   },
 
+  "vague_input_probing_strategy": {
+    "description": "vague/partial 输入时的追问增强策略，减少默认值使用",
+    "trigger": "input_triage 判定为 vague 或 partial 时激活",
+    "rules": [
+      "REQ-001（工艺与频率）：必须追问，不可用默认值。提供选项：28nm/16nm/7nm + 100/200/500MHz",
+      "REQ-002（接口协议）：必须追问，不可用默认值。根据 stage0 探索结论推断 2-3 种选项让用户选择",
+      "REQ-003（数据流特征）：必须追问，不可用默认值。提供典型值范围让用户确认",
+      "REQ-004/005（PPA）：追问优先级排序，具体数值可用行业默认值但需标注",
+      "REQ-006~028：按 category_processing 规则处理，但 vague 输入时每个 category 至少追问 1 次",
+      "追问上限仍为 2 次，但第 1 次追问必须提供 3 个选项（而非仅推荐值）",
+      "默认值使用时必须标注「基于通用知识，待用户确认」，不可直接标记为确认"
+    ],
+    "coverage_requirement": "vague 输入完成 stageB 后，确认项占比 ≥ 70% 方可进入 stageC0",
+    "default_value_limit": {
+      "max_defaults": 5,
+      "critical_req_no_default": ["REQ-004", "REQ-016", "REQ-020"],
+      "critical_req_ask_twice": "关键 REQ 追问 2 次，仍不明确才用默认值，且标注'基于通用知识，待用户确认'"
+    },
+    "default_value_statistics": {
+      "description": "默认值统计规则",
+      "categories": {
+        "inferred": "推断值 - 从 stage0/stageA 推断",
+        "industry_typical": "行业典型值 - 基于通用知识",
+        "calculated": "计算值 - 基于公式计算"
+      },
+      "output_format": "| REQ | 约束项 | 默认值类型 | 值 | 依据 |"
+    }
+  },
+
   "realtime_conflict_check_pairs": [
     "REQ-001 ↔ REQ-013（工艺 vs PVT 温度范围）",
     "REQ-005 ↔ REQ-009（面积预算 vs ECC/TMR 开销）",

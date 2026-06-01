@@ -8,7 +8,31 @@
     "reject_hesitant": ["嗯...好吧", "行吧", "先这样吧"],
     "reject_partial": ["大部分没问题，XX有点疑问"],
     "rule": "正向确认词后紧跟转折词/省略号/疑问 → 不确认。仅纯正向确认词 → 确认。",
-    "semantic_judgment": "关键词列表仅作辅助参考。实际判断优先利用 LLM 理解用户意图：对于'大概可以'、'先这样'、'还行吧'等灰色地带表达，结合上下文语义判断是否真正确认。若语义倾向确认但存在犹豫，标注为'部分确认'并记录犹豫点。"
+    "semantic_judgment": "关键词列表仅作辅助参考。实际判断优先利用 LLM 理解用户意图：对于'大概可以'、'先这样'、'还行吧'等灰色地带表达，结合上下文语义判断是否真正确认。若语义倾向确认但存在犹豫，标注为'部分确认'并记录犹豫点。",
+    "grey_expression_handling": {
+      "description": "灰色表达处理增强规则",
+      "grey_expressions": ["大概", "可能", "应该", "差不多", "还行", "先这样", "暂定", "初步"],
+      "action": "标注'部分确认'，记录犹豫点，追问 1 次：'您对这个值是否有疑虑？如果有，我可以提供其他选项。'",
+      "documentation": "在 stageB 输出中标注：'⚠️ 部分确认 - 用户表达犹豫，已追问并记录'"
+    },
+    "grey_expression_system": {
+      "description": "灰色表达系统化处理规则",
+      "detection": {
+        "keywords": ["大概", "可能", "应该", "差不多", "还行", "先这样", "暂定", "初步", "估计", "大约"],
+        "patterns": ["{keyword}+{value}", "{value}+{keyword}"]
+      },
+      "handling": {
+        "step1": "标注'部分确认'",
+        "step2": "追问 1 次：'您对这个值是否有疑虑？'",
+        "step3": "记录追问结果",
+        "step4": "如果仍不明确，使用默认值并标注'推断值-待确认'"
+      },
+      "documentation": {
+        "stageB": "⚠️ 部分确认 - 用户表达犹豫，已追问并记录",
+        "stageC": "⚠️ 部分确认 - 来源：stageB 灰色表达处理",
+        "trace_graph": "confirmation_status: partial_confirmed"
+      }
+    }
   },
 
   "priority_grading": {

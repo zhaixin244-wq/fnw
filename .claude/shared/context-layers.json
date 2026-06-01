@@ -64,13 +64,14 @@
           ],
           "budget": "~0.7K tokens"
         },
-        "solution_design": {
-          "description": "方案设计（面积估算按需加载）",
+        "stageD": {
+          "description": "方案细化 D0~D14（按子阶段按需加载，面积估算按需）",
           "files": [
+            { "path": ".claude/shared/flow/stageD-detail.json", "tokens": "~3.0K（D0~D14 全量）" },
             { "path": ".claude/shared/solution-template.json", "tokens": "~1.5K（精简后）" },
             { "path": ".claude/shared/flow/area-estimation.json", "tokens": "~1.0K（按需）" }
           ],
-          "budget": "~1.5K tokens（典型）/ ~2.5K tokens（含面积估算时）"
+          "budget": "~3.0K tokens（典型，仅加载当前 D 子阶段）/ ~4.5K tokens（含面积估算时）"
         },
         "arch_review": {
           "description": "架构评审（按模块类型筛选 1-2 个文件）",
@@ -121,7 +122,7 @@
       { "step": "进入 stageC0", "action": "Read conflict-detection-rules.json + stageC0-detail.json → 基础检测 → 按需 Read conflict-detection-conditional.json（REQ-022~025 激活时）→ 按需 Read conflict-detection-experimental.json（实验检测+反馈收集）" },
       { "step": "stageC0 完成", "action": "Read coverage-model.json → 运行覆盖率分析 → Read end-to-end-coverage-report.json → 生成端到端覆盖视图" },
       { "step": "进入 stageC", "action": "无需额外 Read（规则内联）" },
-      { "step": "进入方案设计", "action": "Read solution-template.json" },
+      { "step": "进入方案设计", "action": "Read stageD-detail.json + solution-template.json → 按 D0~D14 子阶段逐步执行" },
       { "step": "架构评审", "action": "Read arch-review-rules.json（索引） → 按需 Read 1-2 个类别文件" },
       { "step": "EDA 反馈", "action": "Read eda-tool-interfaces.json（仅首次），后续按 report_parsing_rules 解析" }
     ]

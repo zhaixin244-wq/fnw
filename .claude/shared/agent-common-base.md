@@ -167,3 +167,36 @@ Read .claude/knowledge/{domain}/{name}.md
 1. **读取任何文件**：所有 Agent 可以读取任何文件（只读）
 2. **临时文件**：写入 `/tmp/` 或 `run/tmp/` 下的临时文件
 3. **日志文件**：写入自己的日志文件
+
+---
+
+## 五、文件管理规范
+
+> 所有芯片架构 Agent 的文件管理规范。
+
+### 版本号规则
+
+- **版本格式**：`v{X}.{Y}`（X=主版本号，Y=次版本号）
+- **初始版本**：`v1.0`
+- **自动递增**：每次重大修改递增次版本号（v1.0 → v1.1）
+- **重大变更**：需求冻结后变更递增主版本号（v1.x → v2.0）
+
+### 文件命名规范
+
+- **FS 文档**：`{module}_FS_v{X}.md`
+- **UA 文档**：`{module}_{sub}_microarch_v{X}.md`
+- **ADR 文档**：`{module}_ADR_v{X}.md`
+- **需求汇总**：`{module}_requirement_summary_v{X}.md`
+- **方案文档**：`{module}_solution_v{X}.md`
+- **追溯图**：`{module}_trace_graph.yaml`
+
+### 文件头规范
+
+所有输出文档必须包含文件头：
+```
+# {文档标题}
+> **模块名称**：{module_name}
+> **版本**：v{X}.{Y}
+> **文档编号**：{project_code}-{doc_type}-{module_name}-v{X}.{Y}
+> **作者/日期**：{author} / {YYYY-MM-DD}
+```

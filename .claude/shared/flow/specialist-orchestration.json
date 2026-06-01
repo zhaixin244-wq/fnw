@@ -73,13 +73,13 @@
       },
       "conflict_resolution": "同 id 已存在 → 跳过（静态定义优先）；新 id → 追加到 specialist_agents 数组"
     },
-    "scan_trigger": "stageC 确认后、orchestration_rules 执行前自动扫描一次",
+    "scan_trigger": "D0 完成后、orchestration_rules 执行前自动扫描一次",
     "known_agents_pattern": "当前已知：cdc-architect, low-power-architect, reliability-architect, design-space-explorer, budget-allocator",
     "extension_example": "新增 chip-security-architect.md → 自动注册为 { id: 'security-architect', agent: 'chip-security-architect', trigger_req: 'REQ-018', parallel_group: 1 }"
   },
 
   "orchestration_rules": {
-    "auto_trigger": "读取 stageC 输出的 REQ 汇总表，检查各 specialist 的 trigger_req 是否满足 trigger_condition",
+    "auto_trigger": "D0 完成后读取 REQ 汇总表，检查各 specialist 的 trigger_req 是否满足 trigger_condition",
     "parallel_execution": "parallel_group 相同且无 dependencies 的 agent 可并行调用",
     "sequential_gate": "dependencies 中的 agent 全部完成后才启动当前 agent",
     "optional_dependency": "optional_dependencies 中的 agent 若已完成，其输出作为输入传递；若未完成（未触发或进行中），当前 agent 可先启动，后续补充可选输入",
