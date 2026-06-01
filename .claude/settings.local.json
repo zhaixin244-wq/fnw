@@ -676,7 +676,16 @@
       "Bash(chmod +x *)",
       "Bash(WORKSPACE=D:/work/ai/fnw/arch venv-win/Scripts/python.exe -c ' *)",
       "Bash(WORKSPACE=D:/work/ai/fnw/arch timeout 5 venv-win/Scripts/python.exe -c ' *)",
-      "Bash(mmdc *)"
+      "Bash(mmdc *)",
+      "WebFetch(domain:bayasystems.com)",
+      "WebFetch(domain:www.marvell.com)",
+      "WebFetch(domain:blog.apnic.net)",
+      "WebFetch(domain:www.synopsys.com)",
+      "WebFetch(domain:docs.broadcom.com)",
+      "Bash(sort -t'_' -k1,1n)",
+      "Bash(wc -c)",
+      "Bash(echo \"29: $\\(wc -c < 29_marvell_structera_s_260lane_newsroom.html\\) bytes\")",
+      "Bash(echo \"30: $\\(wc -c < 30_marvell_pcie_scale_up_blog.html\\) bytes\")"
     ]
   }
 }

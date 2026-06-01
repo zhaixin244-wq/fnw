@@ -63,5 +63,88 @@
     "REQ-005 ↔ REQ-009（面积预算 vs ECC/TMR 开销）",
     "REQ-002 ↔ REQ-003（接口位宽 vs 数据粒度）",
     "REQ-004 ↔ REQ-006 ↔ REQ-011（延迟 vs 时钟域 vs CDC 延迟）"
-  ]
+  ],
+
+  "post_stageB_brainstorming": {
+    "description": "stageB 约束检查完成后，使用头脑风暴 skill 与用户探索是否需要追加新 feature（v6.5：多轮头脑风暴 + Wiki 知识库参考）",
+    "trigger": "stageB 全部 28 项确认完成（主模块）或子模块从 B+ 阶段开始时",
+    "skill": "brainstorming",
+    "wiki_integration": {
+      "description": "头脑风暴前必须检索 Wiki 知识库，获取协议/CBB/行业实践参考",
+      "steps": [
+        "1. 读取 wiki/index.md 获取知识库索引",
+        "2. 按模块类型检索相关协议/CBB/选型知识",
+        "3. 将 Wiki 知识作为头脑风暴的输入参考",
+        "4. 头脑风暴中引用 Wiki 内容作为 feature 提出的依据"
+      ]
+    },
+    "multi_round_rules": {
+      "description": "v6.5：多轮头脑风暴，用户确认后才进入下一阶段",
+      "round_flow": [
+        "1. 第 1 轮：按 5 个维度探索新 feature（参考 Wiki 知识库）",
+        "2. 用户确认第 1 轮结果 → 追加 REQ → 进入第 2 轮",
+        "3. 用户不确认 → 根据用户反馈调整 → 重新探索",
+        "4. 第 2 轮：基于第 1 轮追加的 REQ，深入探索子 feature",
+        "5. 用户确认 → 追加 REQ → 进入第 3 轮",
+        "6. 用户不确认 → 继续调整",
+        "7. 重复直到：用户明确表示「没有更多需求」或无法分解出新 feature",
+        "8. 输出最终追加 REQ 汇总 + 头脑风暴总结"
+      ],
+      "termination_conditions": [
+        "用户明确表示「没有更多需求」",
+        "连续 2 轮无法分解出新 feature",
+        "达到最大轮数（5 轮）"
+      ],
+      "max_rounds": 5,
+      "user_confirmation_required": true
+    },
+    "purpose": "发现 stageB 28 项约束清单未覆盖的隐含需求或用户未主动提出的 feature",
+    "focus_dimensions": [
+      {
+        "dimension": "功能扩展",
+        "description": "stageB 28 项未覆盖的功能需求（如特殊协议支持、自定义命令、扩展寄存器）",
+        "prompt": "基于已确认的 28 项约束，是否有额外的功能需求未被覆盖？比如特殊协议支持、自定义命令、扩展寄存器空间等？"
+      },
+      {
+        "dimension": "性能优化",
+        "description": "用户隐含的性能期望（如突发优化、流水线级数、并行度）",
+        "prompt": "在性能方面，是否有额外的优化需求？比如突发传输优化、流水线深度调整、多通道并行等？"
+      },
+      {
+        "dimension": "兼容性",
+        "description": "协议/接口的向下兼容需求（如旧版本协议支持、多模式切换）",
+        "prompt": "是否需要向下兼容旧版本协议或支持多模式切换？"
+      },
+      {
+        "dimension": "可测试性",
+        "description": "用户对验证的额外要求（如错误注入、覆盖率模型、回归策略）",
+        "prompt": "在验证方面，是否有额外需求？比如错误注入接口、特殊覆盖率模型、回归测试策略等？"
+      },
+      {
+        "dimension": "可维护性",
+        "description": "调试/诊断/日志需求（如性能计数器、Trace 接口、运行时配置）",
+        "prompt": "在调试和维护方面，是否有额外需求？比如性能计数器、Trace 接口、运行时可配置参数等？"
+      }
+    ],
+    "execution_flow": [
+      "1. 回顾 stageB 确认结果摘要（28 项确认值 + 默认值 + 跳过项）",
+      "2. 按 5 个维度逐一与用户展开头脑风暴（每维度 1-2 轮 Q&A）",
+      "3. 用户提出新 feature → 分配 REQ 编号（从 REQ-029 起连续）",
+      "4. 新 REQ 逐一确认细节（约束项/确认值/优先级/备注）",
+      "5. 新 REQ 确认后执行实时矛盾检测（与已有 REQ 交叉检查）",
+      "6. 输出追加 REQ 汇总表或「未发现新需求」结论"
+    ],
+    "new_req_rules": {
+      "numbering": "从 REQ-029 起连续编号，不允许跳号",
+      "quality_standard": "每个新 REQ 必须对应一个可验证功能点，不允许一个 REQ 包含多个独立功能",
+      "confirmation": "新 REQ 逐一与用户确认，灰色表达规则同 stageB（犹豫→追问，转折→继续）",
+      "conflict_check": "新 REQ 确认后实时检查与已有 REQ 的矛盾（扩展 realtime_conflict_check_pairs）",
+      "max_rounds": "头脑风暴最多 3 轮 Q&A，避免无限扩展",
+      "exit_condition": "用户明确表示「没有更多需求」或 3 轮 Q&A 后自动结束"
+    },
+    "output_template": {
+      "new_req_added": "## 头脑风暴 Feature Discovery\n\n**主题**：基于已梳理需求的 feature 探索\n\n**Q&A 记录**：\n- Q: {问题}\n- A: {回答}\n\n**追加 REQ**：\n| REQ | 约束项 | 确认值 | 优先级 | 备注 |\n|-----|--------|--------|--------|------|\n| REQ-029 | {项} | {值} | Must/Should/Could | {说明} |",
+      "no_new_feature": "## 头脑风暴 Feature Discovery\n\n**结论**：头脑风暴未发现新需求，stageB 28 项约束已覆盖全部功能需求。"
+    }
+  }
 }

@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"python3 -c \\\"\\nimport json\\nwith open('e-stage-detail.json', 'r', encoding='utf-8') as f:\\n    data = json.load(f)\\n\\ndata['tree_todolist']['self_contained_todolist'] = {\\n    'description...",
+  "error": "Exit code 1\n/usr/bin/bash: line 287: 日期：YYYY-MM-DD: command not found\n/usr/bin/bash: line 291: A:: command not found\n/usr/bin/bash: line 292: ...: command not found\n/usr/bin/bash: line 295: {17: command not found\n/usr/bin/bash: line 298: {需求汇总表: command not found\n/usr/bin/bash: line 302: {估算过程和结论}: command not found\n/usr/bin/bash: line 304: ...: command not found\n/usr/bin/bash: line 307: {递归分解过程}: command not found\n/usr/bin/bash: line 287: 1.0: command not found\n/usr/bin/bash: command substituti...",
+  "timestamp": "2026-06-01T14:33:51.246Z",
+  "retry_count": 1
+}

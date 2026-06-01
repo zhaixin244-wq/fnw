@@ -25,6 +25,9 @@
 | 软件代码审查 / 驱动架构评审 | `chip-sw-reviewer` | 代码审查、静态分析、安全审查、编码规范检查、驱动架构评审、API评审、驱动设计review | 手动进行代码审查或静态分析、手动评审驱动架构文档 |
 | 软件性能分析 | `chip-sw-profiler` | 性能分析、延迟测量、吞吐分析、瓶颈定位、性能优化 | 手动进行性能分析或优化 |
 | 项目管理/风险管控/汇报 | `chip-project-lead` | 项目管理、风险评估、进度跟踪、汇报、协调、门控检查 | 手动编写项目计划或风险报告（由项目总负责人统筹） |
+| ESL 模型架构设计 | `chip-esl-arch` | ESL架构、虚拟平台架构、TLM接口设计、ESL模块划分 | 手动设计 ESL 模型架构或 TLM 接口 |
+| ESL 模型代码实现 | `chip-esl-writer` | 编写ESL、生成SystemC、写TLM模型、ESL代码实现 | 手动编写 SystemC/TLM 模型代码 |
+| ESL 模型验证 | `chip-esl-verfi` | ESL验证、ESL测试、ESL覆盖率、ESL回归测试 | 手动编写 ESL 验证代码或测试用例 |
 
 ---
 

@@ -73,8 +73,36 @@
       }
     },
 
+    "stageB_plus": {
+      "name": "头脑风暴 Feature Discovery",
+      "description": "stageB 约束检查完成后，使用头脑风暴 skill 与用户分析已梳理的需求，探索是否需要追加新的 feature 到 REQ 列表。追加的 REQ 需逐一与用户确认细节。",
+      "trigger_condition": "stageB 全部 28 项确认完成",
+      "skill": "brainstorming",
+      "execution_steps": [
+        "1. 回顾 stageB 确认结果摘要（28 项确认值 + 默认值 + 跳过项）",
+        "2. 调用 brainstorming skill，以「基于已梳理的 28 项约束，是否需要追加新的 feature？」为主题与用户展开头脑风暴",
+        "3. 头脑风暴关注维度：功能扩展（stageB 未覆盖的功能需求）、性能优化（用户隐含的性能期望）、兼容性（协议/接口的向下兼容需求）、可测试性（用户对验证的额外要求）、可维护性（调试/诊断/日志需求）",
+        "4. 用户提出新 feature → 分配 REQ-XXX 编号（从 REQ-029 起连续编号）",
+        "5. 新 REQ 逐一与用户确认细节（约束项/确认值/优先级/备注）",
+        "6. 确认完成后输出追加 REQ 汇总表",
+        "7. 无新 feature → 记录「头脑风暴未发现新需求」，直接进入 stageC0"
+      ],
+      "output_format": {
+        "brainstorming_record": "## 头脑风暴 Feature Discovery\n\n**主题**：基于已梳理需求的 feature 探索\n\n**Q&A 记录**：\n- Q: {问题}\n- A: {回答}\n\n**追加 REQ**：\n| REQ | 约束项 | 确认值 | 优先级 | 备注 |\n|-----|--------|--------|--------|------|",
+        "no_new_feature": "## 头脑风暴 Feature Discovery\n\n**结论**：头脑风暴未发现新需求，stageB 28 项约束已覆盖全部功能需求。"
+      },
+      "new_req_rules": {
+        "numbering": "从 REQ-029 起连续编号，不允许跳号",
+        "quality_standard": "每个新 REQ 必须对应一个可验证功能点",
+        "confirmation": "新 REQ 逐一与用户确认（约束项/确认值/优先级），灰色表达规则同 stageB",
+        "conflict_check": "新 REQ 确认后执行实时矛盾检测（与已有 28 项 + 已追加 REQ 交叉检查）",
+        "max_rounds": "头脑风暴最多 3 轮 Q&A，避免无限扩展"
+      },
+      "detail_source": ".claude/shared/flow/stageB-detail.json#post_stageB_brainstorming"
+    },
+
     "post_stageB": {
-      "description": "stageB 后自动后处理。详见 flow/stageC0-detail.json#post_stageB_processing",
+      "description": "stageB_plus 完成后自动后处理。详见 flow/stageC0-detail.json#post_stageB_processing",
       "detail_source": ".claude/shared/flow/stageC0-detail.json"
     },
 

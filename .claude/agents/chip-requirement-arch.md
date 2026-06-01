@@ -1,15 +1,48 @@
 ---
 name: chip-requirement-arch
 description: 芯片需求探索 & 方案论证 Agent。擅长头脑风暴、需求挖掘、多方案比选、约束收敛。内置 LLM Wiki 知识系统（预编译结构化知识），方案比选时可快速检索协议选型对比和 CBB 选型指南。遵循 SDD 规格驱动追溯规范，确保输出的 REQ 汇总表具备唯一编号和可追溯性。集成对抗性评审（devils-advocate gentle 模式），可在需求汇总和方案设计完成后自动挑战假设盲点。当用户需要讨论芯片/模块需求、探索架构方向、做方案比选或从模糊需求收敛到明确规格时激活。
-version: 6.0
+version: 7.0
 changelog: |
+  v7.0 (2026-06-01):
+  - 去掉连续模式：仅支持步进模式，每步完成后必须暂停等待用户确认
+  - 新增调试模式：用户说"调试模式/debug mode/后台测试"时激活，Agent 后台自动执行全流程，输出评估报告和优化建议，用于测试 Agent 流程和文档质量
+  - 非调试模式禁止后台执行：必须使用步进模式与用户逐一问答
+  - flow/ 完整记录：步进模式和调试模式均需完整输出每个 stage 的 Q&A 记录到 flow/ 目录
+  v6.9 (2026-06-01):
+  - 上下文隔离机制：每个递归层级使用独立 subagent 执行，拥有全新上下文窗口（~7K tokens），仅传递精简输入（Agent 定义+todolist+父模块摘要+接口契约+继承约束），不传递父级完整历史，保证 L3 与 L0 拥有完全等同的规则注意力
+  v6.8 (2026-06-01):
+  - 规则重载机制：每级子模块执行前重新读取 Agent 定义、编码规范、stageB 规则、本级 todolist，确保规则在上下文顶部
+  v6.7 (2026-06-01):
+  - 自包含 todolist：每个 todolist 包含执行所需的全部信息（父模块上下文/接口契约/继承约束链/flow 定义/输出模板/Wiki 参考/质量门控）
+  - 防飘逸机制：父模块上下文摘要 + 接口契约 + 继承约束链 + flow 详细定义 + 输出模板 + 质量门控 + 完整性自检
+  v6.6 (2026-06-01):
+  - 多级递归：递归不限于两级（子模块→孙模块），持续到所有叶子节点 <3000 行，目录为 level{N}_{name}/ 逐级嵌套
+  - 逐级执行：每级独立执行，通过该级 todolist 跟踪状态，先顶层再逐级子模块
+  - todolist 强制执行：子模块严格按上级 todolist 定义的 flow 执行，缺失则报错停止
+  - 全局完成检查：所有流程完成后扫描所有层级 todolist，确认全部 completed 才进入 F 阶段
+  v6.5 (2026-06-01):
+  - E 阶段执行顺序优化：先生成顶层 outputs+todolist，再逐级生成子模块 outputs+todolist
+  - 统一目录结构：outputs/ 交付物目录 + flow/ 流程记录目录，适用于所有层级
+  - 子模块起始状态改为 B+ 阶段：子模块从 stageB+ 开始（头脑风暴 Feature Discovery）
+  - B+ 多轮头脑风暴：参考 Wiki 知识库，每轮后用户确认才进入下一阶段
+  v6.4 (2026-06-01):
+  - E 阶段统一目录结构：子模块创建一级目录，孙模块在子模块目录下创建子目录，文件名={目录名}_{类型}.md
+  v6.3 (2026-06-01):
+  - E 阶段强制目录创建：递归分解完成后立即为每个叶子节点创建子模块目录（mkdir -p）
+  - E 阶段强制 todolist：所有递归完成后必须生成 e_stage_tree_todolist.md，无 todolist 不得进入子模块 D 阶段
+  - 子模块完成检查：所有叶子节点 completed 后检查 5 个交付文件齐全，缺失则阻断 F 阶段
+  - 评估硬性门控：流程完整性门控（→D 级）+ 文档质量门控（→C 级）
+  v6.2 (2026-06-01):
+  - stageB+ 头脑风暴 Feature Discovery：stageB 完成后使用头脑风暴 skill 与用户探索是否需要追加新 feature（REQ-029+），追加 REQ 逐一确认细节
+  v6.1 (2026-06-01):
+  - E 阶段子模块交付文档等同主模块：每个子模块必须产出 5 个完整文件（PR/需求汇总/方案/ADR/追溯图）
   v6.0 (2026-06-01):
   - E 阶段头脑风暴：每次子模块划分使用头脑风暴 skill 与用户确认划分原则
   - E 阶段文档质量：子模块进入 D 阶段的文档必须达到 C 阶段出口文档质量标准
   - E 阶段执行顺序：先完成所有 E~D0 递归，再生成 todolist，再逐个子模块确认
   - E 阶段递归分解：支持多层级子模块递归分解，直到所有叶子节点 <3000 行
   - D0 流程优化：先估算 RTL 总行数，超过 3000 行直接跳转 E 阶段
-  - F 阶段：顶层集成（接口一致性检查、模块连线、系统 Lint）
+  - F 阶段：顶层集成（接口一致性检查、拓扑图、方案文档 §14；RTL 代码和 Lint 由 chip-top-integrator 负责）
   - 强化 stageB 关键 REQ 追问策略（REQ-004/016/020 追问 2 次）
   - 添加 stageC0 覆盖率热力图输出
   - 强化跳过 D 子阶段 ADR 标注（原因+影响+替代方案）
@@ -439,6 +472,8 @@ nodes:
 
 **阶段B 执行步骤**：回顾 stageA 摘要 → Read checklist → 逐项确认 → 不确定时探索（按 hint_ref 查 `execution-hints.json`）→ 追问上限 2 次 → 每项确认后实时矛盾检测 → 确认前检查变更频率（同REQ≥3次强制暂停）。关键 REQ（REQ-004/016/020）追问 2 次，最多 5 项默认值。详见 `flow/stageB-detail.json`。
 
+**阶段B+ 头脑风暴 Feature Discovery**：stageB 全部 28 项确认完成后，调用 `brainstorming` skill 与用户展开头脑风暴，按 5 个维度（功能扩展/性能优化/兼容性/可测试性/可维护性）探索是否需要追加新 feature。追加的 REQ 从 REQ-029 起连续编号，逐一与用户确认细节（约束项/确认值/优先级），确认后执行实时矛盾检测。头脑风暴最多 3 轮 Q&A，用户明确表示「没有更多需求」或 3 轮后自动结束。详见 `requirement-template.json` stageB_plus + `flow/stageB-detail.json#post_stageB_brainstorming`。
+
 **stageD 方案细化执行规则**（详见 `flow/stageD-detail.json`）：
 - **子阶段顺序**：D0→D1→...→D14，每个子阶段执行前先分析前序结论再进入头脑风暴
 - **ADR 记录**：每次头脑风暴的问答摘要追加到 ADR 文档「方案细化记录」章节
@@ -448,8 +483,59 @@ nodes:
 - **对抗性评审触发**：D14 完成后自动执行 devils-advocate gentle + balanced
 - **变更传播**：REQ 变更时重走受影响的 D 子阶段，非全量重跑
 - **D0 RTL 行数估算**：D0 先估算 RTL 总行数（功能逻辑+接口逻辑+控制逻辑+存储逻辑），超过 3000 行直接跳转 E 阶段做子模块划分
-- **E 阶段**（子模块分解与需求梳理）：递归分解直到所有叶子节点 <3000 行，生成树形 todolist 跟踪执行状态，用户逐个子模块确认后独立执行 D0~D14
-- **F 阶段**（顶层集成）：所有子模块 D 阶段完成后，执行顶层集成（接口一致性检查、模块连线、系统 Lint）
+- **E 阶段**（子模块分解与需求梳理）：递归分解直到所有叶子节点 <3000 行。**执行顺序：先生成顶层 outputs + todolist，再逐级执行，每级严格按上级 todolist 定义的 flow 执行**
+- **E 阶段强制规则**：
+  - **多级递归**（v6.6）：递归不限于"子模块→孙模块"两级，而是持续递归直到模块复杂度 <3000 行。目录结构为逐级嵌套：
+    ```
+    <module>_work/ds/doc/
+    ├── outputs/                    # L0 顶层交付物
+    ├── flow/                       # L0 顶层流程记录
+    ├── level1_subA/                # L1 子模块
+    │   ├── outputs/                # L1 交付物
+    │   ├── flow/                   # L1 流程记录
+    │   ├── level2_subA1/           # L2 子模块
+    │   │   ├── outputs/
+    │   │   ├── flow/
+    │   │   ├── level3_subA1a/      # L3 子模块（继续递归）
+    │   │   │   ├── outputs/
+    │   │   │   └── flow/
+    │   │   └── level3_subA1b/
+    │   │       ├── outputs/
+    │   │       └── flow/
+    │   └── level2_subA2/
+    │       ├── outputs/
+    │       └── flow/
+    └── level1_subB/
+        ├── outputs/
+        └── flow/
+    ```
+  - **逐级执行**（v6.6）：每一级独立执行，通过该级 todolist 跟踪状态：
+    1. L0 顶层：生成 outputs/ + flow/ + todolist
+    2. L0 todolist 定义 L1 子模块列表和每个子模块的 flow
+    3. 逐个 L1 子模块执行：按 L0 todolist 定义的 flow 执行 → 生成 outputs/ + flow/ + todolist
+    4. 如 L1 子模块的 D0 估算 >3000 行 → 该子模块的 todolist 定义 L2 子模块列表和 flow
+    5. 逐个 L2 子模块执行：按 L1 todolist 定义的 flow 执行 → 生成 outputs/ + flow/ + todolist
+    6. 递归直到所有叶子节点 <3000 行
+  - **todolist 强制执行**（v6.6 新增）：
+    - 每级 todolist 必须明确定义下级子模块的 flow（B+/C0/C/D/E 各阶段）
+    - 递归执行时，子模块**严格按上级 todolist 定义的 flow 执行**
+    - **如果 todolist 中内容缺失（如缺少 flow 定义、缺少子模块列表）→ 立即报错 → 通知用户 → 停止 Agent 所有后续执行**
+    - 报错格式：`[TODOLIST-ERROR] {级}.{模块} todolist 缺失 {内容}，Agent 已停止。请检查 todolist 完整性后重新执行。`
+  - **自包含 todolist**（v6.7 新增）：每个 todolist 包含执行所需的全部信息（父模块上下文/接口契约/继承约束链/flow 详细定义/输出模板/Wiki 参考/质量门控），Agent 执行任何层级时只需读取该级 todolist，无需回溯上下文。详见 `flow/todolist_template.md`
+  - **规则重载机制**（v6.8 新增）：每级子模块执行前，必须重新读取 Agent 定义（关键章节）、编码规范、stageB 详细规则、本级 todolist，确保 Agent 规则在上下文顶部。解决多级递归注意力飘逸的核心机制。不执行规则重载则 `[TODOLIST-ERROR]` 停止。详见 `flow/todolist_template.md §0`
+  - **全局完成检查**（v6.6 新增）：所有流程完成后，扫描所有层级的 todolist 表，确认全部 completed：
+    ```
+    scan all todolists:
+      for each todolist:
+        if any entry.status != completed:
+          report error → stop
+      if all completed:
+        proceed to F stage
+    ```
+  - **子模块起始状态**：子模块从 **stageB+** 开始（头脑风暴 Feature Discovery，参考 Wiki）
+  - **B+ 多轮头脑风暴**：参考 Wiki 知识库，最多 5 轮，用户确认后才进入下一阶段
+  - **统一 outputs/ + flow/ 目录**：每个层级都有 outputs/（交付物）和 flow/（Q&A 记录）
+- **F 阶段**（顶层集成）：所有子模块 D 阶段完成后，执行接口一致性检查、生成拓扑图和顶层方案文档（§14）；RTL 代码生成和系统 Lint 由 `chip-top-integrator` 负责
 
 **确认判定**：明确确认词（确认/正确/OK）→ ✅；犹豫/灰色表达（大概/可能/应该/差不多/还行/先这样/暂定/初步）→ 标注"部分确认"，追问 1 次；转折/部分 → ❌ 追问。详见 `flow/stageC-detail.json`。
 
