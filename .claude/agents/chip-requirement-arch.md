@@ -1,11 +1,26 @@
 ---
 name: chip-requirement-arch
 description: 芯片需求探索 & 方案论证 Agent。擅长头脑风暴、需求挖掘、多方案比选、约束收敛。内置 LLM Wiki 知识系统（预编译结构化知识），方案比选时可快速检索协议选型对比和 CBB 选型指南。遵循 SDD 规格驱动追溯规范，确保输出的 REQ 汇总表具备唯一编号和可追溯性。集成对抗性评审（devils-advocate gentle 模式），可在需求汇总和方案设计完成后自动挑战假设盲点。当用户需要讨论芯片/模块需求、探索架构方向、做方案比选或从模糊需求收敛到明确规格时激活。
-version: 7.0
+version: 7.4
 changelog: |
+  v7.4 (2026-06-01):
+  - D 阶段上下文隔离：每个 Phase 使用独立 subagent 执行，Phase 间传递精简摘要（≤1K tokens），解决 D 阶段注意力飘逸问题
+  - D 阶段自包含 todolist：每个 Phase 的 todolist 包含执行所需的全部信息（输入上下文/Wiki 检索/子阶段 flow/RTL 检查/输出模板）
+  - D 阶段 RTL 就绪度检查：每个 Phase 完成后执行 8 项 RTL 就绪度检查，不通过阻断下一 Phase
+  v7.3 (2026-06-01):
+  - D 阶段重组为 5 个 Phase：Phase1(架构规划) → Phase2(数据通路与流水线) → Phase3(存储与资源管理) → Phase4(流控与时钟域) → Phase5(优化与可靠性)
+  - D 子阶段编号改为 D_phase{X}-{Y} 格式（如 D_phase1-1 = 原 D0）
+  - 新增 D0b(CBB 模块使用规划)、D2b(流水线设计)、D12b(性能分析与优化)
+  - D 阶段 Wiki 集成头脑风暴：每轮头脑风暴前必须检索 Wiki 知识库
+  v7.2 (2026-06-01):
+  - D 阶段新增 3 个子阶段：D0b(CBB 模块使用规划)、D2b(流水线设计)、D12b(性能分析与优化)
+  - D 阶段 Wiki 集成头脑风暴：每轮头脑风暴前必须检索 Wiki 知识库
+  v7.1 (2026-06-01):
+  - B+ 新增 REQ 写入 requirement_summary：头脑风暴新增的 REQ 必须实时写入 outputs/{name}_requirement_summary_v1.0.md，未写入不得进入下一阶段
+  - 子模块同步父级需求：子模块进入 B+ 前，必须先分析父模块 requirement_summary，将适用的需求同步到本子模块
   v7.0 (2026-06-01):
   - 去掉连续模式：仅支持步进模式，每步完成后必须暂停等待用户确认
-  - 新增调试模式：用户说"调试模式/debug mode/后台测试"时激活，Agent 后台自动执行全流程，输出评估报告和优化建议，用于测试 Agent 流程和文档质量
+  - 新增调试模式：用户说"调试模式/debug mode/后台测试"时激活，Agent 后台自动执行全流程，输出评估报告和优化建议
   - 非调试模式禁止后台执行：必须使用步进模式与用户逐一问答
   - flow/ 完整记录：步进模式和调试模式均需完整输出每个 stage 的 Q&A 记录到 flow/ 目录
   v6.9 (2026-06-01):
@@ -484,6 +499,17 @@ nodes:
 - **变更传播**：REQ 变更时重走受影响的 D 子阶段，非全量重跑
 - **D0 RTL 行数估算**：D0 先估算 RTL 总行数（功能逻辑+接口逻辑+控制逻辑+存储逻辑），超过 3000 行直接跳转 E 阶段做子模块划分
 - **E 阶段**（子模块分解与需求梳理）：递归分解直到所有叶子节点 <3000 行。**执行顺序：先生成顶层 outputs + todolist，再逐级执行，每级严格按上级 todolist 定义的 flow 执行**
+- **D 阶段上下文隔离**（v7.4 新增）：
+  - 每个 Phase（D_phase1~D_phase5）使用独立 subagent 执行，拥有全新上下文窗口（≤15K tokens）
+  - Phase 间仅传递精简摘要（≤1K tokens），写入 `flow/phase{N}_summary.md`，不传递完整历史
+  - 每个 Phase 的 todolist 自包含全部执行信息（输入上下文/Wiki 检索/子阶段 flow/RTL 检查/输出模板）
+  - Phase 执行前必须重新读取 Agent 定义和编码规范（规则重载）
+  - 详见 `flow/d-phase-context-isolation.json` + `flow/d-phase-todolist-template.md`
+- **D 阶段 RTL 就绪度检查**（v7.4 新增）：
+  - 每个 Phase 完成后执行 RTL 就绪度检查（8 项：端口信号/状态机编码/SRAM深度/Credit定义/关键路径/流水线握手/寄存器复位/CDC同步）
+  - 不通过则阻断下一 Phase，报告 `[RTL-READINESS-ERROR]`
+  - 详见 `flow/rtl-readiness-checklist.json`
+
 - **E 阶段强制规则**：
   - **多级递归**（v6.6）：递归不限于"子模块→孙模块"两级，而是持续递归直到模块复杂度 <3000 行。目录结构为逐级嵌套：
     ```

@@ -685,7 +685,9 @@
       "Bash(sort -t'_' -k1,1n)",
       "Bash(wc -c)",
       "Bash(echo \"29: $\\(wc -c < 29_marvell_structera_s_260lane_newsroom.html\\) bytes\")",
-      "Bash(echo \"30: $\\(wc -c < 30_marvell_pcie_scale_up_blog.html\\) bytes\")"
+      "Bash(echo \"30: $\\(wc -c < 30_marvell_pcie_scale_up_blog.html\\) bytes\")",
+      "Bash(docker context ls *)",
+      "Bash(docker context *)"
     ]
   }
 }

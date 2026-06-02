@@ -133,13 +133,32 @@ L0 主 Agent（上下文：~7K tokens）
 | D | 方案细化 | 是 | D0=4, 其他=3 | outputs/{name}_solution_v1.0.md + ADR | D0 估算行数 + D1~D14 逐阶段 |
 | E | 递归分解 | 条件 | - | {name}_todolist.md | D0 >3000 行时触发，生成下级 todolist |
 
+### 5.0 父模块需求同步（v7.1 新增，stageB+ 前执行）
+
+> **铁律：子模块进入 stageB+ 前，必须先同步父模块 requirement_summary 中适用的需求。**
+
+执行步骤：
+1. 读取父模块 outputs/{parent}_requirement_summary_v1.0.md
+2. 分析每条 REQ 是否适用于本子模块（按功能域/接口/约束判断）
+3. 适用的 REQ 同步到本子模块 requirement_summary（标注来源：同步自父模块 REQ-XXX）
+4. 不适用的 REQ 标注为「不适用」并记录原因
+5. 同步完成后进入 stageB+ 头脑风暴
+
+适用判断标准：
+- REQ 约束直接影响本子模块的功能域
+- REQ 约束涉及本子模块的接口（时钟/复位/数据/控制）
+- REQ 约束影响本子模块的 PPA（频率/面积/功耗）
+- REQ 约束涉及本子模块的可靠性/DFT/低功耗需求
+
 ### 5.1 stageB+ 详细要求
 
+- 先执行 §5.0 父模块需求同步
 - 参考 Wiki 知识库检索相关协议/CBB/行业实践
 - 按 5 个维度探索：功能扩展/性能优化/兼容性/可测试性/可维护性
 - 每轮后用户确认才进入下一阶段
+- **新增 REQ 必须实时写入 outputs/{name}_requirement_summary_v1.0.md**（格式：E-REQ-{N} | {约束项} | {确认值} | {优先级} | stageB+ 头脑风暴新增）
 - 不确认则继续分解直到无新 feature（最多 5 轮）
-- 追加 E-REQ 从 E-{N+1} 起连续编号
+- 追加 E-REQ 从当前最大编号 +1 起连续编号
 
 ### 5.2 stageD 详细要求
 

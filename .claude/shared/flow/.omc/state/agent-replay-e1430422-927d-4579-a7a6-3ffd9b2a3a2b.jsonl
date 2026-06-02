@@ -1,2 +1,4 @@
 {"t":0,"agent":"ae700fc","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
 {"t":0,"agent":"a149611","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"ae700fc","agent_type":"general-purpose","event":"agent_stop","success":true,"duration_ms":1880624}
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"wiki"}

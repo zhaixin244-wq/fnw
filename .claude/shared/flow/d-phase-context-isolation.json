@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "description": "D 阶段上下文隔离配置：每个 Phase 使用独立 subagent 执行，Phase 间仅传递精简摘要",
+
+  "context_isolation": {
+    "enabled": true,
+    "mechanism": "每个 D_phase 使用独立 subagent，拥有全新上下文窗口",
+    "context_budget_per_phase": "≤15K tokens",
+    "phase_summary_max_size": "≤1K tokens"
+  },
+
+  "phase_definitions": [
+    {
+      "phase_id": "D_phase1",
+      "name": "架构规划",
+      "sub_stages": ["D_phase1-1", "D_phase1-2", "D_phase1-3"],
+      "input_files": [
+        "outputs/{module}_requirement_summary_v1.0.md",
+        "flow/stageC0.md"
+      ],
+      "wiki_keywords": ["架构设计模式", "CBB 选型指南", "接口协议规范"],
+      "output_sections": ["S3 架构概述", "S4 接口定义"],
+      "output_summary_fields": ["架构拓扑", "子模块列表", "接口定义"]
+    },
+    {
+      "phase_id": "D_phase2",
+      "name": "数据通路与流水线",
+      "sub_stages": ["D_phase2-1", "D_phase2-2", "D_phase2-3"],
+      "input_files": ["phase1_summary.md"],
+      "wiki_keywords": ["数据通路设计", "流水线设计模式", "FSM 设计模式"],
+      "output_sections": ["S5 数据通路与控制逻辑"],
+      "output_summary_fields": ["数据通路", "流水线级数", "状态机列表"]
+    },
+    {
+      "phase_id": "D_phase3",
+      "name": "存储与资源管理",
+      "sub_stages": ["D_phase3-1", "D_phase3-2", "D_phase3-3", "D_phase3-4"],
+      "input_files": ["phase1_summary.md", "phase2_summary.md"],
+      "wiki_keywords": ["SRAM 设计", "FIFO 设计", "寄存器设计", "面积优化"],
+      "output_sections": ["S7 寄存器", "S8 PPA", "S13.5 存储设计"],
+      "output_summary_fields": ["SRAM/FIFO 实例列表", "寄存器列表", "面积预算"]
+    },
+    {
+      "phase_id": "D_phase4",
+      "name": "流控与时钟域",
+      "sub_stages": ["D_phase4-1", "D_phase4-2", "D_phase4-3"],
+      "input_files": ["phase1_summary.md", "phase2_summary.md", "phase3_summary.md"],
+      "wiki_keywords": ["流控机制", "Credit 流控", "调度算法", "反压设计"],
+      "output_sections": ["S13.2 流控", "S13.4 调度"],
+      "output_summary_fields": ["反压路径", "Credit 方案", "调度策略"]
+    },
+    {
+      "phase_id": "D_phase5",
+      "name": "优化与可靠性",
+      "sub_stages": ["D_phase5-1", "D_phase5-2", "D_phase5-3", "D_phase5-4", "D_phase5-5"],
+      "input_files": ["phase1_summary.md", "phase2_summary.md", "phase3_summary.md", "phase4_summary.md"],
+      "wiki_keywords": ["CDC 设计", "时序优化", "性能优化", "DFT 设计", "异常检测"],
+      "output_sections": ["S6 时序", "S8 PPA", "S11 DFT", "S12 可靠性"],
+      "output_summary_fields": ["CDC 信号列表", "关键路径", "性能指标", "DFX 功能"]
+    }
+  ],
+
+  "phase_summary_template": {
+    "description": "每个 Phase 完成后输出的精简摘要，传递给下一个 Phase",
+    "max_size": "1K tokens",
+    "format": "# Phase {N} 输出摘要\n\n## 架构决策\n- 拓扑：{集中式/分布式}\n- 子模块：{列表}\n\n## 关键接口\n- {端口名}: {位宽} {协议}\n\n## 数据通路\n- {路径}: {延迟} cycles\n\n## 状态机\n- {FSM}: {状态数} states\n\n## 存储\n- {SRAM/FIFO}: {深度}x{位宽}\n\n## 关键约束\n- {约束}: {值}"
+  }
+}

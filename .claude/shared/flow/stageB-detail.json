@@ -66,7 +66,7 @@
   ],
 
   "post_stageB_brainstorming": {
-    "description": "stageB 约束检查完成后，使用头脑风暴 skill 与用户探索是否需要追加新 feature（v6.5：多轮头脑风暴 + Wiki 知识库参考）",
+    "description": "stageB 约束检查完成后，使用头脑风暴 skill 与用户探索是否需要追加新 feature（v7.1：多轮头脑风暴 + Wiki 知识库参考 + 新增 REQ 写入 requirement_summary）",
     "trigger": "stageB 全部 28 项确认完成（主模块）或子模块从 B+ 阶段开始时",
     "skill": "brainstorming",
     "wiki_integration": {
@@ -78,14 +78,22 @@
         "4. 头脑风暴中引用 Wiki 内容作为 feature 提出的依据"
       ]
     },
+    "new_req_persistence": {
+      "description": "v7.1：头脑风暴新增的 REQ 必须实时写入 requirement_summary 文档",
+      "rule": "每轮头脑风暴确认的新增 REQ，必须立即追加到 outputs/{name}_requirement_summary_v1.0.md",
+      "format": "| E-REQ-{N} | {约束项} | {确认值} | Must/Should/Could | stageB+ 头脑风暴新增 |",
+      "numbering": "从当前最大 E-REQ 编号 +1 起连续编号，不允许跳号",
+      "conflict_check": "新增 REQ 后立即执行实时矛盾检测（与已有 REQ 交叉检查）",
+      "blocking_rule": "未写入 requirement_summary 的 REQ 不得进入下一阶段"
+    },
     "multi_round_rules": {
-      "description": "v6.5：多轮头脑风暴，用户确认后才进入下一阶段",
+      "description": "v7.1：多轮头脑风暴，用户确认后才进入下一阶段，新增 REQ 实时写入 requirement_summary",
       "round_flow": [
         "1. 第 1 轮：按 5 个维度探索新 feature（参考 Wiki 知识库）",
-        "2. 用户确认第 1 轮结果 → 追加 REQ → 进入第 2 轮",
+        "2. 用户确认第 1 轮结果 → 追加 REQ → 写入 requirement_summary → 进入第 2 轮",
         "3. 用户不确认 → 根据用户反馈调整 → 重新探索",
         "4. 第 2 轮：基于第 1 轮追加的 REQ，深入探索子 feature",
-        "5. 用户确认 → 追加 REQ → 进入第 3 轮",
+        "5. 用户确认 → 追加 REQ → 写入 requirement_summary → 进入第 3 轮",
         "6. 用户不确认 → 继续调整",
         "7. 重复直到：用户明确表示「没有更多需求」或无法分解出新 feature",
         "8. 输出最终追加 REQ 汇总 + 头脑风暴总结"

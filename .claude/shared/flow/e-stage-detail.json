@@ -380,6 +380,33 @@
           "4. 输出未完成模块清单"
         ]
       }
+    },
+    "parent_requirement_sync": {
+      "description": "v7.1：子模块进入 B+ 阶段前，同步父模块 requirement_summary 中适用的需求",
+      "timing": "子模块 stageB+ 开始前",
+      "steps": [
+        "1. 读取父模块 outputs/{parent}_requirement_summary_v1.0.md",
+        "2. 分析每条 REQ 是否适用于本子模块（按功能域/接口/约束判断）",
+        "3. 适用的 REQ 同步到本子模块 requirement_summary（标注来源：同步自父模块 REQ-XXX）",
+        "4. 不适用的 REQ 标注为「不适用」并记录原因",
+        "5. 同步完成后进入 stageB+ 头脑风暴"
+      ],
+      "sync_rules": {
+        "applicable_criteria": [
+          "REQ 约束直接影响本子模块的功能域",
+          "REQ 约束涉及本子模块的接口（时钟/复位/数据/控制）",
+          "REQ 约束影响本子模块的 PPA（频率/面积/功耗）",
+          "REQ 约束涉及本子模块的可靠性/DFT/低功耗需求"
+        ],
+        "not_applicable_criteria": [
+          "REQ 约束仅影响其他子模块（如 DMA 相关 REQ 不适用于中断模块）",
+          "REQ 约束已被本子模块的 E-REQ 覆盖",
+          "REQ 约束与本子模块功能域无关"
+        ],
+        "format": "| E-REQ-{N} | {约束项} | {确认值} | Must/Should/Could | 同步自父模块 REQ-XXX |",
+        "numbering": "从 E-001 起连续编号，先同步父模块 REQ，再追加 B+ 新增 REQ"
+      },
+      "blocking_rule": "未完成父模块需求同步不得进入 stageB+ 头脑风暴"
     }
   },
   "submodule_deliverables": {
