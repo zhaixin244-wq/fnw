@@ -1,0 +1,208 @@
+{
+  "version": "2.0",
+  "description": "stageD group3 存储与资源 — 从 stageD-detail.json 拆出",
+  "group": "stageD group3",
+  "name": "存储与资源",
+  "sub_stages": [
+    {
+      "id": "stageD group3-step1",
+      "name": "SRAM 设计",
+      "description": "通过头脑风暴与用户沟通，分析模块中 memory 的使用方法。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图",
+          "stageD group1-step1 子模块列表"
+        ],
+        "analysis_steps": [
+          "1. 从 stageD group2-step1 数据流中识别所有存储点",
+          "2. 分析每个存储点的容量需求",
+          "3. 确定存储类型（SRAM/寄存器阵列/FIFO）"
+        ]
+      },
+      "brainstorm_focus": [
+        "SRAM 端口类型选择（1R1W / 2P / 1RW）",
+        "SRAM 位宽和深度确定",
+        "填充内容和初始化策略",
+        "读写策略（写优先/读优先/bypass）",
+        "多源写冲突处理（仲裁/队列/优先级）",
+        "SRAM ECC/Parity 保护需求"
+      ],
+      "calculation_template": {
+        "description": "SRAM 参数量化计算模板，每次 stageD group3-step1 头脑风暴必须填充",
+        "sram_instance": {
+          "name": "实例名称",
+          "type": "1R1W / 2P / 1RW",
+          "width": "位宽计算：数据粒度 × 并行度",
+          "depth": "深度计算：突发量 × 安全系数（≥1.5），向上取 2 的幂",
+          "capacity": "容量 = 位宽 × depth（bit）",
+          "read_latency": "读延迟（cycles）",
+          "write_latency": "写延迟（cycles）",
+          "conflict_policy": "同地址同周期写：W2 优先 / W1 反压 / 仲裁",
+          "ecc": "无 / Parity / SECDED"
+        },
+        "mandatory_fields": [
+          "width",
+          "depth",
+          "conflict_policy"
+        ]
+      },
+      "output": {
+        "solution_section": "§11.1 存储设计（SRAM 部分）",
+        "deliverables": [
+          "SRAM 实例列表（名称/类型/位宽/深度/用途）",
+          "多源冲突仲裁方案",
+          "读写时序约束"
+        ]
+      },
+      "skip_condition": "模块无 SRAM 使用时跳过",
+      "phase": "stageD group3"
+    },
+    {
+      "id": "stageD group3-step2",
+      "name": "FIFO 设计",
+      "description": "通过头脑风暴与用户沟通，细化 FIFO/Buffer 的使用方法。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图"
+        ],
+        "optional_reference": [
+          "stageD group4-step2 流控机制（完成后可参考，FIFO 深度计算需结合流控策略）"
+        ],
+        "analysis_steps": [
+          "1. 从 stageD group2-step1 数据流中识别需要缓冲的位置",
+          "2. 分析 stageD group4-step2 流控机制中的 FIFO 需求",
+          "3. 计算每个 FIFO 的理论深度"
+        ]
+      },
+      "brainstorm_focus": [
+        "FIFO 深度计算（基于流控模型，非拍脑袋）",
+        "同步 FIFO vs 异步 FIFO 选择",
+        "多源读写解冲突策略",
+        "FIFO 填充内容和数据格式",
+        "读写策略（写优先/读优先/bypass）",
+        "FIFO 满/空阈值和告警机制",
+        "溢出/下溢处理策略"
+      ],
+      "calculation_template": {
+        "description": "FIFO 深度量化计算模板，每次 stageD group3-step2 头脑风暴必须填充",
+        "fifo_instance": {
+          "name": "实例名称",
+          "type": "同步 / 异步（Gray码/握手）",
+          "width": "位宽 = 数据粒度",
+          "depth_formula": "深度 = B_max + D_fb × (R_prod / R_cons)",
+          "B_max": "最大突发量（beats）",
+          "D_fb": "反馈延迟（cycles）：反压从下游传播到上游的延迟",
+          "R_prod": "生产者速率（beats/cycle）",
+          "R_cons": "消费者速率（beats/cycle）",
+          "depth_with_margin": "含 50% 裕量，向上取 2 的幂",
+          "full_threshold": "满阈值（通常 = depth - 1 或 depth - 反压延迟）",
+          "empty_threshold": "空阈值（通常 = 0 或 1）",
+          "overflow_policy": "溢出策略：丢弃新数据 / 反压上游 / 覆盖旧数据",
+          "underflow_policy": "下溢策略：输出默认值 / 保持 / 报错"
+        },
+        "mandatory_fields": [
+          "depth_formula",
+          "B_max",
+          "D_fb",
+          "R_prod",
+          "R_cons",
+          "depth_with_margin"
+        ]
+      },
+      "output": {
+        "solution_section": "§11.2 存储设计（FIFO 部分）",
+        "deliverables": [
+          "FIFO 实例列表（名称/类型/位宽/深度/用途）",
+          "深度计算依据",
+          "满/空判断逻辑"
+        ]
+      },
+      "skip_condition": "模块无 FIFO/Buffer 使用时跳过",
+      "phase": "stageD group3"
+    },
+    {
+      "id": "stageD group3-step3",
+      "name": "链表设计",
+      "description": "通过头脑风暴与用户沟通，细化链表使用方法。",
+      "trigger_condition": "需求涉及描述符管理/缓冲区管理/队列管理",
+      "depends_on": [
+        "stageD group3-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group3-step1 SRAM 使用方案",
+          "stageD group2-step1 数据流图"
+        ],
+        "analysis_steps": [
+          "1. 识别需要链表管理的数据结构",
+          "2. 分析 stageD group3-step1 中共享 SRAM 的分配方案",
+          "3. 确定链表操作的并发需求"
+        ]
+      },
+      "brainstorm_focus": [
+        "单通道 vs 多通道链表架构",
+        "共享 SRAM 大小和分配策略",
+        "多源读写解冲突（头/尾指针分离）",
+        "链表节点格式和 next 指针设计",
+        "空闲链表管理（初始化/回收/泄漏检测）",
+        "链表遍历和搜索策略"
+      ],
+      "output": {
+        "solution_section": "§11.3 存储设计（链表部分）",
+        "deliverables": [
+          "链表架构图",
+          "节点格式定义",
+          "并发访问仲裁方案"
+        ]
+      },
+      "skip_condition": "模块无链表管理需求时跳过",
+      "phase": "stageD group3"
+    },
+    {
+      "id": "stageD group3-step4",
+      "name": "寄存器定义",
+      "description": "通过头脑风暴与用户沟通，细化寄存器功能设计方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageC phase2 REQ 汇总表（REQ-002 接口协议 + REQ-019 软件接口约束）",
+          "stageD group1-step1 架构框图（接口概要）"
+        ],
+        "analysis_steps": [
+          "1. 从 REQ 汇总表中提取所有配置/状态/控制相关需求",
+          "2. 分析 REQ-002 确认的接口协议类型和 REQ-019 的软件接口约束",
+          "3. 确定寄存器读写属性和访问权限"
+        ]
+      },
+      "brainstorm_focus": [
+        "寄存器地址映射方案",
+        "每个寄存器的位域定义和读写属性",
+        "W1C/W0C/W1S 等特殊写行为",
+        "寄存器复位值设计",
+        "状态寄存器的更新时机",
+        "中断寄存器的设计"
+      ],
+      "output": {
+        "solution_section": "§7.1 寄存器定义",
+        "deliverables": [
+          "地址映射表",
+          "每个寄存器的位域定义表",
+          "寄存器读写时序说明"
+        ]
+      },
+      "skip_condition": "无 APB/寄存器映射接口时跳过",
+      "phase": "stageD group3"
+    }
+  ]
+}

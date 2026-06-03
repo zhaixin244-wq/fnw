@@ -5,6 +5,38 @@
 
 ---
 
+## v12.0 (2026-06-03)
+- 方案 C 全面重构：统一编码规则（stage/phase/group/step），创建 stage-definition.json
+- stageB phase2 写入目标修正为 PR 记录（非 requirement_summary），解决文件创建时序矛盾
+- stageD 子阶段执行顺序铁律：recommended_execution_order 优先于 sub_stages 数组顺序
+- DFX/DFT 术语统一为 DFX（Design for X）
+- e-stage todolist 模板补充 parent_requirement_sync 步骤
+- e-stage 子模块交付文件扩展为 6 个（含条件 todolist）
+- 递归深度兜底行为定义：超过 5 层强制停止 + ADR 标注风险
+- 评估标准阈值校准：G-17 ≥62，D4.2 ≥60，G-08 ≥5
+- PPA "大幅调整" 量化阈值统一为 >20%
+- stageB phase2 强制终止行为定义（5 轮后自动结束）
+- input_triage 约束维度判定标准明确
+- exception_handling 补充 step_mode_enforcement 标记
+
+## v12.0-patch (2026-06-03) — 跨文件矛盾修复 + 可维护性优化
+### P0 修复（严重矛盾）
+- **OPT-01**：requirement-template.json sub_stages 数组 group2 内顺序修正为 step1→step2→step4→step3（与 recommended_execution_order 一致）
+- **OPT-02**：e-stage-detail.json output_files 统一为 6 个文件（含 todolist），evaluation D5.5/G-08 同步更新
+
+### P1 修复（LLM 歧义）
+- **OPT-04**：context-layers.json stageB budget 修正为 ~4K tokens（与实际文件大小一致）
+- **OPT-05**：evaluation D4.2 补充说明：条件跳过的子阶段不计入遗漏
+- **OPT-06**：stageD-detail.json context_isolation 占位符从 `{N-1}` 改为具体文件名（group2→group1_summary, group3→group2_summary, group4→group3_summary, group5→group4_summary）
+
+### P2 优化（可维护性）
+- **OPT-07**：stage-definition.json 新增 constants 节，集中定义 18 个全局常量（RTL_LINE_THRESHOLD=3000, CONSTRAINT_ITEM_COUNT=28 等）
+- **OPT-08**：evaluation G-08b 脚本完善，增加孙模块目录结构验证（outputs/flow/ 子目录检查）
+- **OPT-09**：stage-definition.json 新增 file_to_stages 反向索引，20 个文件→引用 stage 映射
+
+## v8.0~v11.0 (2026-06-01 ~ 2026-06-03)
+- 中间版本为增量迭代，关键变更已合并至 v12.0
+
 ## v7.4 (2026-06-01)
 - D 阶段上下文隔离：每个 Phase 使用独立 subagent 执行，Phase 间传递精简摘要（≤1K tokens），解决 D 阶段注意力飘逸问题
 - D 阶段自包含 todolist：每个 Phase 的 todolist 包含执行所需的全部信息（输入上下文/Wiki 检索/子阶段 flow/RTL 检查/输出模板）

@@ -1,6 +1,28 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "description": "统一 stage/phase/step 定义 - 所有编码规则集中管理",
+
+  "constants": {
+    "description": "全局常量定义 - 各文件引用此处值，避免分散定义导致不一致",
+    "RTL_LINE_THRESHOLD": 3000,
+    "CONSTRAINT_ITEM_COUNT": 28,
+    "D_SUBSTAGE_COUNT": 20,
+    "D_GROUP_COUNT": 5,
+    "MAX_BRAINSTORM_ROUNDS": 5,
+    "MIN_QA_PAIRS_TOTAL": 64,
+    "BASE_CONFLICT_RULES": 17,
+    "EXPERIMENTAL_RULES": 5,
+    "CONDITIONAL_RULES": 7,
+    "MAX_RECURSION_DEPTH": 5,
+    "MAX_DEFAULT_VALUES": 5,
+    "MAX_INQUIRY_COUNT": 2,
+    "BRAINSTORM_DIMENSIONS": 5,
+    "SELF_CHECK_ITEMS": 5,
+    "KEY_REQ_IDS": ["REQ-004", "REQ-016", "REQ-020"],
+    "REQ_NUMBERING_START": 29,
+    "REQ_NUMBERING_FORMAT": "REQ-{NNN}",
+    "REQ_MAX_BASIC": 28
+  },
 
   "naming_convention": {
     "description": "编码规则：大阶段用 stage，子阶段用 phase，stageD 内部用 group/step",
@@ -121,7 +143,8 @@
               "original_name": "D_phase2-3",
               "chapter": "§8.1",
               "content": "性能指标 + 优化策略",
-              "skippable": false
+              "skippable": true,
+              "skip_condition": "REQ-004 为 Could 级且无明确性能要求"
             },
             "stageD group2-step4": {
               "name": "控制逻辑/FSM",
@@ -219,7 +242,7 @@
               "name": "DFX设计",
               "original_name": "D9 / D_phase5-3",
               "chapter": "§9",
-              "content": "DFT设计",
+              "content": "DFX设计（DFT/调试/诊断）",
               "skippable": true,
               "skip_condition": "无DFX"
             },
@@ -265,14 +288,14 @@
   },
 
   "old_to_new_mapping": {
-    "deprecated_note": "D0~D14 编码已废弃。权威编码为 stageD-detail.json 的 sub_stage id（stageD group{N}-step{M}）。以下映射仅作历史参考。D5~D14 映射已删除（与 stageD-detail.json 的 original_name 矛盾），以 stageD-detail 为权威。",
-    "description": "旧编码到新编码的映射表（用于关联文件迁移）",
+    "deprecated_note": "D0~D14 编码已废弃。权威编码为 stageD-detail.json 的 sub_stage id（stageD group{N}-step{M}）。以下映射仅作历史参考。旧编码存在重叠（如 D1/D2 都映射到 group2-step1），以 stageD-detail 为权威。",
+    "description": "旧编码到新编码的映射表（用于关联文件迁移）。注意：旧编码存在重叠，仅作单向查询参考，不可反向推导。",
     "stageB+": "stageB phase2",
     "stageC0": "stageC phase1",
     "D0": "stageD group1-step1",
-    "D1": "stageD group1-step3 / stageD group2-step1",
-    "D2": "stageD group2-step1 / stageD group2-step4",
-    "D3": "stageD group3-step1 / stageD group2-step4",
+    "D1": "stageD group1-step3 / stageD group2-step1（旧 D1 覆盖范围模糊，以 stageD-detail 为准）",
+    "D2": "stageD group2-step1 / stageD group2-step4（旧 D2 覆盖范围模糊，以 stageD-detail 为准）",
+    "D3": "stageD group3-step1 / stageD group2-step4（旧 D3 覆盖范围模糊，以 stageD-detail 为准）",
     "D4": "stageD group3-step4",
     "D_phase1": "stageD group1",
     "D_phase2": "stageD group2",
@@ -327,6 +350,30 @@
       "config_files": [".claude/shared/flow/e-stage-detail.json", ".claude/shared/flow/e-stage-template.md"],
       "data_files": [".claude/shared/flow/todolist_template.md"]
     }
+  },
+
+  "file_to_stages": {
+    "description": "反向索引：文件 → 引用该文件的 stage 列表（维护时快速定位影响范围）",
+    ".claude/shared/requirement-checklist.json": ["stageB phase1"],
+    ".claude/shared/flow/stageB-detail.json": ["stageB phase1", "stageB phase2"],
+    ".claude/shared/flow/protocol-mapping.json": ["stageB phase1"],
+    ".claude/shared/flow/execution-hints.json": ["stageB phase1"],
+    ".claude/shared/flow/stageC-phase1-detail.json": ["stageC phase1"],
+    ".claude/shared/conflict-detection-rules.json": ["stageC phase1"],
+    ".claude/shared/flow/conflict-detection-conditional.json": ["stageC phase1（条件加载）"],
+    ".claude/shared/flow/conflict-detection-experimental.json": ["stageC phase1（实验加载）"],
+    ".claude/shared/flow/reference-values.json": ["stageC phase1"],
+    ".claude/shared/flow/stageC-detail.json": ["stageC phase2"],
+    ".claude/shared/flow/stageD-detail.json": ["stageD"],
+    ".claude/shared/solution-template.json": ["stageD"],
+    ".claude/shared/flow/area-estimation.json": ["stageD"],
+    ".claude/shared/flow/stageD-group1.json": ["stageD group1"],
+    ".claude/shared/flow/stageD-group2.json": ["stageD group2"],
+    ".claude/shared/flow/stageD-group3.json": ["stageD group3"],
+    ".claude/shared/flow/stageD-group4.json": ["stageD group4"],
+    ".claude/shared/flow/stageD-group5.json": ["stageD group5"],
+    ".claude/shared/flow/e-stage-detail.json": ["stageE"],
+    ".claude/shared/flow/rtl-readiness-checklist.json": ["stageD（RTL 就绪度检查）"]
   },
 
   "validation_rules": {

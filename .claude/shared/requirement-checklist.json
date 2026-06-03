@@ -46,7 +46,7 @@
   "not_applicable_rules": [
     { "scenario": "用户不了解", "action": "解释概念→默认值+风险提示→确认" },
     { "scenario": "专家说'你看着定'", "action": "默认值+可选方案→确认" },
-    { "scenario": "含糊敷衍", "action": "追问1次→A/B二选一；追问2次仍敷衍→强制用推荐值，标注'基于通用知识，待用户确认'" }
+    { "scenario": "含糊敷衍", "action": "第1次追问：推荐值+可选项；第2次追问：A/B二选一；2次后仍敷衍→强制用推荐值，标注'基于通用知识，待用户确认'" }
   ],
 
   "trigger_rules": {
@@ -57,7 +57,7 @@
       { "scenario": "给出确定值", "trigger": false },
       { "scenario": "'先按这个来'", "trigger": false }
     ],
-    "semantic_judgment": "灰色表达处理规则详见 stageC-detail.json confirmation_rules.grey_expression_system。关键词规则仅作辅助参考，实际判断优先利用 LLM 理解用户意图：对于'大概28nm吧'、'好像是200MHz'、'先按这个来'等灰色地带表达，结合上下文语义判断用户是倾向确定还是不确定。若语义倾向确定但存在犹豫，不触发探索追问，而是记录犹豫点并在 stageC phase2 汇总时标注'待验证'。若语义明确不确定，则触发探索流程。"
+    "semantic_judgment": "灰色表达处理规则详见 stageB-detail.json grey_expression_system。关键词规则仅作辅助参考，实际判断优先利用 LLM 理解用户意图：对于'大概28nm吧'、'好像是200MHz'、'先按这个来'等灰色地带表达，结合上下文语义判断用户是倾向确定还是不确定。若语义倾向确定但存在犹豫，不触发探索追问，而是记录犹豫点并在 stageC phase2 汇总时标注'待验证'。若语义明确不确定，则触发探索流程。"
   },
 
   "exploration_template": "> 关于{约束项}：\n\n**推荐值**：{值} — {理由}\n\n| 选项 | 值 | 优势 | 劣势 |\n|------|-----|------|------|\n| A（推荐） | {值} | {优势} | {劣势} |\n| B | {值} | {优势} | {劣势} |"

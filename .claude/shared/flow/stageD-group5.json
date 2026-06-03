@@ -1,0 +1,283 @@
+{
+  "version": "2.0",
+  "description": "stageD group5 优化与可靠性 — 从 stageD-detail.json 拆出",
+  "group": "stageD group5",
+  "name": "优化与可靠性",
+  "sub_stages": [
+    {
+      "id": "stageD group5-step1",
+      "name": "面积预估",
+      "description": "通过头脑风暴与用户沟通，细化面积优化方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group1-step1 子模块列表",
+          "stageC phase2 REQ-005 面积与功耗预算"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group1-step1 各子模块预估面积",
+          "2. 对比 REQ-005 面积与功耗预算",
+          "3. 识别面积超标的子模块"
+        ]
+      },
+      "brainstorm_focus": [
+        "资源共享策略（加法器/乘法器/比较器复用）",
+        "存储优化（SRAM vs 寄存器阵列选择）",
+        "逻辑压缩和编码优化",
+        "流水线级数 vs 面积权衡",
+        "子模块合并/拆分的面积影响",
+        "关键参数敏感性分析（±20% 变化对 PPA 的影响）"
+      ],
+      "output": {
+        "solution_section": "§8.3 面积指标（补充优化策略）",
+        "deliverables": [
+          "面积优化策略表",
+          "优化前后面积对比",
+          "资源复用方案",
+          "敏感性分析矩阵（参数×PPA 维度变化率，详见 solution-template.json sensitivity_analysis）"
+        ]
+      },
+      "skip_condition": "面积预算充裕（< 50% 使用率）时可简化",
+      "phase": "stageD group5"
+    },
+    {
+      "id": "stageD group5-step2",
+      "name": "时序分析",
+      "description": "通过头脑风暴与用户沟通，细化时序有风险的逻辑的优化方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1",
+        "stageD group2-step4"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图",
+          "stageD group2-step4 控制逻辑",
+          "stageC phase2 REQ-001 频率"
+        ],
+        "analysis_steps": [
+          "1. 从 stageD group2-step1/group2-step4 中识别关键路径",
+          "2. 估算组合逻辑级数",
+          "3. 对比 REQ-001 频率约束的时序预算"
+        ]
+      },
+      "brainstorm_focus": [
+        "关键路径识别和延迟估算",
+        "流水线插入策略（哪些位置可以插寄存器）",
+        "逻辑重定时（retiming）方案",
+        "组合逻辑拆分和平衡",
+        "多周期路径约束",
+        "面积 vs 时序权衡"
+      ],
+      "output": {
+        "solution_section": "§6 关键时序分析",
+        "deliverables": [
+          "关键路径列表",
+          "时序优化策略表",
+          "SDC 约束建议"
+        ]
+      },
+      "skip_condition": "低频模块（< 100MHz）且无关键路径时可简化",
+      "phase": "stageD group5"
+    },
+    {
+      "id": "stageD group5-step3",
+      "name": "DFX 设计",
+      "description": "通过头脑风暴与用户沟通，确定需要哪些 DFX（Design for X）功能。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageC phase2 REQ-008 DFT",
+          "stageC phase2 REQ-009 可靠性"
+        ],
+        "analysis_steps": [
+          "1. 回顾 REQ-008 DFT 需求",
+          "2. 回顾 REQ-009 可靠性需求",
+          "3. 确定 DFX 功能范围"
+        ]
+      },
+      "brainstorm_focus": [
+        "DFT 功能（扫描链/MBIST/LBIST/ATPG）",
+        "调试功能（ trace/断点/性能计数器）",
+        "可观测性（关键信号可读/状态可查询）",
+        "可配置性（运行时参数调整）",
+        "错误注入和测试接口",
+        "在线诊断功能"
+      ],
+      "security_enhanced_questions": {
+        "trigger": "REQ-018 或 REQ-024/025 确认有安全需求时自动激活",
+        "questions": [
+          "安全隔离级别要求？（物理隔离/逻辑隔离/软件隔离）",
+          "是否需要侧信道防护？（功耗分析/时序分析防护）",
+          "故障注入检测需求？（电压毛刺/时钟毛刺/激光注入）",
+          "安全审计日志记录哪些事件？",
+          "安全降级策略？（检测到攻击后的行为：锁定/告警/降级运行）"
+        ]
+      },
+      "output": {
+        "solution_section": "§9 DFT 设计",
+        "deliverables": [
+          "DFX 功能列表",
+          "DFT 扫描链方案",
+          "调试接口定义"
+        ]
+      },
+      "skip_condition": "用户明确不需要 DFX 时跳过",
+      "phase": "stageD group5"
+    },
+    {
+      "id": "stageD group5-step4",
+      "name": "可靠性设计",
+      "description": "通过头脑风暴与用户沟通，确定需要哪些异常检测功能。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1",
+        "stageD group2-step4",
+        "stageD group4-step2"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流",
+          "stageD group2-step4 控制逻辑",
+          "stageD group4-step2 流控机制"
+        ],
+        "analysis_steps": [
+          "1. 从数据流中识别异常场景（溢出/下溢/超时/死锁）",
+          "2. 从控制逻辑中识别非法状态/卡死场景",
+          "3. 从流控机制中识别反压异常场景"
+        ]
+      },
+      "brainstorm_focus": [
+        "超时检测（握手超时/处理超时/响应超时）",
+        "溢出/下溢检测（FIFO/SRAM/Credit）",
+        "死锁检测（反压环路/资源争用）",
+        "数据完整性校验（CRC/ECC/Parity）",
+        "状态异常检测（非法状态/卡死/活锁）",
+        "异常响应策略（报错/复位/降级/告警）",
+        "异常统计和日志记录"
+      ],
+      "security_enhanced_questions": {
+        "trigger": "REQ-018 或 REQ-024/025 确认有安全需求时自动激活",
+        "questions": [
+          "入侵检测机制？（异常访问模式/频率阈值/地址范围检查）",
+          "安全审计日志存储方式和保留策略？",
+          "检测到安全事件后的响应链？（记录→告警→锁定→恢复）",
+          "安全相关计数器/状态是否需要防篡改保护？",
+          "安全模块自身的可靠性保障？（看门狗/冗余/自检）"
+        ]
+      },
+      "output": {
+        "solution_section": "§10.1 可靠性设计（异常检测部分）",
+        "deliverables": [
+          "异常场景列表",
+          "检测机制和阈值",
+          "异常响应策略表"
+        ]
+      },
+      "skip_condition": null,
+      "phase": "stageD group5"
+    },
+    {
+      "id": "stageD group5-step5",
+      "name": "接口定义",
+      "description": "通过头脑风暴与用户沟通接口细节与接口时序，确定如何实现接口设计。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group1-step1 子模块列表",
+          "stageC phase2 REQ-002 接口协议",
+          "stageD group3-step4 寄存器定义（地址映射表，用于确定寄存器映射接口的地址位宽）"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group1-step1 子模块列表中的接口定义",
+          "2. 分析 REQ-002 确认的接口协议类型",
+          "3. 参考 group3-step4 寄存器地址映射，确定寄存器映射接口的地址位宽和访问模式",
+          "4. 检查各子模块对外接口的协议匹配性"
+        ]
+      },
+      "brainstorm_focus": [
+        "各接口的协议选择（Valid-Ready / 请求-应答 / 寄存器映射 / 自定义）",
+        "接口时序参数（setup/hold/latency）",
+        "握手信号的 valid/ready 依赖关系",
+        "接口位宽与数据粒度匹配",
+        "寄存器映射接口的地址位宽和访问模式（参考 group3-step4）",
+        "多主/多从场景的仲裁策略"
+      ],
+      "output": {
+        "solution_section": "§4 接口定义",
+        "deliverables": [
+          "各子模块端口列表",
+          "接口时序图（Wavedrom）",
+          "握手协议定义"
+        ]
+      },
+      "skip_condition": null,
+      "phase": "stageD group5"
+    },
+    {
+      "id": "stageD group5-step6",
+      "name": "功耗设计",
+      "description": "通过头脑风暴与用户沟通，确定功耗域划分、时钟门控策略和电源管理方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1",
+        "stageD group3-step4",
+        "stageD group5-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageC phase2 REQ 汇总表（功耗预算）",
+          "stageD group1-step1 架构概述",
+          "stageD group3-step4 寄存器定义",
+          "stageD group5-step1 面积预估"
+        ],
+        "analysis_steps": [
+          "1. 从 REQ 汇总表中提取功耗预算约束",
+          "2. 分析各子模块的时钟需求和可关断条件",
+          "3. 评估面积预估对功耗的影响"
+        ]
+      },
+      "brainstorm_focus": [
+        "功耗域划分（Always-On / 可关断域）",
+        "Always-On 域识别和最小化",
+        "电源状态机（Active / Sleep / Deep-Sleep / Off）",
+        "Isolation Cell 和 Level Shifter 方案",
+        "Clock Gating 策略（ICG 插入位置和粒度）",
+        "功耗预算分配（动态/静态/各域）"
+      ],
+      "wiki_integration": {
+        "required": true,
+        "search_queries": [
+          "低功耗设计",
+          "功耗域划分",
+          "Clock Gating",
+          "Isolation Level Shifter"
+        ],
+        "wiki_pages": [
+          "wiki/low-power-design.md",
+          "wiki/clock-gating-patterns.md"
+        ]
+      },
+      "output": {
+        "solution_section": "§10.2 低功耗设计",
+        "deliverables": [
+          "功耗域划分表",
+          "时钟门控方案（ICG 列表）",
+          "Isolation / Level Shifter 清单",
+          "功耗预算分配表"
+        ]
+      },
+      "skip_condition": "使用全局 Clock Gating 方案且无特殊低功耗需求时可简化",
+      "phase": "stageD group5"
+    }
+  ]
+}

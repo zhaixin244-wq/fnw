@@ -2,7 +2,7 @@
 
 > 评估芯片需求探索 & 方案论证 Agent（苏启辰/Sean）的流程执行质量。
 > 满分 100 分，按维度加权评分。
-> 版本：v6.0（同步 agent v12.0+ — D 阶段上下文隔离 + RTL 就绪度检查 + 自包含 todolist + stageD group/step 编码 + 调试模式 + 路径统一）
+> 版本：v12.0（同步 agent v12.0 — D 阶段上下文隔离 + RTL 就绪度检查 + 自包含 todolist + stageD group/step 编码 + 调试模式 + 路径统一 + REQ 编号全局唯一 + stageD 执行顺序统一）
 
 ---
 
@@ -100,14 +100,14 @@ D1（需求采集完整性）的部分子项依赖评估人对 PR 文件内容�
 
 | # | 门控条件 | 验证命令 | PASS 条件 | FAIL 判定 |
 |---|----------|----------|-----------|-----------|
-| G-01 | stageB phase1 完成率 ≥70% | `grep -c "✅" outputs/{module}_requirement_summary_v1.0.md` | 确认项 ≥20 | <20 → D 级 |
+| G-01 | stageB phase1 完成率 ≥70% | `grep -cP "^\| REQ-\d+.*✅" outputs/{module}_requirement_summary_v1.0.md` | 确认项 ≥20 | <20 → D 级 |
 | G-02 | stageB phase2 已执行 | `grep -c "stageB phase2\|Feature Discovery\|头脑风暴" outputs/{module}_requirement_summary_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
 | G-03 | stageC phase1 已执行 | `grep -c "stageC phase1\|矛盾检测" outputs/{module}_pr_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
 | G-04 | stageC phase2 已执行 | `ls outputs/{module}_requirement_summary_v1.0.md` | 文件存在且 >100 行 | 不存在或 ≤100 行 → D 级 |
 | G-05 | stageD 已执行 | `ls outputs/{module}_solution_v1.0.md` | 文件存在且 >200 行 | 不存在或 ≤200 行 → D 级 |
 | G-06 | E 阶段 todolist 存在 | `find <root> -name "todolist.md" -type f \| wc -l` | ≥1 个 todolist 文件 | 0 个 → D 级 |
 | G-07 | 子模块目录已创建 | `find <root> -mindepth 2 -maxdepth 2 -type d \| wc -l` | ≥1 个子目录 | 0 个 → D 级 |
-| G-08 | 子模块交付文件 ≥5 | `for d in <submodule_dirs>; do find "$d" -type f \| wc -l; done` | 每个目录 ≥5 | 任意 <5 → D 级 |
+| G-08 | 子模块交付文件 ≥5（有递归时 ≥6） | `for d in <submodule_dirs>; do find "$d" -type f \| wc -l; done` | 每个目录 ≥5（5 基础文件；有递归时含 todolist 共 6） | 任意 <5 → D 级 |
 | G-08b | 目录结构符合统一规则 | `find <root> -mindepth 3 -maxdepth 3 -type d \| wc -l`（孙模块在子模块下） | 孙模块在子模块目录下 | 孙模块在根目录下 → D 级 |
 | G-09 | F 阶段已执行 | `grep -c "§14\|顶层集成" outputs/{module}_solution_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
 
@@ -152,12 +152,24 @@ done
 
 # G-08b: 目录结构统一性
 # 检查孙模块是否在子模块目录下（而非根目录下）
-GRANDCHILD_IN_ROOT=$(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d -exec basename {} \; 2>/dev/null | while read name; do
-  # 如果子模块目录下还有子目录，说明有孙模块
-  SUB_SUB=$(find "${ROOT}/${name}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
-  [ "$SUB_SUB" -gt 0 ] && echo "has_grandchild"
-done | wc -l)
-# 这个检查需要更精细，暂标注为信息性
+# 逻辑：如果存在 level2+ 目录，它们必须在 level1 目录下
+GRANDCHILD_IN_ROOT=0
+for d in $(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null); do
+  # 检查子模块目录下是否有孙模块目录
+  SUB_SUB=$(find "$d" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+  if [ "$SUB_SUB" -gt 0 ]; then
+    # 有孙模块，检查孙模块是否在正确位置（子模块目录下）
+    for sd in $(find "$d" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
+      # 验证孙模块目录下有 outputs/ 和 flow/ 子目录
+      HAS_OUTPUTS=$(find "$sd" -maxdepth 1 -type d -name "outputs" 2>/dev/null | wc -l)
+      HAS_FLOW=$(find "$sd" -maxdepth 1 -type d -name "flow" 2>/dev/null | wc -l)
+      if [ "$HAS_OUTPUTS" -eq 0 ] && [ "$HAS_FLOW" -eq 0 ]; then
+        echo "G-08b WARN: ${sd} 缺少 outputs/ 或 flow/ 子目录"
+      fi
+    done
+  fi
+done
+# G-08b 通过条件：孙模块在子模块目录下，不在根目录下
 
 # G-09: F 阶段执行
 grep -q "§14\|顶层集成\|接口一致性" "${ROOT}/${MODULE}_solution_v1.0.md" 2>/dev/null || { echo "G-09 FAIL: F 阶段未执行"; PASS=false; }
@@ -180,7 +192,7 @@ $PASS && echo "门控 1: 全部 PASS" || echo "门控 1: 存在 FAIL → D 级"
 | G-14 | 追溯图节点数 = REQ 总数 | `grep -c "id:" outputs/{module}_trace_graph.yaml` 与 `grep -c "REQ-" outputs/{module}_requirement_summary_v1.0.md` | 数量相等 | 不等 → C 级 |
 | G-15 | 子模块方案文档完整 | `for d in <submodule_dirs>; do grep -c "^##" "${d}/*_solution_v1.0.md"; done` | 每个 ≥8 章节 | 任意 <8 → C 级 |
 | G-16 | 子模块需求汇总含 REQ | `for d in <submodule_dirs>; do grep -c "REQ" "${d}/*_requirement_summary_v1.0.md"; done` | 每个 ≥1 | 任意 0 → C 级 |
-| G-17 | D 子阶段 Q&A 达标 | `grep -c "Q:" outputs/{module}_solution_v1.0.md` | ≥30 个 Q&A | <30 → C 级 |
+| G-17 | D 子阶段 Q&A 达标 | `grep -c "^- Q:" outputs/{module}_solution_v1.0.md` | ≥64 个 Q&A（20 子阶段 min_qa_pairs 总和 = 4+3+3+3+3+3+4+4+4+3+3+3+3+3+3+3+3+3+3+3 = 64） | <64 → C 级 |
 | G-18 | 跳过子阶段有标注 | `grep -c "原因.*影响.*替代方案\|原因+影响+替代方案" outputs/{module}_ADR_v1.0.md` | ≥1 | 0 → C 级 |
 
 ---
@@ -373,11 +385,13 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 5 | group1-step1~group5-step6 全部执行，Q&A ≥ 60 | `grep -c "group.*step" 方案文档` ≥20，`grep -c "Q:" 方案文档` ≥60 |
+| 5 | group1-step1~group5-step6 全部执行，Q&A ≥ 64 | `grep -cP "^\| stageD group\d+-step\d+" 方案文档` ≥20，`grep -c "^- Q:" 方案文档` ≥64 |
 | 4 | 执行完整，个别 Q&A 不足 | 章节 ≥14，Q&A ≥45 |
 | 3 | 遗漏 1-2 个子阶段 | 章节 ≥12 |
 | 2 | 遗漏 >3 个 | 章节 <12 |
 | 0 | 跳过 stageD | 章节 = 0 |
+
+> **说明**：条件跳过的子阶段（按 stageD-detail.json conditional_skip_rules）不计入"遗漏"，但需在 ADR 中标注「原因+影响+替代方案」。跳过的子阶段无 Q&A 要求。
 
 ### D4.3~D4.6 数据通路/控制逻辑/存储设计/流控（各 2 分）
 
@@ -459,11 +473,13 @@ done
 
 | 分值 | 标准 | 验证命令 |
 |------|------|----------|
-| 4 | 所有叶子节点 5 文件齐全，目录结构统一，文件命名规范 | `find <root> -mindepth 2 -type d -exec sh -c 'echo "$(basename $1): $(find $1 -maxdepth 1 -type f \| wc -l) files"' _ {} \;` 全部 = 5 |
-| 3 | 5 文件齐全但个别质量不足 | 文件数全部 = 5，但内容检查有缺 |
-| 2 | 部分叶子节点 <5 文件 | 有目录文件数 <5 |
+| 4 | 所有叶子节点 5 基础文件齐全（有递归时含 todolist 共 6 文件），目录结构统一，文件命名规范 | `find <root> -mindepth 2 -type d -exec sh -c 'echo "$(basename $1): $(find $1 -maxdepth 1 -type f \| wc -l) files"' _ {} \;` 全部 ≥ 5 |
+| 3 | 5 基础文件齐全但个别质量不足 | 文件数全部 ≥ 5，但内容检查有缺 |
+| 2 | 部分叶子节点 <5 基础文件 | 有目录文件数 <5 |
 | 1 | 多个叶子节点缺文件 | 多数目录文件数 <5 |
 | 0 | 未产出独立交付文档 | 无子模块目录 |
+
+> **说明**：5 个基础文件 = pr + requirement_summary + solution + ADR + trace_graph。todolist 仅在触发递归分解（RTL >3000 行）时必须生成。
 
 ---
 
@@ -709,7 +725,7 @@ done
 ```markdown
 # {模块名} 评估报告
 
-> 评估日期：YYYY-MM-DD | Agent 版本：v6.4 | 评估标准：v3.0
+> 评估日期：YYYY-MM-DD | Agent 版本：v12.0 | 评估标准：v12.0
 
 ## §0 门控检查结果
 

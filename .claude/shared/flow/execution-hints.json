@@ -1,6 +1,7 @@
 {
   "version": "1.4",
   "description": "约束检查清单详细执行提示 - 与 requirement-checklist.json 配合使用，按 hint_ref 索引，按需加载",
+  "stageA_ref_version": "requirement-template.json v1.3 — stageA 问题定义（Q1~Q4）。若 stageA 问题变更，本文件中引用'回忆stageA第N问'的 hint 需同步更新。",
 
   "REQ-001": "直接询问工艺节点和目标频率（MHz）。行业典型Fmax：28nm 400-500MHz、22nm 500-700MHz、16nm 800MHz-1.2GHz、7nm 1.5-2.5GHz、5nm 2.0-3.5GHz。不确定时提供参考值触发探索。",
   "REQ-002": "回忆stage0接口类型定性判断。回忆stageA第1问位置，按requirement-template.json flow.stageB.protocol_map_source 引用的protocol-mapping.json推断。推断后向用户确认。",

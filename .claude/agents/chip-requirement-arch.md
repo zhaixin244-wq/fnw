@@ -11,7 +11,7 @@ includes:
   - .claude/shared/change-propagation-v2.md
 ---
 
-# L0 常驻层（始终加载，~2K tokens）
+# L0 常驻层（始终加载，~8K tokens）
 
 ## 角色定义
 
@@ -76,7 +76,7 @@ includes:
 | stageB | phase2 | B+ 详细规则 | `.claude/shared/flow/stageB-detail.json`（section: post_stageB_brainstorming） |
 | stageC | phase1 | 矛盾检测规则 | `.claude/shared/conflict-detection-rules.json` + `.claude/shared/flow/stageC-phase1-detail.json` |
 | stageC | phase2 | 汇总规则 | `.claude/shared/flow/stageC-detail.json` |
-| stageD | group1-step1~group5-step6 | phase 规则 | `.claude/shared/flow/stageD-detail.json` + `.claude/shared/solution-template.json` + `.claude/shared/flow/area-estimation.json` + `.claude/shared/flow/rtl-readiness-checklist.json` |
+| stageD | group1-step1~group5-step6 | phase 规则 | `.claude/shared/flow/stageD-detail.json` + `.claude/shared/flow/stageD-group{1~5}.json`（按 group 按需加载）+ `.claude/shared/solution-template.json` + `.claude/shared/flow/area-estimation.json` + `.claude/shared/flow/rtl-readiness-checklist.json` |
 | stageE | - | 递归规则 | `.claude/shared/flow/e-stage-detail.json` |
 
 ---
@@ -136,7 +136,7 @@ includes:
 
 **输出物**：
 - `flow/{module}_pr_v1.0.md` 中追加 `## [PHASE-START] stageB phase2` 章节
-- `outputs/{module}_requirement_summary_v1.0.md` 创建（含 stageB phase1 28 项确认值）+ 追加 REQ-029+
+- `flow/{module}_pr_v1.0.md` 中追加 stageB phase2 头脑风暴记录 + 追加 REQ-029+（stageC phase2 再合并到 requirement_summary）
 
 **违规处理**：`[PHASE-SKIP-ERROR] stageB phase2 被跳过，Agent 已停止`
 
@@ -173,12 +173,19 @@ includes:
 
 ## stageD 编码规则速查
 
-> 完整定义见 `.claude/shared/flow/stage-definition.json` 的 `stage_definitions.stageD.groups`。
+> 完整定义见 `.claude/shared/flow/stage-definition.json` 的 `stage_definitions.stageD.groups` 和 `validation_rules.step_pattern_detail`。
 
-| 层级 | 编码格式 | 范围 |
-|------|----------|------|
-| Group | `stageD group{N}` | N=1~5 |
-| Step | `stageD group{N}-step{M}` | group1: M=1~3, group2: M=1~4, group3: M=1~4, group4: M=1~3, group5: M=1~6 |
+## stageD 执行顺序
+
+> **铁律：stageD-detail.json 的 `recommended_execution_order` 为唯一权威执行顺序，优先于任何文件中的 sub_stages 数组顺序。**
+
+| Group | 推荐执行顺序 | 说明 |
+|-------|-------------|------|
+| group1 | step1 → step2 → step3 | 线性依赖 |
+| group2 | step1 → step2 → **step4** → **step3** | step4（控制逻辑/FSM）在 step3（性能优化）之前，因性能优化需参考 FSM 状态数 |
+| group3 | step1 → step2 → step3 → step4 | 线性依赖 |
+| group4 | step1 → step2 → step3 | 线性依赖 |
+| group5 | step1 → step2 → step3 → step4 → step5 → step6 | 线性依赖 |
 
 ## stageD group1-step1 特殊规则：RTL 行数估算
 
@@ -296,30 +303,30 @@ EOF
 | stage0 | - | 探索结论 | `flow/{module}_pr_v1.0.md` |
 | stageA | - | 问答摘要 | `flow/{module}_pr_v1.0.md` |
 | stageB | phase1 | 确认值（28项） | `flow/{module}_pr_v1.0.md` |
-| stageB | phase2 | 创建 requirement_summary（含 stageB phase1 28 项确认值）+ 追加 REQ | `outputs/{module}_requirement_summary_v1.0.md` |
+| stageB | phase2 | 追加 REQ 到 PR 记录（stageC phase2 再合并到 requirement_summary） | `flow/{module}_pr_v1.0.md` |
 | stageC | phase1 | 矛盾检测 | `flow/{module}_pr_v1.0.md` |
 | stageC | phase2 | 需求汇总确认 + 优先级分级 + 冻结 | `outputs/{module}_requirement_summary_v1.0.md`（追加确认/冻结标记） |
-| stageD | group1-step1 | 架构概述 + RTL估算 | `outputs/{module}_solution.md` §3 |
-| stageD | group1-step2 | CBB选型 | `outputs/{module}_solution.md` §13 |
-| stageD | group1-step3 | 子模块划分 | `outputs/{module}_solution.md` §3.4 |
-| stageD | group2-step1 | 数据通路 | `outputs/{module}_solution.md` §5.1 |
-| stageD | group2-step2 | 流水线 | `outputs/{module}_solution.md` §5.4 |
-| stageD | group2-step3 | 性能优化 | `outputs/{module}_solution.md` §8.1 |
-| stageD | group2-step4 | 控制逻辑 | `outputs/{module}_solution.md` §5.2-5.3 |
-| stageD | group3-step1 | SRAM | `outputs/{module}_solution.md` §11.1 |
-| stageD | group3-step2 | FIFO | `outputs/{module}_solution.md` §11.2 |
-| stageD | group3-step3 | 链表 | `outputs/{module}_solution.md` §11.3 |
-| stageD | group3-step4 | 寄存器 | `outputs/{module}_solution.md` §7.1 |
-| stageD | group4-step1 | 调度 | `outputs/{module}_solution.md` §12.1 |
-| stageD | group4-step2 | 流控 | `outputs/{module}_solution.md` §12.2 |
-| stageD | group4-step3 | CDC | `outputs/{module}_solution.md` §7.2 |
-| stageD | group5-step1 | 面积 | `outputs/{module}_solution.md` §8.3 |
-| stageD | group5-step2 | 时序 | `outputs/{module}_solution.md` §6 |
-| stageD | group5-step3 | DFX | `outputs/{module}_solution.md` §9 |
-| stageD | group5-step4 | 可靠性 | `outputs/{module}_solution.md` §10.1 |
-| stageD | group5-step5 | 接口 | `outputs/{module}_solution.md` §4 |
-| stageD | group5-step6 | 功耗 | `outputs/{module}_solution.md` §10.2 |
-| stageD | - | ADR | `outputs/{module}_ADR.md` |
+| stageD | group1-step1 | 架构概述 + RTL估算 | `outputs/{module}_solution_v{X}.md` §3 |
+| stageD | group1-step2 | CBB选型 | `outputs/{module}_solution_v{X}.md` §13 |
+| stageD | group1-step3 | 子模块划分 | `outputs/{module}_solution_v{X}.md` §3.4 |
+| stageD | group2-step1 | 数据通路 | `outputs/{module}_solution_v{X}.md` §5.1 |
+| stageD | group2-step2 | 流水线 | `outputs/{module}_solution_v{X}.md` §5.4 |
+| stageD | group2-step4 | 控制逻辑 | `outputs/{module}_solution_v{X}.md` §5.2-5.3 |
+| stageD | group2-step3 | 性能优化 | `outputs/{module}_solution_v{X}.md` §8.1 |
+| stageD | group3-step1 | SRAM | `outputs/{module}_solution_v{X}.md` §11.1 |
+| stageD | group3-step2 | FIFO | `outputs/{module}_solution_v{X}.md` §11.2 |
+| stageD | group3-step3 | 链表 | `outputs/{module}_solution_v{X}.md` §11.3 |
+| stageD | group3-step4 | 寄存器 | `outputs/{module}_solution_v{X}.md` §7.1 |
+| stageD | group4-step1 | 调度 | `outputs/{module}_solution_v{X}.md` §12.1 |
+| stageD | group4-step2 | 流控 | `outputs/{module}_solution_v{X}.md` §12.2 |
+| stageD | group4-step3 | CDC | `outputs/{module}_solution_v{X}.md` §7.2 |
+| stageD | group5-step1 | 面积 | `outputs/{module}_solution_v{X}.md` §8.3 |
+| stageD | group5-step2 | 时序 | `outputs/{module}_solution_v{X}.md` §6 |
+| stageD | group5-step3 | DFX | `outputs/{module}_solution_v{X}.md` §9 |
+| stageD | group5-step4 | 可靠性 | `outputs/{module}_solution_v{X}.md` §10.1 |
+| stageD | group5-step5 | 接口 | `outputs/{module}_solution_v{X}.md` §4 |
+| stageD | group5-step6 | 功耗 | `outputs/{module}_solution_v{X}.md` §10.2 |
+| stageD | - | ADR | `outputs/{module}_ADR_v{X}.md` |
 | stageE | - | 子模块 todolist | `level*_{name}/flow/todolist.md` |
 | stageF | - | 顶层集成 | `outputs/{module}_top_integration.md` |
 
@@ -330,7 +337,8 @@ EOF
 > 权威定义见 `.claude/shared/sdd-spec-traceability.md` §10.1。
 
 **速查**：
-- 编号格式：`REQ-{NNN}`（三位数字，001~999。超过 999 时扩展为 `REQ-{NNNN}`）
+- 编号格式：`REQ-{NNN}`（三位数字，001~999）
+- 扩展规则：超过 999 时扩展为 `REQ-{NNNN}`（四位数字，1000~9999）。同一模块内不允许混用三位和四位编号
 - 编号连续性：编号无间断
 - 编号唯一性：每个 REQ 编号全局唯一
 - 追溯标注：每个 REQ 标注来源

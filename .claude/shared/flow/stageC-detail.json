@@ -50,7 +50,7 @@
 
   "freeze": {
     "condition": "stageC汇总表确认通过后自动冻结",
-    "scope": "已确认的REQ-001~REQ-028 + 阶段0补充项",
+    "scope": "已确认的REQ-001~REQ-{max}（含 stageB phase2 追加的 REQ-029+） + 阶段0补充项",
     "unfreeze_rules": [
       "用户主动变更 → 解冻对应项，走change_handling（受 change_cooldown 约束）",
       "方案阶段发现矛盾 → 暂停方案，解冻矛盾项，重走stageB→stageC"

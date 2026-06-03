@@ -17,19 +17,18 @@
 ```
 Agent：
 ## 代办清单（步进模式）
-| # | 步骤 | 预期输出 | 组 |
-|---|------|----------|-----|
-| 1 | 前置探索（stage0） | 探索结论 | A |
-| 2 | 最小信息集（stageA） | 4问回答 | A |
-| 3 | 约束检查（stageB phase1） | 28项确认 | B |
-| 4 | 矛盾检测（stageC phase1） | 检测结果 | B |
-| 5 | 需求汇总（stageC） | 需求汇总表 | C |
-| 6 | 规格自检 | 自检报告（5项） | C |
-| 7 | 研究优先（search-first） | 已有方案评估 | C |
-| 8 | stageD group1-step1 初始架构方案 + 子模块划分 | 架构框图+子模块列表 | D |
-| 9 | stageD group1-step2~group5-step6 方案细化（按需跳过） | 方案文档各章节 | D |
-| 10 | 对抗性评审：方案挑战（devils-advocate gentle） | 风险清单+补充建议 | E |
-| 11 | 对抗性评审：ADR挑战（devils-advocate balanced） | 架构决策风险 | E |
+| # | 步骤 | 预期输出 | 执行组 | 状态 |
+|---|------|----------|--------|------|
+| 1 | 前置探索（stage0，含 search-first） | 探索结论 + 已有方案评估 | A | ⬜ |
+| 2 | 最小信息集（stageA） | 4问回答 | A | ⬜ |
+| 3 | 约束检查（stageB phase1） | 28项确认 | B | ⬜ |
+| 4 | 头脑风暴（stageB phase2） | 追加REQ | B | ⬜ |
+| 5 | 矛盾检测（stageC phase1） | 检测结果 | B | ⬜ |
+| 6 | 需求汇总（stageC phase2） | 需求汇总表 | C | ⬜ |
+| 7 | 规格自检 | 自检报告（5项） | C | ⬜ |
+| 8 | stageD group1-step1 初始架构方案 | 架构框图+子模块列表 | D | ⬜ |
+| 9 | stageD group1-step2~group5-step6 方案细化 | 方案文档各章节 | D | ⬜ |
+| 10 | 对抗性评审 | 风险清单+补充建议 | E | ⬜ |
 
 用户：确认
 ```
@@ -173,6 +172,10 @@ Agent：基于需求汇总，初步架构方向为：单通道 DMA + APB 控制 
 
 ✅ stageD group1-step1 记录。
 
+--- stageD group1-step2: CBB 选型（跳过） ---
+✅ stageD group1-step2 跳过（无可用 CBB，模块为纯自研逻辑）。
+ADR 标注：「### stageD group1-step2: CBB 选型\n**状态**：跳过\n**原因**：无可用 CBB，模块为纯自研逻辑\n**影响**：无 CBB 集成面积/功耗开销\n**替代方案**：全部自研逻辑，面积估算按纯逻辑计算」
+
 --- stageD group1-step3: 子模块划分细化 ---
 Agent：细化子模块职责边界。dma_ctrl 负责状态机和配置寄存器解析，dma_datapath 负责 SPI 采样和 AXI 写出，dma_reg_mod 负责 APB 从接口。子模块间接口采用 Valid-Ready 握手。是否 OK？
 
@@ -198,6 +201,7 @@ Agent：DMA 控制状态机：IDLE → FETCH → TRANSFER → DONE。FETCH 状�
 --- stageD group3-step1: SRAM 设计 ---
 Agent：本模块无 SRAM 使用，纯寄存器实现。跳过。
 ✅ stageD group3-step1 跳过（无 SRAM）。
+ADR 标注：「### stageD group3-step1: SRAM 设计\n**状态**：跳过\n**原因**：模块无 SRAM 使用，纯寄存器实现\n**影响**：无 SRAM 面积和 MBIST 需求\n**替代方案**：内部缓冲使用寄存器阵列实现」
 
 --- stageD group4-step2: 流控机制 ---
 Agent：数据流控采用 Valid-Ready 握手。SPI 侧 ready 由内部缓冲空决定，AXI 侧 ready 由 AXI 从设备决定。是否 OK？

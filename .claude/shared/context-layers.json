@@ -19,7 +19,7 @@
         "输出契约（~1K tokens）",
         "专项 Agent 协作接口（~600 tokens）"
       ],
-      "budget": "~5K tokens（Agent 定义 ~4K + 动态摘要 ≤1K）"
+      "budget": "~8K tokens（角色+铁律 ~1.5K + 流程定义 ~3K + Skill/对抗/追溯/编码 ~2.5K + 动态摘要 ≤1K）"
     },
     "L1_startup": {
       "description": "启动层 — 激活后首次 Read，整个会话期间只加载一次",
@@ -60,15 +60,15 @@
             { "path": ".claude/shared/flow/stageB-detail.json", "tokens": "~0.6K" },
             { "path": ".claude/shared/flow/execution-hints.json", "tokens": "~1.5K（按需，约28条 hint）" }
           ],
-          "budget": "~6K tokens（checklist ~2K + stageB-detail ~1.5K + execution-hints ~3K）"
+          "budget": "~4K tokens（典型：checklist ~1.9K + stageB-detail ~0.6K + execution-hints ~1.5K）"
         },
         "stageC phase1": {
           "description": "矛盾检测（stageC phase1）+ post_stageB phase1 后处理（条件规则按需加载，实验性规则反馈收集）",
           "files": [
             { "path": ".claude/shared/flow/stageC-phase1-detail.json", "tokens": "~0.5K" },
             { "path": ".claude/shared/conflict-detection-rules.json", "tokens": "~3.5K（17条基础规则）" },
-            { "path": ".claude/shared/flow/conflict-detection-conditional.json", "tokens": "~1.7K（7条条件规则，按需）" },
-            { "path": ".claude/shared/flow/conflict-detection-experimental.json", "tokens": "~1.5K（5条实验规则+feedback_schema，按需）" },
+            { "path": ".claude/shared/flow/conflict-detection-conditional.json", "tokens": "~1.7K（7条条件规则）", "load_condition": "REQ-022/023/024/025 任一 confirmed 时加载" },
+            { "path": ".claude/shared/flow/conflict-detection-experimental.json", "tokens": "~1.5K（5条实验规则+feedback_schema）", "load_condition": "stageC phase1 基础检测完成后自动加载" },
             { "path": ".claude/shared/flow/coverage-model.json", "tokens": "~0.8K（按需）" },
             { "path": ".claude/shared/flow/end-to-end-coverage-report.json", "tokens": "~0.5K（按需）" }
           ],
@@ -84,11 +84,12 @@
         "stageD": {
           "description": "方案细化（group1-step1~group5-step6 共 20 个子阶段，按 group 按需加载）",
           "files": [
-            { "path": ".claude/shared/flow/stageD-detail.json", "tokens": "~3.0K（group/step 全量 20 子阶段）" },
+            { "path": ".claude/shared/flow/stageD-detail.json", "tokens": "~2.0K（元数据+引用）" },
+            { "path": ".claude/shared/flow/stageD-group{N}.json", "tokens": "~1.5-2.5K（按 group 按需加载）", "note": "N=1~5，进入对应 group 时加载" },
             { "path": ".claude/shared/solution-template.json", "tokens": "~1.5K（精简后）" },
             { "path": ".claude/shared/flow/area-estimation.json", "tokens": "~1.0K（按需）" }
           ],
-          "budget": "~8.0K tokens（group/step 全量 20 子阶段，待 OPT-12 拆分后降至 ~2-3K/group）"
+          "budget": "~2.0K（元数据） + ~2.5K（单个 group，按需）"
         },
         "arch_review": {
           "description": "架构评审（按模块类型筛选 1-2 个文件）",
@@ -138,7 +139,7 @@
       { "step": "进入 stageB phase1", "action": "Read requirement-checklist.json" },
       { "step": "进入 stageC phase1", "action": "Read conflict-detection-rules.json + stageC-phase1-detail.json → 基础检测 → 按需 Read conflict-detection-conditional.json（REQ-022~025 激活时）→ 按需 Read conflict-detection-experimental.json（实验检测+反馈收集）" },
       { "step": "stageC phase1 完成", "action": "Read coverage-model.json → 运行覆盖率分析 → Read end-to-end-coverage-report.json → 生成端到端覆盖视图" },
-      { "step": "进入 stageC", "action": "无需额外 Read（规则内联）" },
+      { "step": "进入 stageC phase2", "action": "Read stageC-detail.json（需求汇总规则）" },
       { "step": "进入方案设计", "action": "Read stageD-detail.json + solution-template.json → 按 group1-step1~group5-step6 子阶段逐步执行" },
       { "step": "架构评审", "action": "Read arch-review-rules.json（索引） → 按需 Read 1-2 个类别文件" },
       { "step": "EDA 反馈", "action": "Read eda-tool-interfaces.json（仅首次），后续按 report_parsing_rules 解析" }

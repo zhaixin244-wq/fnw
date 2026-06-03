@@ -148,7 +148,7 @@
       "example": "目标延迟5cycles + 双触发器同步2cycles = 7cycles > 5cycles预算",
       "involved_keys": ["REQ-004", "REQ-006", "REQ-011"],
       "detection_tip": "检查REQ-011的CDC策略类型和REQ-004的延迟预算：CDC同步器增加的延迟 + 功能处理延迟 > 延迟预算 → 标记矛盾。建议增加功能并行度补偿CDC延迟，或放宽延迟约束。单时钟域时跳过此检测。",
-      "arch_review_cross_ref": "本规则检测需求阶段的CDC延迟矛盾。方案阶段的CDC实现正确性检测（裸跨域/数据撕裂/级联/复位共享）在 arch-review/cdc-reset-timing-rules.json CDC-01~06。"
+      "arch_review_cross_ref": "本规则检测需求阶段的CDC延迟矛盾。方案阶段的CDC实现正确性检测（裸跨域/数据撕裂/级联/复位共享）在 arch-review/cdc-reset-timing-rules.json AR-CDC-01~06（注意：arch-review 使用 AR-CDC- 前缀，与本文件 CDC-01 编号空间隔离）。"
     },
     {
       "id": "PERF-02",

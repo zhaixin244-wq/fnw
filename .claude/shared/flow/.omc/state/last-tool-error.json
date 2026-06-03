@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"echo \\\"=== 版本一致性 ===\\\" && grep \\\"version:\\\" .claude/agents/chip-requirement-arch.md | head -1 && grep \\\"版本：\\\" .claude/evaluation_criteria/chip-requirement-arch-eva.md | head -1 && echo \\\"\\...",
-  "error": "Exit code 1\n=== 版本一致性 ===\ngrep: .claude/agents/chip-requirement-arch.md: No such file or directory\ngrep: .claude/evaluation_criteria/chip-requirement-arch-eva.md: No such file or directory\n\n=== v7.2 关键特性 ===\n1. D 阶段新增子阶段:\nTraceback (most recent call last):\r\n  File \"<string>\", line 3, in <module>\r\nFileNotFoundError: [Errno 2] No such file or directory: '.claude/shared/flow/stageD-detail.json'",
-  "timestamp": "2026-06-02T05:44:31.079Z",
-  "retry_count": 1
-}

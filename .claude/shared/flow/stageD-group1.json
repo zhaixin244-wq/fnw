@@ -1,0 +1,197 @@
+{
+  "version": "2.0",
+  "description": "stageD group1 架构规划 — 从 stageD-detail.json 拆出",
+  "group": "stageD group1",
+  "name": "架构规划",
+  "sub_stages": [
+    {
+      "id": "stageD group1-step1",
+      "name": "初始架构方案 + RTL 行数估算",
+      "description": "通过头脑风暴与用户沟通，确定架构拓扑方向，估算 RTL 总行数。如果总行数 > 3000 行，跳转 E 阶段做子模块划分；否则继续 stageD group1-step3 子模块划分。",
+      "trigger_condition": "默认触发",
+      "depends_on": [],
+      "input_analysis": {
+        "source": [
+          "stageC phase2 需求汇总表",
+          "stageC phase1 矛盾检测结果"
+        ],
+        "analysis_steps": [
+          "1. 回顾需求汇总表中所有 Must 级 REQ",
+          "2. 分析矛盾检测结果中的调和方案",
+          "3. 提取关键约束：频率/面积/功耗/接口/数据流特征"
+        ]
+      },
+      "brainstorm_focus": [
+        "模块整体架构拓扑方向（集中式 vs 分布式）",
+        "关键数据通路路径",
+        "初步 PPA 预算分配",
+        "RTL 总行数估算（功能逻辑+接口逻辑+控制逻辑+存储逻辑）"
+      ],
+      "domain_exploration_questions": {
+        "description": "vague 输入时的领域引导问题列表，确保 stage0 探索深度",
+        "mandatory_questions": [
+          "这个模块在 SoC 中的角色是什么？（主控/从设备/桥接/加速器）",
+          "上游和下游分别是什么模块？数据怎么流过来、流过去？",
+          "这个模块最核心的功能用一句话描述是什么？",
+          "有没有类似的模块可以参考？（已有 IP / 开源实现 / 行业方案）"
+        ],
+        "conditional_questions": {
+          "数据搬运类": [
+            "数据粒度多大？突发长度？速率要求？"
+          ],
+          "控制管理类": [
+            "管理多少个通道/资源？调度公平性要求？"
+          ],
+          "接口桥接类": [
+            "两侧接口协议分别是什么？需要转换什么？"
+          ],
+          "安全隔离类": [
+            "隔离的边界在哪？安全等级要求？"
+          ],
+          "低功耗类": [
+            "有几个功耗域？唤醒延迟要求？"
+          ]
+        },
+        "depth_requirement": "vague 输入时必须完成全部 mandatory_questions + 至少 2 个 conditional_questions 才能离开 stage0"
+      },
+      "output": {
+        "solution_section": "§3 架构概述",
+        "deliverables": [
+          "架构拓扑方向（集中式/分布式/混合式）",
+          "RTL 总行数估算表",
+          "关键约束列表"
+        ]
+      },
+      "rtl_estimation": {
+        "description": "RTL 总行数估算",
+        "formula": "功能逻辑行数 + 接口逻辑行数 + 控制逻辑行数 + 存储逻辑行数",
+        "estimation_rules": {
+          "functional_logic": "功能点数量 × 每个功能点平均行数（500~2000）",
+          "interface_logic": "接口数量 × 每个接口平均行数（200~800）",
+          "control_logic": "状态机状态数 × 每个状态平均行数（100~500）",
+          "storage_logic": "SRAM/FIFO 数量 × 每个实例平均行数（100~400）"
+        },
+        "threshold": 3000,
+        "action_if_exceeded": {
+          "condition": "RTL 总行数 > 3000",
+          "action": "跳转 E 阶段（子模块划分 + 需求梳理）",
+          "reason": "模块规模过大，需要先做子模块划分"
+        },
+        "action_if_within": {
+          "condition": "RTL 总行数 ≤ 3000",
+          "action": "继续 stageD group1-step3 子模块划分，然后进入 stageD group1-step2~group5-step6",
+          "reason": "模块规模适中，可直接细化"
+        }
+      },
+      "skip_condition": null,
+      "phase": "stageD group1"
+    },
+    {
+      "id": "stageD group1-step2",
+      "name": "CBB 选型与集成",
+      "description": "通过头脑风暴与用户沟通，确定是否有可复用的 CBB 模块，评估集成方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group1-step1 子模块列表",
+          "stageC phase2 需求汇总表",
+          "Wiki 知识库 CBB 索引"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group1-step1 子模块列表，识别可复用的功能单元",
+          "2. 检索 Wiki 知识库中的 CBB 选型指南",
+          "3. 评估已有 CBB 是否满足需求（功能/接口/PPA）",
+          "4. 识别需要新设计的模块"
+        ]
+      },
+      "brainstorm_focus": [
+        "已有 CBB 模块清单（FIFO/SRAM/仲裁器/CDC/寄存器模块等）",
+        "每个 CBB 的功能匹配度评估",
+        "CBB 集成的接口适配方案",
+        "CBB 的 PPA 特性与需求对比",
+        "CBB 使用的约束和限制",
+        "自研 vs 复用的 trade-off 分析"
+      ],
+      "wiki_integration": {
+        "required": true,
+        "search_queries": [
+          "CBB 选型指南",
+          "FIFO IP",
+          "SRAM IP",
+          "仲裁器 IP",
+          "CDC IP"
+        ],
+        "wiki_pages": [
+          "wiki/cbb-selection-guide.md",
+          "wiki/fifo-design-patterns.md",
+          "wiki/arbiter-patterns.md"
+        ]
+      },
+      "output": {
+        "solution_section": "§13 CBB 集成规划",
+        "deliverables": [
+          "CBB 使用清单（名称/版本/功能/接口/PPA）",
+          "CBB 集成方案（接口适配/配置初始化）",
+          "自研模块清单（无可用 CBB 时）"
+        ]
+      },
+      "skip_condition": "无可用 CBB 或用户明确不使用 CBB 时跳过",
+      "phase": "stageD group1"
+    },
+    {
+      "id": "stageD group1-step3",
+      "name": "子模块划分细化",
+      "description": "基于 group1-step1 的架构拓扑，细化子模块职责划分和接口定义。明确各子模块的功能边界、内部接口和依赖关系，为后续数据通路和存储设计提供清晰的模块视图。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group1-step1 架构框图",
+          "stageD group1-step1 RTL 行数估算",
+          "stageC phase2 需求汇总表"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group1-step1 架构框图中的模块划分",
+          "2. 分析各子模块的功能聚类和接口耦合度",
+          "3. 识别共享资源和数据依赖关系",
+          "4. 确定子模块间内部接口协议"
+        ]
+      },
+      "brainstorm_focus": [
+        "子模块功能职责划分和边界定义",
+        "子模块间内部接口协议（Valid-Ready / 请求-应答 / 自定义）",
+        "子模块依赖关系和数据流方向",
+        "共享资源的访问仲裁策略",
+        "子模块预估行数和面积分配"
+      ],
+      "wiki_integration": {
+        "required": true,
+        "search_queries": [
+          "架构设计模式",
+          "SoC 架构",
+          "模块划分原则"
+        ],
+        "wiki_pages": [
+          "wiki/architecture-design-patterns.md",
+          "wiki/module-partitioning.md"
+        ]
+      },
+      "output": {
+        "solution_section": "§3.4 子模块划分",
+        "deliverables": [
+          "子模块清单（名称/职责/预估行数）",
+          "子模块职责矩阵",
+          "子模块间内部接口定义",
+          "子模块依赖关系图"
+        ]
+      },
+      "skip_condition": "RTL 总行数 ≤ 500 的极简模块可跳过（单模块即可实现）",
+      "phase": "stageD group1"
+    }
+  ]
+}

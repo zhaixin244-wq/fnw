@@ -7,7 +7,8 @@
     "trigger_condition": "stageD group1-step1 阶段估算 RTL 总行数 > 3000 行",
     "exit_condition": "所有叶子节点子模块预估行数 < 3000 行",
     "max_recursion_depth": 5,
-    "execution_mode": "先完成所有递归分解，再逐个子模块确认"
+    "execution_mode": "先完成所有递归分解，再逐个子模块确认",
+    "max_recursion_depth_fallback": "超过 5 层时强制停止递归，将当前模块标记为叶子节点（即使 >3000 行），在 ADR 中标注风险：「递归深度已达上限，模块行数仍超阈值，建议人工拆分」"
   },
   "brainstorm_for_decomposition": {
     "description": "每次子模块划分都使用头脑风暴 skill 与用户确认划分原则",
@@ -153,7 +154,7 @@
     "standardized_template": {
       "description": "标准化 todolist 文件模板（所有 Case 统一格式）",
       "output_path": "<module>_work/ds/doc/pr/e_stage_tree_todolist.md",
-      "template": "# E 阶段树形 Todolist\n\n> 本文件是 E 阶段递归分解的执行指南。Agent 必须按本文件定义的流程和顺序逐步执行。\n> v6.6：多级递归（直到 <3000 行），逐级 todolist 跟踪，todolist 强制执行。\n\n---\n\n## 1. 递归分解结果\n\n| ID | 名称 | 层级 | 父节点 | 预估行数 | 状态 | 执行顺序 | 依赖 | 全局 REQ | REQ |\n|----|------|------|--------|----------|------|----------|------|----------|-------|\n| 0 | 顶层模块 | L0 | - | {N} | completed | 0 | - | REQ-001~REQ-033 | - |\n| 1 | {子模块A} | L1 | 顶层 | {N} | pending | 1 | - | REQ-XXX | REQ-001~REQ-005 |\n| 1.1 | {子模块A1} | L2 | A | {N} | pending | 1.1 | - | REQ-XXX | REQ-001~REQ-003 |\n| 1.1.1 | {子模块A1a} | L3 | A1 | {N} | pending | 1.1.1 | - | REQ-XXX | REQ-001~REQ-002 |\n| 1.1.2 | {子模块A1b} | L3 | A1 | {N} | pending | 1.1.2 | - | REQ-XXX | REQ-003 |\n| 1.2 | {子模块A2} | L2 | A | {N} | pending | 1.2 | 1.1 | REQ-XXX | REQ-004~REQ-005 |\n| 2 | {子模块B} | L1 | 顶层 | {N} | pending | 2 | - | REQ-XXX | REQ-006~REQ-010 |\n\n**状态说明**：pending -> in_progress -> completed -> skipped\n**起始阶段**：所有子模块从 stageB phase2（头脑风暴）开始（非 D0）\n**递归终止**：所有叶子节点预估行数 <3000\n\n---\n\n## 2. 本级 todolist 定义的子模块 flow\n\n> **铁律：子模块必须严格按本级 todolist 定义的 flow 执行。缺失则报错停止。**\n\n| 子模块 ID | 名称 | 必须执行的 flow | 交付文件 |\n|-----------|------|----------------|----------|\n| 1 | {子模块A} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD -> stageE | outputs/ 6 文件 + flow/ 5 文件 |\n| 1.1 | {子模块A1} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD -> stageE | outputs/ 6 文件 + flow/ 5 文件 |\n| 1.1.1 | {子模块A1a} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n| 1.1.2 | {子模块A1b} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n| 1.2 | {子模块A2} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n| 2 | {子模块B} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n\n**todolist 完整性检查**：每个子模块必须有明确的 flow 定义和交付文件清单。缺失 -> [TODOLIST-ERROR] -> 停止执行。\n\n---\n\n## 3. 执行流程（v6.6：逐级执行，每级 todolist 跟踪）\n\n### 阶段 1：生成顶层 outputs + todolist\n\n1. 创建顶层目录：mkdir -p {module}/{outputs,flow}/\n2. 生成顶层 outputs/（6 个文件）\n3. 生成顶层 flow/（9 个文件）\n4. 生成本 todolist（e_stage_tree_todolist.md）\n5. todolist 必须包含：子模块列表 + 每个子模块的 flow 定义 + 交付文件清单\n\n### 阶段 2：递归分解\n\n1. D0 估算 RTL 行数\n   - <=3000 行 -> 跳过 E 阶段\n   - >3000 行 -> 进入递归分解\n2. 头脑风暴划分原则（调用 brainstorming skill + Wiki 知识库）\n   - 与用户确认划分原则\n   - 用户未确认不得进入下一步\n3. 划分子模块，估算行数\n4. 递归检查：\n   for each 子模块:\n     if 行数 > 3000 -> 递归执行步骤 2~4\n     else -> 标记为叶子节点\n5. 生成执行顺序，分配编号\n6. 在 todolist 中为每个子模块定义 flow 和交付文件\n7. 创建目录结构：\n   for each 子模块: mkdir -p {parent}/level{N}_{name}/{outputs,flow}/\n\n### 阶段 3：逐级执行子模块\n\n按 todolist 的 execution_order 顺序，逐个子模块执行：\n\n1. 选择 pending 状态的子模块\n2. 更新为 in_progress\n3. 读取本级 todolist 中该子模块的 flow 定义\n4. 如果 flow 定义缺失 -> [TODOLIST-ERROR] -> 停止执行\n5. 创建子模块 outputs/ + flow/ 目录\n6. 严格按 todolist 定义的 flow 顺序执行：\n   a. stageB phase2（头脑风暴 Feature Discovery，参考 Wiki，多轮）\n      - 生成 flow/stageB_phase2.md\n      - 用户确认后才进入下一步\n   b. stageC phase1（矛盾检测）\n      - 生成 flow/stageC_phase1.md\n   c. stageC（需求确认）\n      - 生成 outputs/{name}_requirement_summary_v1.0.md\n      - 生成 flow/stageC.md\n   d. stageD（stageD group1-step1 估算 + stageD group1-step2~group5-step6）\n      - 生成 outputs/{name}_solution_v1.0.md\n      - 生成 outputs/{name}_ADR_v1.0.md\n      - 生成 flow/stageD.md\n   e. stageE（如 D0 >3000 行）\n      - 生成 {name}_todolist.md\n      - 递归执行下级模块（同步骤 1~6）\n7. 生成 outputs/ 剩余文件：\n   - {name}_pr_v1.0.md\n   - {name}_trace_graph.yaml\n8. 规格自检 5 项\n9. 更新本级 todolist 状态为 completed\n10. 检查是否所有叶子节点 completed\n    - 是 -> 进入阶段 4\n    - 否 -> 回到步骤 1\n\n---\n\n## 4. 全局完成检查（v6.6 新增）\n\n所有流程完成后、F 阶段前，扫描所有层级的 todolist：\n\nscan all todolists:\n  for each todolist:\n    read file\n    for each entry:\n      if entry.status != completed:\n        report: [TODOLIST-INCOMPLETE] {级}.{模块} 状态为 {status}\n        stop all execution\n  if all completed:\n    proceed to F stage\n\n| # | 检查项 | 方法 | 阻断条件 |\n|---|--------|------|----------|\n| 1 | 所有 todolist 文件存在 | find 检查 | 缺失 -> 阻断 |\n| 2 | 所有 todolist 条目 completed | 逐个检查 | pending/in_progress -> 阻断 |\n| 3 | 每个叶子节点 outputs/ 5 文件齐全 | find 检查 | <3 -> 阻断 |\n| 4 | 每个叶子节点 flow/ stageB_phase2.md 存在 | ls 检查 | 缺失 -> 阻断 |\n| 5 | 目录结构符合统一规则 | 层级检查 | 不符合 -> 阻断 |\n| 6 | REQ 编号连续 | grep 检查 | 跳号 -> 阻断 |\n\n**全部通过 -> 触发 F 阶段**\n\n---\n\n## 5. 每个子模块的交付文件\n\n### outputs/ 目录\n\n| # | 文件 | 命名 | 说明 |\n|---|------|------|------|\n| 1 | PR 沟通记录 | {name}_pr_v1.0.md | 完整 stageB phase2~stageD 沟通记录 |\n| 2 | 需求汇总表 | {name}_requirement_summary_v1.0.md | REQ 汇总 |\n| 3 | 方案文档 | {name}_solution_v1.0.md | §3~§15 |\n| 4 | ADR 文档 | {name}_ADR_v1.0.md | Nygard 格式 |\n| 5 | 追溯图 | {name}_trace_graph.yaml | L1 节点 |\n| 6 | 子模块 todolist | {name}_todolist.md | 如有下级模块 |\n\n### flow/ 目录\n\n| # | 文件 | 说明 |\n|---|------|------|\n| 1 | stageB_phase2.md | 头脑风暴 Feature Discovery（必须） |\n| 2 | stageC_phase1.md | 矛盾检测 |\n| 3 | stageC.md | 需求确认汇总 |\n| 4 | stageD.md | 方案细化（D0~D14） |\n| 5 | stageE.md | 递归分解（如有下级模块） |\n\n---\n\n## 6. 执行进度跟踪\n\n| 层级 | 模块 | 总数 | completed | in_progress | pending | 进度 |\n|------|------|------|-----------|-------------|---------|------|\n| L0 | 顶层 | 1 | {N} | - | - | {N}% |\n| L1 | 子模块 | {N} | {N} | {N} | {N} | {N}% |\n| L2 | 孙模块 | {N} | {N} | {N} | {N} | {N}% |\n| L3 | 曾孙模块 | {N} | {N} | {N} | {N} | {N}% |\n| ... | ... | ... | ... | ... | ... | ... |\n| **全局** | **所有** | **{N}** | **{N}** | **{N}** | **{N}** | **{N}%** |\n"
+      "template": "# E 阶段树形 Todolist\n\n> 本文件是 E 阶段递归分解的执行指南。Agent 必须按本文件定义的流程和顺序逐步执行。\n> v6.6：多级递归（直到 <3000 行），逐级 todolist 跟踪，todolist 强制执行。\n\n---\n\n## 1. 递归分解结果\n\n| ID | 名称 | 层级 | 父节点 | 预估行数 | 状态 | 执行顺序 | 依赖 | 全局 REQ | REQ |\n|----|------|------|--------|----------|------|----------|------|----------|-------|\n| 0 | 顶层模块 | L0 | - | {N} | completed | 0 | - | REQ-001~REQ-033 | - |\n| 1 | {子模块A} | L1 | 顶层 | {N} | pending | 1 | - | REQ-XXX | REQ-001~REQ-005 |\n| 1.1 | {子模块A1} | L2 | A | {N} | pending | 1.1 | - | REQ-XXX | REQ-001~REQ-003 |\n| 1.1.1 | {子模块A1a} | L3 | A1 | {N} | pending | 1.1.1 | - | REQ-XXX | REQ-001~REQ-002 |\n| 1.1.2 | {子模块A1b} | L3 | A1 | {N} | pending | 1.1.2 | - | REQ-XXX | REQ-003 |\n| 1.2 | {子模块A2} | L2 | A | {N} | pending | 1.2 | 1.1 | REQ-XXX | REQ-004~REQ-005 |\n| 2 | {子模块B} | L1 | 顶层 | {N} | pending | 2 | - | REQ-XXX | REQ-006~REQ-010 |\n\n**状态说明**：pending -> in_progress -> completed -> skipped\n**起始阶段**：所有子模块从 stageB phase2（头脑风暴）开始（非 D0）\n**递归终止**：所有叶子节点预估行数 <3000\n\n---\n\n## 2. 本级 todolist 定义的子模块 flow\n\n> **铁律：子模块必须严格按本级 todolist 定义的 flow 执行。缺失则报错停止。**\n\n| 子模块 ID | 名称 | 必须执行的 flow | 交付文件 |\n|-----------|------|----------------|----------|\n| 1 | {子模块A} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD -> stageE | outputs/ 6 文件 + flow/ 5 文件 |\n| 1.1 | {子模块A1} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD -> stageE | outputs/ 6 文件 + flow/ 5 文件 |\n| 1.1.1 | {子模块A1a} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n| 1.1.2 | {子模块A1b} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n| 1.2 | {子模块A2} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n| 2 | {子模块B} | stageB phase2 -> stageC phase1 -> stageC phase2 -> stageD | outputs/ 5 文件 + flow/ 4 文件 |\n\n**todolist 完整性检查**：每个子模块必须有明确的 flow 定义和交付文件清单。缺失 -> [TODOLIST-ERROR] -> 停止执行。\n\n---\n\n## 3. 执行流程（v6.6：逐级执行，每级 todolist 跟踪）\n\n### 阶段 1：生成顶层 outputs + todolist\n\n1. 创建顶层目录：mkdir -p {module}/{outputs,flow}/\n2. 生成顶层 outputs/（6 个文件）\n3. 生成顶层 flow/（9 个文件）\n4. 生成本 todolist（e_stage_tree_todolist.md）\n5. todolist 必须包含：子模块列表 + 每个子模块的 flow 定义 + 交付文件清单\n\n### 阶段 2：递归分解\n\n1. D0 估算 RTL 行数\n   - <=3000 行 -> 跳过 E 阶段\n   - >3000 行 -> 进入递归分解\n2. 头脑风暴划分原则（调用 brainstorming skill + Wiki 知识库）\n   - 与用户确认划分原则\n   - 用户未确认不得进入下一步\n3. 划分子模块，估算行数\n4. 递归检查：\n   for each 子模块:\n     if 行数 > 3000 -> 递归执行步骤 2~4\n     else -> 标记为叶子节点\n5. 生成执行顺序，分配编号\n6. 在 todolist 中为每个子模块定义 flow 和交付文件\n7. 创建目录结构：\n   for each 子模块: mkdir -p {parent}/level{N}_{name}/{outputs,flow}/\n\n### 阶段 3：逐级执行子模块\n\n按 todolist 的 execution_order 顺序，逐个子模块执行：\n\n1. 选择 pending 状态的子模块\n2. 更新为 in_progress\n3. 读取本级 todolist 中该子模块的 flow 定义\n4. 如果 flow 定义缺失 -> [TODOLIST-ERROR] -> 停止执行\n5. 创建子模块 outputs/ + flow/ 目录\n6. 严格按 todolist 定义的 flow 顺序执行：\n   a0. parent_requirement_sync：读取父模块 requirement_summary，同步适用 REQ 到本子模块（详见 submodule_requirements.parent_requirement_sync）\n   a. stageB phase2（头脑风暴 Feature Discovery，参考 Wiki，多轮）\n      - 生成 flow/stageB_phase2.md\n      - 用户确认后才进入下一步\n   b. stageC phase1（矛盾检测）\n      - 生成 flow/stageC_phase1.md\n   c. stageC（需求确认）\n      - 生成 outputs/{name}_requirement_summary_v1.0.md\n      - 生成 flow/stageC.md\n   d. stageD（stageD group1-step1 估算 + stageD group1-step2~group5-step6）\n      - 生成 outputs/{name}_solution_v1.0.md\n      - 生成 outputs/{name}_ADR_v1.0.md\n      - 生成 flow/stageD.md\n   e. stageE（如 D0 >3000 行）\n      - 生成 {name}_todolist.md\n      - 递归执行下级模块（同步骤 1~6）\n7. 生成 outputs/ 剩余文件：\n   - {name}_pr_v1.0.md\n   - {name}_trace_graph.yaml\n8. 规格自检 5 项\n9. 更新本级 todolist 状态为 completed\n10. 检查是否所有叶子节点 completed\n    - 是 -> 进入阶段 4\n    - 否 -> 回到步骤 1\n\n---\n\n## 4. 全局完成检查（v6.6 新增）\n\n所有流程完成后、F 阶段前，扫描所有层级的 todolist：\n\nscan all todolists:\n  for each todolist:\n    read file\n    for each entry:\n      if entry.status != completed:\n        report: [TODOLIST-INCOMPLETE] {级}.{模块} 状态为 {status}\n        stop all execution\n  if all completed:\n    proceed to F stage\n\n| # | 检查项 | 方法 | 阻断条件 |\n|---|--------|------|----------|\n| 1 | 所有 todolist 文件存在 | find 检查 | 缺失 -> 阻断 |\n| 2 | 所有 todolist 条目 completed | 逐个检查 | pending/in_progress -> 阻断 |\n| 3 | 每个叶子节点 outputs/ 5 文件齐全 | find 检查 | <3 -> 阻断 |\n| 4 | 每个叶子节点 flow/ stageB_phase2.md 存在 | ls 检查 | 缺失 -> 阻断 |\n| 5 | 目录结构符合统一规则 | 层级检查 | 不符合 -> 阻断 |\n| 6 | REQ 编号连续 | grep 检查 | 跳号 -> 阻断 |\n\n**全部通过 -> 触发 F 阶段**\n\n---\n\n## 5. 每个子模块的交付文件\n\n### outputs/ 目录\n\n| # | 文件 | 命名 | 说明 |\n|---|------|------|------|\n| 1 | PR 沟通记录 | {name}_pr_v1.0.md | 完整 stageB phase2~stageD 沟通记录 |\n| 2 | 需求汇总表 | {name}_requirement_summary_v1.0.md | REQ 汇总 |\n| 3 | 方案文档 | {name}_solution_v1.0.md | §3~§15 |\n| 4 | ADR 文档 | {name}_ADR_v1.0.md | Nygard 格式 |\n| 5 | 追溯图 | {name}_trace_graph.yaml | L1 节点 |\n| 6 | 子模块 todolist | {name}_todolist.md | 如有下级模块 |\n\n### flow/ 目录\n\n| # | 文件 | 说明 |\n|---|------|------|\n| 1 | stageB_phase2.md | 头脑风暴 Feature Discovery（必须） |\n| 2 | stageC_phase1.md | 矛盾检测 |\n| 3 | stageC.md | 需求确认汇总 |\n| 4 | stageD.md | 方案细化（D0~D14） |\n| 5 | stageE.md | 递归分解（如有下级模块） |\n\n---\n\n## 6. 执行进度跟踪\n\n| 层级 | 模块 | 总数 | completed | in_progress | pending | 进度 |\n|------|------|------|-----------|-------------|---------|------|\n| L0 | 顶层 | 1 | {N} | - | - | {N}% |\n| L1 | 子模块 | {N} | {N} | {N} | {N} | {N}% |\n| L2 | 孙模块 | {N} | {N} | {N} | {N} | {N}% |\n| L3 | 曾孙模块 | {N} | {N} | {N} | {N} | {N}% |\n| ... | ... | ... | ... | ... | ... | ... |\n| **全局** | **所有** | **{N}** | **{N}** | **{N}** | **{N}** | **{N}%** |\n"
     },
     "node_fields": {
       "id": "唯一标识（层级路径，如 1.2.3）",
@@ -210,7 +211,7 @@
           "file": ".claude/rules/coding-style.md",
           "timing": "仅 chip-code-writer 使用，chip-requirement-arch 不需要此文件重载",
           "chapters": "命名规范、模块声明、状态机、FIFO 设计",
-          "note": "coding-style.md 适用于 RTL 编码阶段，需求探索阶段无需重载"
+          "note": "coding-style.md 适用于 RTL 编码阶段，需求探索阶段无需重载。此条目仅供 chip-code-writer Agent 参考。"
         },
         {
           "id": "R-03",
@@ -246,8 +247,8 @@
         },
         {
           "id": "RC-03",
-          "check": "stageB phase1 规则已读取",
-          "method": "上下文包含多轮头脑风暴",
+          "check": "stageB phase2 规则已读取",
+          "method": "上下文包含多轮头脑风暴规则",
           "on_fail": "[TODOLIST-ERROR]"
         },
         {
@@ -304,7 +305,7 @@
     "description": "子模块需求梳理（达到 C 阶段出口文档质量标准）",
     "quality_standard": "每个子模块进入 D 阶段的文档必须达到 stageC phase2 出口文档质量标准",
     "stageC_quality_requirements": [
-      "REQ 编号连续无跳号（REQ-001 起）",
+      "REQ 编号连续无跳号（L1 主模块从 REQ-001 起；子模块从父模块最大 REQ+1 起，保证全局唯一）",
       "每个 REQ 对应一个可验证功能点",
       "优先级分级（Must/Should/Could）",
       "接口定义完整（端口名/方向/位宽/功能）",
@@ -318,13 +319,13 @@
     "processing_steps": [
       "1. 读取父模块的需求汇总表",
       "2. 将全局 REQ 分配到各个子模块",
-      "3. 为每个子模块梳理独立需求（REQ），编号从 REQ-001 起连续",
+      "3. 为每个子模块梳理独立需求（REQ），编号从父模块最大 REQ 编号 +1 起连续（保证全局唯一）",
       "4. 定义子模块间接口（端口名/方向/位宽/功能）",
       "5. 执行规格自检 5 项（占位符/内部一致性/范围/模糊性/REQ覆盖度）",
       "6. 输出子模块需求矩阵（达到 C 阶段出口文档质量标准）"
     ],
     "output_format": {
-      "section_template": "### {子模块名}\n\n**全局 REQ 映射**：\n| 全局 REQ | 子模块功能点 | 优先级 |\n|----------|-------------|--------|\n| REQ-XXX | {功能点} | Must |\n\n**独立需求（REQ）**：\n| REQ | 需求描述 | 来源 | 优先级 |\n|-------|----------|------|--------|\n| REQ-001 | {描述} | {来源} | Must |\n\n**接口定义**：\n| 端口名 | 方向 | 位宽 | 功能 |\n|--------|------|------|------|\n| {端口} | I/O | {位宽} | {功能} |"
+      "section_template": "### {子模块名}\n\n**全局 REQ 映射**：\n| 全局 REQ | 子模块功能点 | 优先级 |\n|----------|-------------|--------|\n| REQ-XXX | {功能点} | Must |\n\n**独立需求（REQ）**：\n| REQ | 需求描述 | 来源 | 优先级 |\n|-------|----------|------|--------|\n| REQ-{N} | {描述} | {来源} | Must |（N = 父模块最大 REQ 编号 +1 起连续）\n\n**接口定义**：\n| 端口名 | 方向 | 位宽 | 功能 |\n|--------|------|------|------|\n| {端口} | I/O | {位宽} | {功能} |"
     }
   },
   "submodule_execution_flow": {
@@ -408,7 +409,7 @@
           "REQ 约束与本子模块功能域无关"
         ],
         "format": "| REQ-{N} | {约束项} | {确认值} | Must/Should/Could | 同步自父模块 REQ-XXX |",
-        "numbering": "从 REQ-001 起连续编号，先同步父模块 REQ，再追加 B+ 新增 REQ"
+        "numbering": "从父模块最大 REQ 编号 +1 起连续编号（保证全局唯一），先同步父模块适用 REQ，再追加子模块 stageB phase2 新增 REQ"
       },
       "blocking_rule": "未完成父模块需求同步不得进入 stageB phase2 头脑风暴"
     }
@@ -452,6 +453,13 @@
         "filename": "{submodule}_trace_graph.yaml",
         "description": "需求追溯图骨架",
         "quality_standard": "L1 节点完整（节点数 = REQ 总数），每个节点有 title/ref/upstream/downstream，metadata 含 module/version/last_updated"
+      },
+      {
+        "id": 6,
+        "name": "子模块 todolist",
+        "filename": "{submodule}_todolist.md",
+        "description": "如有下级模块（触发递归分解时生成）",
+        "quality_standard": "包含下级子模块的 flow 定义和交付文件清单"
       }
     ],
     "self_check": {
@@ -486,15 +494,17 @@
     "submodule_matrix": "e_stage_submodule_matrix.md",
     "execution_log": "e_stage_execution_log.md",
     "submodule_deliverables": {
-      "description": "每个子模块（叶子节点）必须产出的 5 个文件",
+      "description": "每个子模块（叶子节点）必须产出的文件：5 个基础文件 + 条件 todolist（有递归时必须）",
       "directory": "<submodule>_work/ds/doc/pr/",
       "files": [
         "{submodule}_pr_v1.0.md",
         "{submodule}_requirement_summary_v1.0.md",
         "{submodule}_solution_v1.0.md",
         "{submodule}_ADR_v1.0.md",
-        "{submodule}_trace_graph.yaml"
-      ]
+        "{submodule}_trace_graph.yaml",
+        "{submodule}_todolist.md"
+      ],
+      "conditional_note": "todolist 仅在触发递归分解（RTL >3000 行）时必须生成，无递归时可省略"
     }
   }
 }

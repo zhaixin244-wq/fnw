@@ -1,0 +1,195 @@
+{
+  "version": "2.0",
+  "description": "stageD group2 数据通路 — 从 stageD-detail.json 拆出",
+  "group": "stageD group2",
+  "name": "数据通路",
+  "sub_stages": [
+    {
+      "id": "stageD group2-step1",
+      "name": "数据通路设计",
+      "description": "通过头脑风暴与用户沟通，细化模块的数据流细节。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group1-step1 架构框图",
+          "stageC phase2 REQ-003 数据流特征"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group1-step1 架构框图中的数据通路",
+          "2. 分析 REQ-003 确认的数据速率/突发长度/数据粒度",
+          "3. 标记关键数据路径和潜在瓶颈点"
+        ]
+      },
+      "brainstorm_focus": [
+        "数据从输入到输出的完整路径",
+        "每个阶段的数据格式和位宽变化",
+        "数据处理延迟（每阶段 cycles）",
+        "数据打包/拆包策略",
+        "错误数据的处理路径（丢弃/重传/标记）"
+      ],
+      "output": {
+        "solution_section": "§5.1 数据通路",
+        "deliverables": [
+          "数据流图（stageD group2-step1 数据通路图）",
+          "各阶段数据格式表",
+          "端到端延迟分析"
+        ]
+      },
+      "skip_condition": null,
+      "phase": "stageD group2"
+    },
+    {
+      "id": "stageD group2-step2",
+      "name": "流水线设计",
+      "description": "通过头脑风暴与用户沟通，细化模块的流水线架构设计。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图",
+          "stageC phase2 REQ-001 频率约束",
+          "stageC phase2 REQ-003 数据流特征"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group2-step1 数据流中的各级处理阶段",
+          "2. 分析 REQ-001 频率约束对流水线深度的要求",
+          "3. 识别关键路径和潜在瓶颈"
+        ]
+      },
+      "brainstorm_focus": [
+        "流水线级数确定（基于频率/面积/延迟权衡）",
+        "每级流水线的功能划分",
+        "流水线寄存器的位宽和复位值",
+        "流水线冒险处理（数据冒险/控制冒险/结构冒险）",
+        "Forwarding/Bypass 路径设计",
+        "Stall/Flush 机制设计",
+        "流水线握手协议（valid/ready）",
+        "包边界（last/eop）在流水线中的传播"
+      ],
+      "wiki_integration": {
+        "required": true,
+        "search_queries": [
+          "流水线设计模式",
+          "pipeline hazard",
+          "forwarding bypass",
+          "stall flush 机制"
+        ],
+        "wiki_pages": [
+          "wiki/pipeline-design-patterns.md",
+          "wiki/fsm-design-patterns.md"
+        ]
+      },
+      "output": {
+        "solution_section": "§5.4 流水线设计",
+        "deliverables": [
+          "流水线级数和功能划分表",
+          "每级流水线的数据格式和位宽",
+          "冒险处理方案（Forwarding/Stall/Flush）",
+          "流水线时序图（Wavedrom）"
+        ]
+      },
+      "skip_condition": "纯组合逻辑模块或单周期模块可跳过",
+      "phase": "stageD group2"
+    },
+    {
+      "id": "stageD group2-step4",
+      "name": "控制逻辑/FSM",
+      "description": "通过头脑风暴与用户沟通，细化模块的控制流细节。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图",
+          "stageD group1-step1 子模块列表"
+        ],
+        "analysis_steps": [
+          "1. 回顾 stageD group2-step1 数据流中的控制点",
+          "2. 识别需要控制信号的每个阶段",
+          "3. 分析控制信号的产生源和传播路径"
+        ]
+      },
+      "brainstorm_focus": [
+        "状态机设计（状态数量/编码方式/转移条件）",
+        "控制信号的产生和传播逻辑",
+        "使能/禁用/复位控制策略",
+        "错误处理状态机",
+        "配置寄存器对控制流的影响"
+      ],
+      "output": {
+        "solution_section": "§5.2 控制逻辑 + §5.3 状态机",
+        "deliverables": [
+          "状态机图（stageD group2-step4 FSM 图）",
+          "控制信号列表",
+          "状态转移条件表"
+        ]
+      },
+      "skip_condition": null,
+      "phase": "stageD group2"
+    },
+    {
+      "id": "stageD group2-step3",
+      "name": "性能优化",
+      "description": "通过头脑风暴与用户沟通，分析模块的性能瓶颈并制定优化方案。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1",
+        "stageD group2-step4"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图",
+          "stageD group2-step4 控制逻辑",
+          "stageC phase2 REQ-004 延迟与吞吐"
+        ],
+        "analysis_steps": [
+          "1. 回顾 REQ-004 确认的延迟和吞吐要求",
+          "2. 分析 stageD group2-step1 数据流中的关键路径延迟",
+          "3. 分析 stageD group4-step2 流控机制对性能的影响",
+          "4. 识别性能瓶颈点"
+        ]
+      },
+      "brainstorm_focus": [
+        "端到端延迟分析（每级 cycles 求和）",
+        "吞吐量分析（瓶颈级的吞吐限制）",
+        "性能瓶颈识别（数据通路/控制逻辑/存储/反压）",
+        "并行度优化（多通道/流水线/展开循环）",
+        "存储带宽优化（多端口 SRAM/bank 交织）",
+        "反压对性能的影响分析",
+        "性能 vs 面积/功耗 trade-off",
+        "性能监控计数器设计"
+      ],
+      "wiki_integration": {
+        "required": true,
+        "search_queries": [
+          "性能优化模式",
+          "吞吐量分析",
+          "延迟优化",
+          "并行度优化"
+        ],
+        "wiki_pages": [
+          "wiki/performance-optimization.md",
+          "wiki/pipeline-design-patterns.md"
+        ]
+      },
+      "output": {
+        "solution_section": "§8.1 性能指标",
+        "deliverables": [
+          "端到端延迟分析表",
+          "吞吐量分析表",
+          "性能瓶颈清单",
+          "优化策略和预期效果",
+          "性能监控计数器定义"
+        ]
+      },
+      "skip_condition": "无明确性能要求（REQ-004 为 Could 级）时可简化",
+      "phase": "stageD group2"
+    }
+  ]
+}

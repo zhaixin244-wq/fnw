@@ -27,7 +27,7 @@
     { "element": "控制逻辑", "requirement": "stageD group2-step4 产出：状态机图 + 控制信号列表" },
     { "element": "寄存器定义", "requirement": "stageD group3-step4 产出：地址映射表 + 位域定义（条件：有 APB 接口）" },
     { "element": "面积优化", "requirement": "stageD group5-step1 产出：优化策略 + 前后对比" },
-    { "element": "存储设计", "requirement": "stageD group3-step1 + group3-step2 产出：SRAM/FIFO 实例列表 + 深度计算依据" },
+    { "element": "存储设计", "requirement": "stageD group3-step1（SRAM） + group3-step2（FIFO）产出：SRAM/FIFO 实例列表 + 深度计算依据" },
     { "element": "链表设计", "requirement": "stageD group3-step3 产出：链表架构 + 节点格式（条件：有链表需求）" },
     { "element": "调度策略", "requirement": "stageD group4-step1 产出：仲裁方案 + 公平性分析（条件：多通道）" },
     { "element": "流控机制", "requirement": "stageD group4-step2 产出：反压路径图 + Credit 方案" },

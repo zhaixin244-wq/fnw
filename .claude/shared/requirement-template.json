@@ -11,7 +11,7 @@
     },
 
     "input_triage": {
-      "rules": ["≥6项约束维度且>500字 → complete", "2-5项 → partial", "仅模块名/一句话 → vague"],
+      "rules": ["≥6项约束维度且>500字 → complete", "2-5项 → partial", "仅模块名/一句话 → vague", "约束维度 = 用户输入中明确提及的不同约束类别数（工艺/接口/PPA/功耗/DFT/CDC/安全/可靠性等）"],
       "paths": {
         "complete": "stage0 → stageA → stageB phase1核对 → stageC phase1 → stageC phase2",
         "partial": "stage0 → stageA → stageB phase1补齐 → stageC phase1 → stageC phase2",
@@ -120,6 +120,18 @@
         "trigger": "coverage_analysis 完成后自动执行",
         "data_source": ".claude/shared/flow/end-to-end-coverage-report.json",
         "output": "合并矛盾检测+架构评审覆盖为单一 REQ 全生命周期视图，输出 coverage_summary 统计"
+      },
+      "loading_rules": {
+        "description": "stageC phase1 文件加载边界 — 区分必加载和按需加载",
+        "mandatory": [".claude/shared/conflict-detection-rules.json"],
+        "conditional": {
+          ".claude/shared/flow/conflict-detection-conditional.json": "REQ-022/023/024/025 任一 confirmed 时加载",
+          ".claude/shared/flow/conflict-detection-experimental.json": "stageC phase1 基础检测完成后自动加载"
+        },
+        "post_detection": {
+          ".claude/shared/flow/coverage-model.json": "stageC phase1 全部检测完成后加载",
+          ".claude/shared/flow/end-to-end-coverage-report.json": "coverage_analysis 完成后加载"
+        }
       }
     },
 
@@ -147,7 +159,8 @@
       "description": "将方案设计拆分为 stageD group1-step1~group5-step6 共 20 个子阶段，每个子阶段通过 brainstorming 与用户深入交互，沟通记录沉淀到 ADR",
       "detail_source": ".claude/shared/flow/stageD-detail.json",
       "data_source": ".claude/shared/solution-template.json",
-      "sub_stages": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3", "stageD group2-step1", "stageD group2-step2", "stageD group2-step3", "stageD group2-step4", "stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4", "stageD group4-step1", "stageD group4-step2", "stageD group4-step3", "stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
+      "sub_stages": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3", "stageD group2-step1", "stageD group2-step2", "stageD group2-step4", "stageD group2-step3", "stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4", "stageD group4-step1", "stageD group4-step2", "stageD group4-step3", "stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
+      "sub_stages_note": "group2 内 step4（控制逻辑/FSM）在 step3（性能优化）之前执行，因为性能优化需参考 FSM 状态数。执行顺序以 stageD-detail.json recommended_execution_order 为权威。",
       "default_execution_mode": "步进模式",
       "adr_record": "每个 stageD 子阶段的头脑风暴沟通记录追加到 ADR 文档「方案细化记录」章节",
       "adr_format": "Nygard",
@@ -161,7 +174,7 @@
       { "scenario": "用户不了解某约束", "action": "按not_applicable_rules处理" },
       { "scenario": "用户频繁变更≥3次", "action": "维护变更日志，每次重走对应项" },
       { "scenario": "信息不足且用户无法补充", "action": "标注为假设条件" },
-      { "scenario": "用户跳过确认直接出方案", "action": "1.列出所有未确认项 2.标注为「假设值-待确认」3.在方案文档和ADR中单独记录假设条件 4.暂停，要求用户逐项确认假设后才能继续（步进模式，禁止强制完成）" }
+      { "scenario": "用户跳过确认直接出方案", "action": "1.列出所有未确认项 2.标注为「假设值-待确认」3.在方案文档和ADR中单独记录假设条件 4.暂停，要求用户逐项确认假设后才能继续（步进模式，禁止强制完成）", "step_mode_enforcement": true }
     ]
   },
 

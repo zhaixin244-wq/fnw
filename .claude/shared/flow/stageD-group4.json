@@ -1,0 +1,141 @@
+{
+  "version": "2.0",
+  "description": "stageD group4 流控与时钟 — 从 stageD-detail.json 拆出",
+  "group": "stageD group4",
+  "name": "流控与时钟",
+  "sub_stages": [
+    {
+      "id": "stageD group4-step1",
+      "name": "调度策略",
+      "description": "通过头脑风暴与用户沟通，细化调度策略。",
+      "trigger_condition": "需求涉及多通道/多源/仲裁",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group1-step1 子模块列表",
+          "stageC phase2 REQ 汇总表"
+        ],
+        "analysis_steps": [
+          "1. 识别所有需要仲裁/调度的资源",
+          "2. 分析各请求源的特征（速率/优先级/突发性）",
+          "3. 确定公平性/优先级需求"
+        ]
+      },
+      "brainstorm_focus": [
+        "调度策略选择（Fixed/RR/WRR/DRR/混合）",
+        "公平性实现方案",
+        "优先级分级和动态调整",
+        "多到一调度（多通道汇聚到单资源）",
+        "通道间调度（共享资源分配）",
+        "调度粒度（包级/拍级/事务级）"
+      ],
+      "output": {
+        "solution_section": "§12.1 调度策略",
+        "deliverables": [
+          "调度策略对比表",
+          "公平性分析",
+          "仲裁器设计参数"
+        ]
+      },
+      "skip_condition": "单通道/单源模块可跳过",
+      "phase": "stageD group4"
+    },
+    {
+      "id": "stageD group4-step2",
+      "name": "流控机制",
+      "description": "通过头脑风暴与用户沟通，细化反压机制。",
+      "trigger_condition": "默认触发",
+      "depends_on": [
+        "stageD group2-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageD group2-step1 数据流图",
+          "stageD group5-step5 接口定义"
+        ],
+        "analysis_steps": [
+          "1. 从 stageD group2-step1 数据流中识别所有反压点",
+          "2. 分析 stageD group5-step5 接口中的 ready 信号依赖",
+          "3. 绘制端到端反压传播路径"
+        ]
+      },
+      "brainstorm_focus": [
+        "分链路反压设计（每条数据通路的反压策略）",
+        "通道反压设计（多通道间的反压隔离）",
+        "Credit 控制主动反压（信用计数/归零反压/回收时机）",
+        "反压传播路径（下游 → 本级 → 上游）",
+        "反压对性能的影响分析",
+        "死锁预防策略"
+      ],
+      "credit_calculation_template": {
+        "description": "Credit 流控量化计算模板，涉及 Credit 方案时必须填充",
+        "credit_instance": {
+          "name": "资源名称",
+          "credit_type": "字节 Credit / 拍 Credit / 事务 Credit",
+          "max_credit": "最大 Credit = $clog2(MAX)+1 位",
+          "initial_credit": "初始 Credit（APB 配置或固定值）",
+          "consume_rule": "消耗规则：每发一拍/字节/事务 credit_cnt--",
+          "reclaim_rule": "回收规则：收到下游完成响应后 credit_cnt++",
+          "backpressure_rule": "反压规则：credit_cnt == 0 时立即禁止发送",
+          "overflow_guard": "溢出保护：credit_cnt 不可超过 initial_credit"
+        },
+        "mandatory_fields": [
+          "max_credit",
+          "consume_rule",
+          "reclaim_rule",
+          "backpressure_rule"
+        ]
+      },
+      "output": {
+        "solution_section": "§12.2 流控机制",
+        "deliverables": [
+          "反压传播路径图",
+          "Credit 计数方案",
+          "反压性能影响分析"
+        ]
+      },
+      "skip_condition": "纯寄存器配置模块（无数据流）可跳过",
+      "phase": "stageD group4"
+    },
+    {
+      "id": "stageD group4-step3",
+      "name": "CDC 方案",
+      "description": "通过头脑风暴与用户沟通，细化多时钟域的异步处理方案。",
+      "trigger_condition": "REQ-011 确认为多时钟域",
+      "depends_on": [
+        "stageD group1-step1"
+      ],
+      "input_analysis": {
+        "source": [
+          "stageC phase2 REQ-011 CDC 策略",
+          "stageC phase1 CDC 约束模板"
+        ],
+        "analysis_steps": [
+          "1. 回顾 REQ-011 确认的时钟域列表",
+          "2. 分析 CDC 约束模板中的信号分组",
+          "3. 识别跨时钟域的关键信号"
+        ]
+      },
+      "brainstorm_focus": [
+        "快到慢域信号同步（展宽/握手/异步FIFO）",
+        "慢到快域信号同步（双触发器/采样策略）",
+        "同频异相时钟域处理",
+        "跨域数据通路的同步策略选择",
+        "跨域控制信号的同步策略",
+        "复位域划分和复位同步"
+      ],
+      "output": {
+        "solution_section": "§7.2 时钟与复位 / CDC",
+        "deliverables": [
+          "时钟域划分图",
+          "CDC 信号列表和同步策略",
+          "复位域划分方案"
+        ]
+      },
+      "skip_condition": "单时钟域模块跳过",
+      "phase": "stageD group4"
+    }
+  ]
+}

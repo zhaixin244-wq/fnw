@@ -45,8 +45,9 @@
     "coverage_requirement": "vague 输入完成 stageB 后，确认项占比 ≥ 70% 方可进入 stageC phase1",
     "default_value_limit": {
       "max_defaults": 5,
-      "critical_req_no_default": ["REQ-004", "REQ-016", "REQ-020"],
-      "critical_req_ask_twice": "关键 REQ 追问 2 次，仍不明确才用默认值，且标注'基于通用知识，待用户确认'",
+      "critical_req_no_direct_default": ["REQ-004", "REQ-016", "REQ-020"],
+      "critical_req_no_direct_default_note": "这些 REQ 不可直接使用默认值跳过，必须经过至少 2 次追问。追问后仍不明确时，可使用推荐值但必须标注'基于通用知识，待用户确认'",
+      "critical_req_ask_twice": "关键 REQ 追问 2 次，仍不明确才用推荐值，且标注'基于通用知识，待用户确认'",
       "critical_req_handling": "REQ-004/016/020 在 vague 模式下：2次追问后使用推荐值，但必须标注'基于通用知识，待用户确认'，不可直接标记为已确认"
     },
     "default_value_statistics": {
@@ -101,21 +102,21 @@
       ]
     },
     "new_req_persistence": {
-      "description": "v7.1：头脑风暴新增的 REQ 必须实时写入 requirement_summary 文档",
-      "rule": "每轮头脑风暴确认的新增 REQ，必须立即追加到 outputs/{name}_requirement_summary_v1.0.md",
+      "description": "头脑风暴新增的 REQ 实时写入 PR 沟通记录（stageC phase2 汇总时再合并到 requirement_summary）",
+      "rule": "每轮头脑风暴确认的新增 REQ，必须立即追加到 flow/{name}_pr_v1.0.md",
       "format": "| REQ-{N} | {约束项} | {确认值} | Must/Should/Could | stageB phase2 头脑风暴新增 |",
       "numbering": "从 REQ-029 起连续编号，不允许跳号",
       "conflict_check": "新增 REQ 后立即执行实时矛盾检测（与已有 REQ 交叉检查）",
-      "blocking_rule": "未写入 requirement_summary 的 REQ 不得进入 stageC phase1"
+      "blocking_rule": "未写入 PR 记录的 REQ 不得进入 stageC phase1"
     },
     "multi_round_rules": {
-      "description": "v7.1：多轮头脑风暴，用户确认后才进入下一阶段，新增 REQ 实时写入 requirement_summary",
+      "description": "多轮头脑风暴，用户确认后才进入下一阶段，新增 REQ 实时写入 PR 记录",
       "round_flow": [
         "1. 第 1 轮：按 5 个维度探索新 feature（参考 Wiki 知识库）",
-        "2. 用户确认第 1 轮结果 → 追加 REQ → 写入 requirement_summary → 进入第 2 轮",
+        "2. 用户确认第 1 轮结果 → 追加 REQ → 写入 PR 记录 → 进入第 2 轮",
         "3. 用户不确认 → 根据用户反馈调整 → 重新探索",
         "4. 第 2 轮：基于第 1 轮追加的 REQ，深入探索子 feature",
-        "5. 用户确认 → 追加 REQ → 写入 requirement_summary → 进入第 3 轮",
+        "5. 用户确认 → 追加 REQ → 写入 PR 记录 → 进入第 3 轮",
         "6. 用户不确认 → 继续调整",
         "7. 重复直到：用户明确表示「没有更多需求」或无法分解出新 feature",
         "8. 输出最终追加 REQ 汇总 + 头脑风暴总结"
@@ -126,6 +127,7 @@
         "达到最大轮数（5 轮）"
       ],
       "max_rounds": 5,
+      "forced_termination_behavior": "达到 5 轮后自动结束，不再接受新 REQ。输出最终追加 REQ 汇总 + 头脑风暴总结，进入 stageC phase1。",
       "user_confirmation_required": true
     },
     "purpose": "发现 stageB phase1 28 项约束清单未覆盖的隐含需求或用户未主动提出的 feature",
@@ -167,7 +169,7 @@
     "new_req_rules": {
       "numbering": "从 REQ-029 起连续编号，不允许跳号",
       "quality_standard": "每个新 REQ 必须对应一个可验证功能点，不允许一个 REQ 包含多个独立功能",
-      "confirmation": "新 REQ 逐一与用户确认，灰色表达规则同 stageB（犹豫→追问，转折→继续）。灰色表达处理规则详见 stageC-detail.json confirmation_rules.grey_expression_system：stageB phase1/phase2 阶段负责追问确认，stageC phase2 阶段负责标注汇总。",
+      "confirmation": "新 REQ 逐一与用户确认，灰色表达规则同 stageB（犹豫→追问，转折→继续）。灰色表达处理规则详见 stageB-detail.json grey_expression_system：stageB phase1/phase2 阶段负责追问确认，stageC phase2 阶段负责标注汇总。",
       "conflict_check": "新 REQ 确认后实时检查与已有 REQ 的矛盾（扩展 realtime_conflict_check_pairs）",
       "max_rounds": "头脑风暴最多 5 轮 Q&A，避免无限扩展",
       "exit_condition": "用户明确表示「没有更多需求」或 5 轮 Q&A 后自动结束"
