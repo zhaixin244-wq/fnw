@@ -1,9 +1,9 @@
 {
   "version": "1.1",
-  "description": "端到端覆盖自动化报告 — 合并矛盾检测覆盖（stageC0）和架构评审覆盖（方案设计后），输出单一 REQ 全生命周期覆盖视图。detection_rules 从 coverage-model.json 实时读取，本文件仅维护 arch_checkpoints 增量数据。",
+  "description": "端到端覆盖自动化报告 — 合并矛盾检测覆盖（stageC phase1）和架构评审覆盖（方案设计后），输出单一 REQ 全生命周期覆盖视图。detection_rules 从 coverage-model.json 实时读取，本文件仅维护 arch_checkpoints 增量数据。",
   "data_sources": {
-    "detection_coverage": ".claude/shared/flow/coverage-model.json#req_coverage_matrix",
-    "arch_review_coverage": ".claude/shared/arch-review-rules.json#req_to_checkpoints_mapping",
+    "detection_coverage": ".claude/shared/flow/coverage-model.json（section: req_coverage_matrix）",
+    "arch_review_coverage": ".claude/shared/arch-review-rules.json（section: req_to_checkpoints_mapping）",
     "experimental_rules": ".claude/shared/flow/conflict-detection-experimental.json"
   },
 
@@ -43,8 +43,8 @@
     "arch_review_only": "detection_rules 为空 且 arch_checkpoints 非空",
     "no_coverage": "两者均为空",
     "end_to_end_coverage_rate": "(both + detection_only + arch_review_only) / 28",
-    "uncovered_note": "未覆盖 REQ 为接口细节/调试/软件接口类，通常在 stageB 直接记录不需交叉检测"
+    "uncovered_note": "未覆盖 REQ 为接口细节/调试/软件接口类，通常在 stageB phase1 直接记录不需交叉检测"
   },
 
-  "usage": "stageC0 全部检测完成后自动运行：1) Read coverage-model 获取 detection_rules；2) 合并 arch_review_checkpoints 为单一视图；3) 输出 coverage_summary 统计；4) 标注 hotspot_reqs 高覆盖项；5) 无覆盖 REQ 标注原因。下游 agent（chip-fs-writer）可在 FS RTM 中引用 total_coverage 列。"
+  "usage": "stageC phase1 全部检测完成后自动运行：1) Read coverage-model 获取 detection_rules；2) 合并 arch_review_checkpoints 为单一视图；3) 输出 coverage_summary 统计；4) 标注 hotspot_reqs 高覆盖项；5) 无覆盖 REQ 标注原因。下游 agent（chip-fs-writer）可在 FS RTM 中引用 total_coverage 列。"
 }

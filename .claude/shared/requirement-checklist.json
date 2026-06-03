@@ -28,13 +28,14 @@
     { "seq": 23, "id": "REQ-023", "name": "SerDes/PHY",    "q": "SerDes速率？通道数？均衡策略？",                "cat": "conditional_optional", "hint_ref": "REQ-023", "dep": ["REQ-002"] },
     { "seq": 24, "id": "REQ-024", "name": "形式验证",      "q": "是否需要形式验证？覆盖范围？",                  "cat": "conditional_optional", "hint_ref": "REQ-024", "dep": [] },
     { "seq": 25, "id": "REQ-025", "name": "验证方法学",    "q": "验证方法？覆盖率目标？回归策略？",              "cat": "conditional_optional", "hint_ref": "REQ-025", "dep": ["REQ-003"] },
-    { "seq": 26, "id": "REQ-026", "name": "封装约束",      "q": "IO Pad 数量？封装类型？散热约束？",            "cat": "independent",         "hint_ref": "REQ-026", "dep": [] },
+    { "seq": 26, "id": "REQ-026", "name": "封装约束",      "q": "IO Pad 数量？封装类型？散热约束？",            "cat": "conditional_optional",         "hint_ref": "REQ-026", "dep": [] },
     { "seq": 27, "id": "REQ-027", "name": "EMC/ESD 合规",  "q": "是否涉及汽车/工业场景？EMC合规要求？",        "cat": "conditional_optional", "hint_ref": "REQ-027", "dep": ["REQ-010"] },
     { "seq": 28, "id": "REQ-028", "name": "时钟树约束",    "q": "SS覆盖要求？OCV 余量？",                      "cat": "conditional_optional", "hint_ref": "REQ-028", "dep": ["REQ-001"] }
   ],
 
   "hint_usage": "读取 flow/execution-hints.json 的 {hint_ref} 字段获取详细执行提示。hint_ref 与 REQ 编号一一对应。",
   "protocol_map_usage": "位置→协议推断读取 requirement-template.json flow.stageB.protocol_map_source 引用的 protocol-mapping.json。",
+  "dep_semantics": "dep 为硬阻断：前置 REQ 未确认时，本项不可确认（标记为'等待前置 REQ'）。前置 REQ 确认后才可开始本项确认。",
 
   "priority_inquiry_rules": [
     { "status": "选为最高优先级", "action": "追问具体数值" },
@@ -45,7 +46,7 @@
   "not_applicable_rules": [
     { "scenario": "用户不了解", "action": "解释概念→默认值+风险提示→确认" },
     { "scenario": "专家说'你看着定'", "action": "默认值+可选方案→确认" },
-    { "scenario": "含糊敷衍", "action": "追问1次→A/B二选一；追问2次仍敷衍→强制用推荐值" }
+    { "scenario": "含糊敷衍", "action": "追问1次→A/B二选一；追问2次仍敷衍→强制用推荐值，标注'基于通用知识，待用户确认'" }
   ],
 
   "trigger_rules": {
@@ -56,7 +57,7 @@
       { "scenario": "给出确定值", "trigger": false },
       { "scenario": "'先按这个来'", "trigger": false }
     ],
-    "semantic_judgment": "关键词规则仅作辅助参考。实际判断优先利用 LLM 理解用户意图：对于'大概28nm吧'、'好像是200MHz'、'先按这个来'等灰色地带表达，结合上下文语义判断用户是倾向确定还是不确定。若语义倾向确定但存在犹豫，不触发探索追问，而是记录犹豫点并在 stageC 汇总时标注'待验证'。若语义明确不确定，则触发探索流程。"
+    "semantic_judgment": "灰色表达处理规则详见 stageC-detail.json confirmation_rules.grey_expression_system。关键词规则仅作辅助参考，实际判断优先利用 LLM 理解用户意图：对于'大概28nm吧'、'好像是200MHz'、'先按这个来'等灰色地带表达，结合上下文语义判断用户是倾向确定还是不确定。若语义倾向确定但存在犹豫，不触发探索追问，而是记录犹豫点并在 stageC phase2 汇总时标注'待验证'。若语义明确不确定，则触发探索流程。"
   },
 
   "exploration_template": "> 关于{约束项}：\n\n**推荐值**：{值} — {理由}\n\n| 选项 | 值 | 优势 | 劣势 |\n|------|-----|------|------|\n| A（推荐） | {值} | {优势} | {劣势} |\n| B | {值} | {优势} | {劣势} |"

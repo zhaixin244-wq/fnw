@@ -50,7 +50,7 @@ REQ 变更
 | 删除 REQ | FS + BDD + UA + RTL + 验证 | **全链路清理** | Critical |
 | 修改 REQ 描述 | FS + BDD | **FS 更新 + BDD 更新** | Major |
 | 修改 REQ 优先级 | BDD + 验证方案 | **验证策略调整** | Minor |
-| 修改 PPA 指标 | UA + SDC + 功耗方案 | **架构重新评估** | Critical |
+| 修改 PPA 指标（>20%） | UA + SDC + 功耗方案 | **架构重新评估** | Critical |
 
 **负责 Agent**：`chip-requirement-arch`（产出）、`chip-project-lead`（传播协调）
 

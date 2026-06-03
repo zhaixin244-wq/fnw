@@ -2,7 +2,7 @@
 
 > 评估芯片需求探索 & 方案论证 Agent（苏启辰/Sean）的流程执行质量。
 > 满分 100 分，按维度加权评分。
-> 版本：v4.0（同步 agent v7.4 — D 阶段上下文隔离 + RTL 就绪度检查 + 自包含 todolist）
+> 版本：v6.0（同步 agent v12.0+ — D 阶段上下文隔离 + RTL 就绪度检查 + 自包含 todolist + stageD group/step 编码 + 调试模式 + 路径统一）
 
 ---
 
@@ -17,16 +17,24 @@
 5. **评估结果必须可复现**：同一输入必须产生相同评分，**禁止主观调整分数**
 6. **门控违规必须输出清单**：evaluation.md §0 必须列出所有门控检查结果，**禁止跳过 §0**
 
+### 主观性维度说明
+
+D1（需求采集完整性）的部分子项依赖评估人对 PR 文件内容的主观判断（如"探索深度是否足够"、"灰色表达是否正确处理"）。为保证评估一致性：
+
+1. **双人校验**：关键项目建议两人独立评估，取均值
+2. **证据引用**：每个主观打分必须引用 PR 文件中的具体文字作为依据
+3. **偏差容限**：D1 维度允许 ±1 分的评估偏差
+
 ---
 
 ## 评分维度总览
 
 | 维度 | 权重 | 满分 | 说明 |
 |------|------|------|------|
-| D1 需求采集完整性 | 17% | 22 | stage0/stageA/stageB/stageB+ 执行质量 |
-| D2 需求一致性 | 7% | 10 | stageC0 矛盾检测质量 |
-| D3 需求文档质量 | 11% | 12 | stageC 汇总表质量 + 规格自检 |
-| D4 方案细化质量 | 16% | 20 | stageD D0~D14 执行质量 |
+| D1 需求采集完整性 | 17% | 22 | stage0/stageA/stageB/stageB phase2 执行质量 |
+| D2 需求一致性 | 7% | 10 | stageC phase1 矛盾检测质量 |
+| D3 需求文档质量 | 11% | 12 | stageC phase2 汇总表质量 + 规格自检 |
+| D4 方案细化质量 | 16% | 20 | stageD group1-step1~group5-step6 执行质量 |
 | D5 子模块分解质量 | 11% | 14 | E 阶段递归分解 + 交付文档 + 目录结构 |
 | D6 顶层集成质量 | 8% | 8 | F 阶段接口一致性 + 拓扑图 + §14 |
 | D7 ADR 文档质量 | 7% | 8 | 架构决策记录 + 头脑风暴记录 |
@@ -92,14 +100,14 @@
 
 | # | 门控条件 | 验证命令 | PASS 条件 | FAIL 判定 |
 |---|----------|----------|-----------|-----------|
-| G-01 | stageB 完成率 ≥70% | `grep -c "✅" outputs/{module}_requirement_summary_v1.0.md` | 确认项 ≥20 | <20 → D 级 |
-| G-02 | stageB+ 已执行 | `grep -c "stageB+" outputs/{module}_pr_v1.0.md` 或 `grep -c "Feature Discovery" outputs/{module}_pr_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
-| G-03 | stageC0 已执行 | `grep -c "stageC0\|矛盾检测" outputs/{module}_pr_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
-| G-04 | stageC 已执行 | `ls outputs/{module}_requirement_summary_v1.0.md` | 文件存在且 >100 行 | 不存在或 ≤100 行 → D 级 |
+| G-01 | stageB phase1 完成率 ≥70% | `grep -c "✅" outputs/{module}_requirement_summary_v1.0.md` | 确认项 ≥20 | <20 → D 级 |
+| G-02 | stageB phase2 已执行 | `grep -c "stageB phase2\|Feature Discovery\|头脑风暴" outputs/{module}_requirement_summary_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
+| G-03 | stageC phase1 已执行 | `grep -c "stageC phase1\|矛盾检测" outputs/{module}_pr_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
+| G-04 | stageC phase2 已执行 | `ls outputs/{module}_requirement_summary_v1.0.md` | 文件存在且 >100 行 | 不存在或 ≤100 行 → D 级 |
 | G-05 | stageD 已执行 | `ls outputs/{module}_solution_v1.0.md` | 文件存在且 >200 行 | 不存在或 ≤200 行 → D 级 |
-| G-06 | E 阶段 todolist 存在 | `ls outputs/e_stage_tree_todolist.md` | 文件存在 | 不存在 → D 级 |
+| G-06 | E 阶段 todolist 存在 | `find <root> -name "todolist.md" -type f \| wc -l` | ≥1 个 todolist 文件 | 0 个 → D 级 |
 | G-07 | 子模块目录已创建 | `find <root> -mindepth 2 -maxdepth 2 -type d \| wc -l` | ≥1 个子目录 | 0 个 → D 级 |
-| G-08 | 子模块交付文件 ≥3 | `for d in <submodule_dirs>; do find "$d" -type f \| wc -l; done` | 每个目录 ≥3 | 任意 <3 → D 级 |
+| G-08 | 子模块交付文件 ≥5 | `for d in <submodule_dirs>; do find "$d" -type f \| wc -l; done` | 每个目录 ≥5 | 任意 <5 → D 级 |
 | G-08b | 目录结构符合统一规则 | `find <root> -mindepth 3 -maxdepth 3 -type d \| wc -l`（孙模块在子模块下） | 孙模块在子模块目录下 | 孙模块在根目录下 → D 级 |
 | G-09 | F 阶段已执行 | `grep -c "§14\|顶层集成" outputs/{module}_solution_v1.0.md` | ≥1 行匹配 | 0 行 → D 级 |
 
@@ -112,24 +120,25 @@ MODULE=$1
 ROOT="<module>_work/ds/doc/pr"
 PASS=true
 
-# G-01: stageB 完成率
+# G-01: stageB phase1 完成率
 B_COUNT=$(grep -c "✅" "${ROOT}/${MODULE}_requirement_summary_v1.0.md" 2>/dev/null || echo 0)
-[ "$B_COUNT" -lt 20 ] && echo "G-01 FAIL: stageB 确认项 ${B_COUNT} < 20" && PASS=false
+[ "$B_COUNT" -lt 20 ] && echo "G-01 FAIL: stageB phase1 确认项 ${B_COUNT} < 20" && PASS=false
 
-# G-02: stageB+ 执行
-grep -q "stageB\+\|Feature Discovery" "${ROOT}/${MODULE}_pr_v1.0.md" 2>/dev/null || { echo "G-02 FAIL: stageB+ 未执行"; PASS=false; }
+# G-02: stageB phase2 执行
+grep -q "stageB phase2\|Feature Discovery\|头脑风暴" "${ROOT}/${MODULE}_requirement_summary_v1.0.md" 2>/dev/null || { echo "G-02 FAIL: stageB phase2 未执行"; PASS=false; }
 
-# G-03: stageC0 执行
-grep -q "stageC0\|矛盾检测" "${ROOT}/${MODULE}_pr_v1.0.md" 2>/dev/null || { echo "G-03 FAIL: stageC0 未执行"; PASS=false; }
+# G-03: stageC phase1 执行
+grep -q "stageC phase1\|矛盾检测" "${ROOT}/${MODULE}_pr_v1.0.md" 2>/dev/null || { echo "G-03 FAIL: stageC phase1 未执行"; PASS=false; }
 
-# G-04: stageC 执行
+# G-04: stageC phase2 执行
 [ ! -f "${ROOT}/${MODULE}_requirement_summary_v1.0.md" ] && echo "G-04 FAIL: 需求汇总表不存在" && PASS=false
 
 # G-05: stageD 执行
 [ ! -f "${ROOT}/${MODULE}_solution_v1.0.md" ] && echo "G-05 FAIL: 方案文档不存在" && PASS=false
 
-# G-06: E 阶段 todolist
-[ ! -f "${ROOT}/e_stage_tree_todolist.md" ] && echo "G-06 FAIL: todolist 不存在" && PASS=false
+# G-06: E 阶段 todolist（支持每个子模块独立 todolist）
+TODOLIST_COUNT=$(find "${ROOT}" -name "todolist.md" -type f 2>/dev/null | wc -l)
+[ "$TODOLIST_COUNT" -lt 1 ] && echo "G-06 FAIL: 未发现任何 todolist 文件" && PASS=false
 
 # G-07: 子模块目录
 SUB_DIRS=$(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null | wc -l)
@@ -138,7 +147,7 @@ SUB_DIRS=$(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null | wc -l)
 # G-08: 子模块交付文件
 for d in $(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null); do
   FC=$(find "$d" -type f 2>/dev/null | wc -l)
-  [ "$FC" -lt 3 ] && echo "G-08 FAIL: ${d} 文件数 ${FC} < 3" && PASS=false
+  [ "$FC" -lt 5 ] && echo "G-08 FAIL: ${d} 文件数 ${FC} < 5" && PASS=false
 done
 
 # G-08b: 目录结构统一性
@@ -170,7 +179,7 @@ $PASS && echo "门控 1: 全部 PASS" || echo "门控 1: 存在 FAIL → D 级"
 | G-13 | ADR 含 Nygard 格式 | `grep -c "背景\|决策\|方案对比\|后果" outputs/{module}_ADR_v1.0.md` | ≥4 个关键词 | <4 → C 级 |
 | G-14 | 追溯图节点数 = REQ 总数 | `grep -c "id:" outputs/{module}_trace_graph.yaml` 与 `grep -c "REQ-" outputs/{module}_requirement_summary_v1.0.md` | 数量相等 | 不等 → C 级 |
 | G-15 | 子模块方案文档完整 | `for d in <submodule_dirs>; do grep -c "^##" "${d}/*_solution_v1.0.md"; done` | 每个 ≥8 章节 | 任意 <8 → C 级 |
-| G-16 | 子模块需求汇总含 E-REQ | `for d in <submodule_dirs>; do grep -c "E-REQ" "${d}/*_requirement_summary_v1.0.md"; done` | 每个 ≥1 | 任意 0 → C 级 |
+| G-16 | 子模块需求汇总含 REQ | `for d in <submodule_dirs>; do grep -c "REQ" "${d}/*_requirement_summary_v1.0.md"; done` | 每个 ≥1 | 任意 0 → C 级 |
 | G-17 | D 子阶段 Q&A 达标 | `grep -c "Q:" outputs/{module}_solution_v1.0.md` | ≥30 个 Q&A | <30 → C 级 |
 | G-18 | 跳过子阶段有标注 | `grep -c "原因.*影响.*替代方案\|原因+影响+替代方案" outputs/{module}_ADR_v1.0.md` | ≥1 | 0 → C 级 |
 
@@ -246,7 +255,7 @@ done
 | 1 | 大量追问仍无法收敛 | 读取 PR 文件 |
 | 0 | 跳过 stageA | `grep -c "stageA" PR 文件` |
 
-### D1.3 stageB 约束检查（8 分）
+### D1.3 stageB phase1 约束检查（8 分）
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
@@ -254,7 +263,7 @@ done
 | 6 | 适用项 >90% 确认，个别项使用默认值并标注 | 确认项 ≥18 |
 | 4 | 适用项 70-90% 确认，部分项跳过未说明原因 | 确认项 ≥14 |
 | 2 | 适用项 <70% 确认，大量使用"基于通用知识" | 确认项 <14 |
-| 0 | 跳过 stageB 或仅做粗略确认 | `grep -c "stageB" PR 文件` |
+| 0 | 跳过 stageB phase1 或仅做粗略确认 | `grep -c "stageB" PR 文件` |
 
 **关键 REQ 追问策略**：REQ-004/016/020 必须追问 2 次，最多 5 项使用默认值。未执行追问策略的，D1.3 最高得 4 分。
 
@@ -268,13 +277,13 @@ done
 | 1 | 大量误判 | 读取 PR 文件 |
 | 0 | 未执行确认判定 | 读取 PR 文件 |
 
-### D1.5 stageB+ 头脑风暴 Feature Discovery（2 分）
+### D1.5 stageB phase2 头脑风暴 Feature Discovery（2 分）
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
 | 2 | 按 5 维度完整执行，新 REQ 正确编号并逐一确认 | `grep -c "维度\|功能扩展\|性能优化\|兼容性\|可测试性\|可维护性" PR 文件` ≥5 |
 | 1 | 执行但维度覆盖不全（<5） | 匹配 <5 |
-| 0 | 跳过 | `grep -c "stageB+" PR 文件` = 0 |
+| 0 | 跳过 | `grep -c "stageB phase2" PR 文件` = 0 |
 
 ---
 
@@ -351,7 +360,7 @@ done
 
 ## D4 方案细化质量（20 分）
 
-### D4.1 D0 RTL 行数估算与流程路由（3 分）
+### D4.1 group1-step1 RTL 行数估算与流程路由（3 分）
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
@@ -364,8 +373,8 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 5 | D0~D14 全部执行，Q&A ≥ min_qa_pairs | `grep -c "^### D[0-9]" 方案文档` ≥14，`grep -c "Q:" 方案文档` ≥42（14×3） |
-| 4 | 执行完整，个别 Q&A 不足 | 章节 ≥14，Q&A ≥30 |
+| 5 | group1-step1~group5-step6 全部执行，Q&A ≥ 60 | `grep -c "group.*step" 方案文档` ≥20，`grep -c "Q:" 方案文档` ≥60 |
+| 4 | 执行完整，个别 Q&A 不足 | 章节 ≥14，Q&A ≥45 |
 | 3 | 遗漏 1-2 个子阶段 | 章节 ≥12 |
 | 2 | 遗漏 >3 个 | 章节 <12 |
 | 0 | 跳过 stageD | 章节 = 0 |
@@ -394,7 +403,7 @@ done
 | 1 | 触发但分组有误 | 匹配 = 1 |
 | 0 | 未触发 | 匹配 = 0 |
 
-### D4.9 RTL 就绪度检查（2 分）（v7.4 新增）
+### D4.9 RTL 就绪度检查（2 分）
 
 > D 阶段每个 Phase 完成后执行 8 项 RTL 就绪度检查，确保方案文档可直接指导 code-writer 生成 RTL。
 
@@ -431,7 +440,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 子模块文档达 C 阶段标准（E-REQ 编号、约束项、确认值齐全） | 读取子模块需求汇总表，检查 E-REQ 编号和格式 |
+| 3 | 子模块文档达 C 阶段标准（REQ 编号、约束项、确认值齐全） | 读取子模块需求汇总表，检查 REQ 编号和格式 |
 | 2 | 基本达标，个别缺字段 | 读取文件 |
 | 1 | 质量不足 | 读取文件 |
 | 0 | 未生成 | 文件不存在 |
@@ -648,15 +657,15 @@ done
 | 跳过 stage0 | -4 | D1.1 | 无前置探索 |
 | 关键 REQ 未追问 | -2~4 | D1.3 | REQ-004/016/020 未追问 2 次 |
 | 灰色表达误判 | -1~2 | D1.4 | 犹豫表达被当作确认 |
-| stageB+ 跳过 | -2 | D1.5 | 未执行 Feature Discovery |
-| stageB+ 维度不全 | -1 | D1.5 | <5 维度覆盖 |
+| stageB phase2 跳过 | -2 | D1.5 | 未执行 Feature Discovery |
+| stageB phase2 维度不全 | -1 | D1.5 | <5 维度覆盖 |
 | 矛盾检测跳过 | -5~8 | D2 | 需求不一致风险 |
-| 规格自检未执行 | -2 | D3.4 | stageC 出口门控缺失 |
-| D0 未估算行数 | -3 | D4.1 | 无法判断是否需 E 阶段 |
+| 规格自检未执行 | -2 | D3.4 | stageC phase2 出口门控缺失 |
+| group1-step1 未估算行数 | -3 | D4.1 | 无法判断是否需 E 阶段 |
 | D 子阶段 Q&A 不足 | -1~3 | D4.2 | 未达 min_qa_pairs |
 | D 子阶段遗漏 | -1~5 | D4.2 | 方案不完整 |
 | 跳过未标注 | -1 | D7.4 | ADR 缺原因+影响+替代方案 |
-| 专项编排未触发 | -2 | D4.8 | D0 后未触发 specialist |
+| 专项编排未触发 | -2 | D4.8 | group1-step1 后未触发 specialist |
 | RTL 就绪度检查未通过 | -1~2 | D4.9 | 端口/状态机/存储/Credit/时序/流水线/寄存器/CDC 定义不完整 |
 | E 阶段未用头脑风暴 | -3 | D5.2 | 划分未经用户确认 |
 | E 阶段文档质量不足 | -3 | D5.3 | 未达 C 阶段标准 |
@@ -706,7 +715,7 @@ done
 
 | # | 门控条件 | 验证命令 | 结果 | 说明 |
 |---|----------|----------|------|------|
-| G-01 | stageB ≥70% | `grep -c "✅" ...` | PASS/FAIL | {N}/28 |
+| G-01 | stageB phase1 ≥70% | `grep -c "✅" ...` | PASS/FAIL | {N}/28 |
 | ... | ... | ... | ... | ... |
 
 **门控结论**：门控 1 PASS/FAIL → 门控 2 PASS/FAIL → 最终等级判定

@@ -23,29 +23,29 @@ L0 主 Agent（上下文：~7K tokens）
 ├── 生成 L0 todolist
 ├── 启动 L1 subagent（全新上下文：~7K tokens）
 │   ├── 加载：Agent 定义 + L1 todolist + 父模块摘要
-│   ├── 执行 L1 stageB+~E
+│   ├── 执行 L1 stageB phase2~E
 │   ├── 启动 L2 subagent（全新上下文：~7K tokens）
 │   │   ├── 加载：Agent 定义 + L2 todolist + 父模块摘要
-│   │   └── 执行 L2 stageB+~D → 返回结果
+│   │   └── 执行 L2 stageB phase2~D → 返回结果
 │   └── 接收 L2 结果 → 更新 L1 状态
 └── 接收 L1 结果 → 更新 L0 状态 → 进入 F 阶段
 ```
 
-**关键优势**：每个 subagent 上下文恒定 ~7K tokens，无论递归多深，注意力与 L0 完全等同。
+**关键优势**：每个 subagent 拥有全新上下文窗口，注意力与 L0 完全等同。1M 上下文下可传递更完整的信息。
 
-### 0.2 Subagent 输入清单
+### 0.2 Subagent 输入清单（1M 上下文版）
 
-每个 subagent 启动时，仅传递以下精简信息（不传递父级完整历史）：
+每个 subagent 启动时，传递以下信息（不传递父级完整历史）：
 
 | # | 输入 | 来源 | 大小限制 | 说明 |
 |---|------|------|----------|------|
-| S-01 | Agent 定义 | `.claude/agents/chip-requirement-arch.md` | 完整 | 规则在上下文顶部 |
-| S-02 | 本级 todolist | `{name}/todolist.md` | 完整 | 自包含执行指南 |
-| S-03 | 父模块摘要 | todolist §2 | ≤500 tokens | 精简的功能/约束/接口 |
-| S-04 | 接口契约 | todolist §3 | ≤300 tokens | 仅本模块相关端口 |
-| S-05 | 继承约束链 | todolist §4 | ≤500 tokens | 仅影响本模块的约束 |
+| S-01 | Agent 定义（完整版） | `.claude/agents/chip-requirement-arch.md` | ~13K tokens | 包含全部规则，1M 窗口无压力 |
+| S-02 | 本级 todolist | `{name}/todolist.md` | ~2K tokens | 自包含执行指南 |
+| S-03 | 父模块摘要 | todolist §2 | ≤1K tokens | 比精简版更详细，减少信息丢失 |
+| S-04 | 接口契约 | todolist §3 | ≤500 tokens | 比精简版更详细 |
+| S-05 | 继承约束链 | todolist §4 | ≤1K tokens | 比精简版更详细，含关键约束速查 |
 
-**总计 ~8.3K tokens**，与 L0 执行时的上下文大小相当。
+**总计 ~17.5K tokens**，仅占 1M 上下文的 1.75%，无注意力压力。
 
 ### 0.3 规则重载检查清单
 
@@ -55,7 +55,7 @@ L0 主 Agent（上下文：~7K tokens）
 | RC-02 | 本级 todolist 已加载 | 上下文包含"父模块上下文摘要" | [TODOLIST-ERROR] |
 | RC-03 | 接口契约已加载 | 上下文包含"本模块接口契约" | [TODOLIST-ERROR] |
 | RC-04 | 继承约束已加载 | 上下文包含"继承约束链" | [TODOLIST-ERROR] |
-| RC-05 | 上下文大小合理 | 预估 ≤15K tokens | 压缩父级历史 |
+| RC-05 | 上下文大小合理 | 预估 ≤20K tokens | 压缩父级历史 |
 
 **全部 PASS → 开始执行**
 **任一 FAIL → [TODOLIST-ERROR] 规则重载失败，Agent 已停止**
@@ -64,15 +64,15 @@ L0 主 Agent（上下文：~7K tokens）
 
 ## 1. 递归分解结果
 
-| ID | 名称 | 层级 | 父节点 | 预估行数 | 状态 | 执行顺序 | 依赖 | 全局 REQ | E-REQ |
+| ID | 名称 | 层级 | 父节点 | 预估行数 | 状态 | 执行顺序 | 依赖 | 全局 REQ | REQ |
 |----|------|------|--------|----------|------|----------|------|----------|-------|
 | 0 | 顶层模块 | L0 | - | {N} | completed | 0 | - | REQ-001~REQ-033 | - |
-| 1 | {子模块A} | L1 | 顶层 | {N} | pending | 1 | - | REQ-XXX | E-001~E-005 |
-| 1.1 | {子模块A1} | L2 | A | {N} | pending | 1.1 | - | REQ-XXX | E-001~E-003 |
-| 1.1.1 | {子模块A1a} | L3 | A1 | {N} | pending | 1.1.1 | - | REQ-XXX | E-001~E-002 |
+| 1 | {子模块A} | L1 | 顶层 | {N} | pending | 1 | - | REQ-XXX | REQ-001~REQ-005 |
+| 1.1 | {子模块A1} | L2 | A | {N} | pending | 1.1 | - | REQ-XXX | REQ-001~REQ-003 |
+| 1.1.1 | {子模块A1a} | L3 | A1 | {N} | pending | 1.1.1 | - | REQ-XXX | REQ-001~REQ-002 |
 
 **状态说明**：pending -> in_progress -> completed -> skipped
-**起始阶段**：所有子模块从 stageB+ 开始（非 D0）
+**起始阶段**：所有子模块从 stageB phase2（头脑风暴）开始（非 D0）
 **递归终止**：所有叶子节点预估行数 <3000
 
 ---
@@ -117,7 +117,7 @@ L0 主 Agent（上下文：~7K tokens）
 |----------|----------|----------|---------------|
 | REQ-001 | L0 | {约束描述} | {对本模块的影响} |
 | REQ-006 | L0 | {约束描述} | {对本模块的影响} |
-| E-001 | L1 | {约束描述} | {对本模块的影响} |
+| REQ-001 | L1 | {约束描述} | {对本模块的影响} |
 
 ---
 
@@ -127,22 +127,22 @@ L0 主 Agent（上下文：~7K tokens）
 
 | Stage | 名称 | 必须执行 | 最小 Q&A 数 | 必须产出文件 | 详细要求 |
 |-------|------|----------|------------|-------------|----------|
-| B+ | 头脑风暴 Feature Discovery | 是 | 5 轮（5 维度） | flow/stageB_plus.md | 参考 Wiki，5 维度探索，用户确认后才进入下一阶段 |
-| C0 | 矛盾检测 | 是 | 17 项检测 | flow/stageC0.md | 基础 17 项 + 条件检测 + 覆盖率热力图 |
-| C | 需求确认汇总 | 是 | 1 轮确认 | outputs/{name}_requirement_summary_v1.0.md | E-REQ 汇总表 + 规格自检 5 项 |
+| B+ | 头脑风暴 Feature Discovery | 是 | 5 轮（5 维度） | flow/stageB_phase2.md | 参考 Wiki，5 维度探索，用户确认后才进入下一阶段 |
+| C0 | 矛盾检测 | 是 | 17 项检测 | flow/stageC_phase1.md | 基础 17 项 + 条件检测 + 覆盖率热力图 |
+| C | 需求确认汇总 | 是 | 1 轮确认 | outputs/{name}_requirement_summary_v1.0.md | REQ 汇总表 + 规格自检 5 项 |
 | D | 方案细化 | 是 | D0=4, 其他=3 | outputs/{name}_solution_v1.0.md + ADR | D0 估算行数 + D1~D14 逐阶段 |
 | E | 递归分解 | 条件 | - | {name}_todolist.md | D0 >3000 行时触发，生成下级 todolist |
 
-### 5.0 父模块需求同步（v7.1 新增，stageB+ 前执行）
+### 5.0 父模块需求同步（v7.1 新增，stageB phase2 前执行）
 
-> **铁律：子模块进入 stageB+ 前，必须先同步父模块 requirement_summary 中适用的需求。**
+> **铁律：子模块进入 stageB phase2 前，必须先同步父模块 requirement_summary 中适用的需求。**
 
 执行步骤：
 1. 读取父模块 outputs/{parent}_requirement_summary_v1.0.md
 2. 分析每条 REQ 是否适用于本子模块（按功能域/接口/约束判断）
 3. 适用的 REQ 同步到本子模块 requirement_summary（标注来源：同步自父模块 REQ-XXX）
 4. 不适用的 REQ 标注为「不适用」并记录原因
-5. 同步完成后进入 stageB+ 头脑风暴
+5. 同步完成后进入 stageB phase2 头脑风暴
 
 适用判断标准：
 - REQ 约束直接影响本子模块的功能域
@@ -150,15 +150,15 @@ L0 主 Agent（上下文：~7K tokens）
 - REQ 约束影响本子模块的 PPA（频率/面积/功耗）
 - REQ 约束涉及本子模块的可靠性/DFT/低功耗需求
 
-### 5.1 stageB+ 详细要求
+### 5.1 stageB phase2 详细要求
 
 - 先执行 §5.0 父模块需求同步
 - 参考 Wiki 知识库检索相关协议/CBB/行业实践
 - 按 5 个维度探索：功能扩展/性能优化/兼容性/可测试性/可维护性
 - 每轮后用户确认才进入下一阶段
-- **新增 REQ 必须实时写入 outputs/{name}_requirement_summary_v1.0.md**（格式：E-REQ-{N} | {约束项} | {确认值} | {优先级} | stageB+ 头脑风暴新增）
+- **新增 REQ 必须实时写入 outputs/{name}_requirement_summary_v1.0.md**（格式：REQ-{N} | {约束项} | {确认值} | {优先级} | stageB phase2 头脑风暴新增）
 - 不确认则继续分解直到无新 feature（最多 5 轮）
-- 追加 E-REQ 从当前最大编号 +1 起连续编号
+- 追加 REQ 从当前最大编号 +1 起连续编号
 
 ### 5.2 stageD 详细要求
 
@@ -179,14 +179,14 @@ L0 主 Agent（上下文：~7K tokens）
 # {模块名} PR 沟通记录
 > 版本：v1.0 | 日期：YYYY-MM-DD
 
-## stageB+ 头脑风暴
+## stageB phase2 头脑风暴
 ### Q1: {问题}
 A: {回答}
 
-## stageC0 矛盾检测
+## stageC phase1 矛盾检测
 {17 项检测结果}
 
-## stageC 需求确认
+## stageC phase2 需求确认
 {需求汇总表 + 规格自检}
 
 ## stageD 方案细化
@@ -204,9 +204,9 @@ A: {回答}
 # {模块名} 需求汇总表
 > schema_version: 1.0
 
-| E-REQ | 约束项 | 确认值 | 优先级 | 备注 |
+| REQ | 约束项 | 确认值 | 优先级 | 备注 |
 |-------|--------|--------|--------|------|
-| E-001 | {项} | {值} | Must/Should/Could | {说明} |
+| REQ-001 | {项} | {值} | Must/Should/Could | {说明} |
 
 ## 规格自检
 | # | 检查项 | 结果 |
@@ -263,7 +263,7 @@ metadata:
   last_updated: YYYY-MM-DD
 
 nodes:
-  - id: E-001
+  - id: REQ-001
     layer: L1
     type: requirement
     title: "{需求标题}"
@@ -295,8 +295,8 @@ nodes:
 |---|--------|----------|-----------|-----------|
 | QG-01 | outputs/ 文件数 | find {dir}/outputs/ -type f | >= 5 | 阻断 |
 | QG-02 | flow/ 文件数 | find {dir}/flow/ -type f | >= 4 | 阻断 |
-| QG-03 | flow/stageB_plus.md 存在 | ls {dir}/flow/stageB_plus.md | 存在 | 阻断 |
-| QG-04 | E-REQ 编号连续 | grep E-REQ {dir}/outputs/*_req* | 无跳号 | 阻断 |
+| QG-03 | flow/stageB_phase2.md 存在 | ls {dir}/flow/stageB_phase2.md | 存在 | 阻断 |
+| QG-04 | REQ 编号连续 | grep REQ {dir}/outputs/*_req* | 无跳号 | 阻断 |
 | QG-05 | 方案文档章节完整 | grep "## S" {dir}/outputs/*_sol* | >= 10 | 阻断 |
 | QG-06 | 无占位符 | grep "TODO" {dir}/outputs/*.md | = 0 | 阻断 |
 | QG-07 | 文件命名规范 | ls {dir}/outputs/ | 全部 {name}_ 前缀 | 阻断 |

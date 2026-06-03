@@ -5,7 +5,7 @@
   "specialist_agents": [
     {
       "id": "cdc-architect",
-      "agent": "chip-cdc-architect",
+      "agent": "chip-lowpower-designer",
       "trigger_req": "REQ-011",
       "trigger_condition": "REQ-011 确认为多时钟域",
       "input": "CDC 约束摘要（时钟域列表、同步策略、信号分组）",
@@ -15,18 +15,18 @@
     },
     {
       "id": "low-power-architect",
-      "agent": "chip-low-power-architect",
+      "agent": "chip-lowpower-designer",
       "trigger_req": "REQ-007",
       "trigger_condition": "REQ-007 确认有独立功耗域",
       "input": "功耗域需求摘要（域划分、隔离要求、唤醒约束）+ CDC 输出（跨功耗域信号列表）",
-      "output_target": "方案文档 §10 低功耗设计",
+      "output_target": "方案文档 §10.2 低功耗设计",
       "dependencies": [],
       "optional_dependencies": ["cdc-architect"],
       "parallel_group": 1
     },
     {
       "id": "reliability-architect",
-      "agent": "chip-reliability-architect",
+      "agent": "chip-code-writer",
       "trigger_req": "REQ-009",
       "trigger_condition": "REQ-009 确认有特殊可靠性要求",
       "input": "可靠性需求摘要（ECC/TMR 对象、SEU 防护范围）",
@@ -36,7 +36,7 @@
     },
     {
       "id": "design-space-explorer",
-      "agent": "chip-design-space-explorer",
+      "agent": "chip-requirement-arch",
       "trigger_req": null,
       "trigger_condition": "全部专项 agent 完成（或无专项 agent 触发）",
       "input": "REQ 汇总表 + 专项 agent 输出",
@@ -46,7 +46,7 @@
     },
     {
       "id": "budget-allocator",
-      "agent": "chip-budget-allocator",
+      "agent": "chip-project-lead",
       "trigger_req": null,
       "trigger_condition": "方案文档草稿就绪",
       "input": "系统级 PPA 预算 + 子模块列表 + 方案文档草稿",
@@ -59,7 +59,7 @@
   "dynamic_discovery": {
     "description": "编排引擎动态 agent 发现 — 扫描 .claude/agents/ 目录自动注册新的专项架构 agent",
     "scan_path": ".claude/agents/",
-    "pattern": "chip-*-architect.md",
+    "pattern": "chip-*-architect.md|chip-*-designer.md|chip-*-writer.md",
     "auto_register": {
       "description": "发现新 agent 文件后自动提取元数据并注册到 specialist_agents",
       "metadata_extraction": {
@@ -73,13 +73,13 @@
       },
       "conflict_resolution": "同 id 已存在 → 跳过（静态定义优先）；新 id → 追加到 specialist_agents 数组"
     },
-    "scan_trigger": "D0 完成后、orchestration_rules 执行前自动扫描一次",
+    "scan_trigger": "stageD group1-step1 完成后、orchestration_rules 执行前自动扫描一次",
     "known_agents_pattern": "当前已知：cdc-architect, low-power-architect, reliability-architect, design-space-explorer, budget-allocator",
     "extension_example": "新增 chip-security-architect.md → 自动注册为 { id: 'security-architect', agent: 'chip-security-architect', trigger_req: 'REQ-018', parallel_group: 1 }"
   },
 
   "orchestration_rules": {
-    "auto_trigger": "D0 完成后读取 REQ 汇总表，检查各 specialist 的 trigger_req 是否满足 trigger_condition",
+    "auto_trigger": "stageD group1-step1 完成后读取 REQ 汇总表，检查各 specialist 的 trigger_req 是否满足 trigger_condition",
     "parallel_execution": "parallel_group 相同且无 dependencies 的 agent 可并行调用",
     "sequential_gate": "dependencies 中的 agent 全部完成后才启动当前 agent",
     "optional_dependency": "optional_dependencies 中的 agent 若已完成，其输出作为输入传递；若未完成（未触发或进行中），当前 agent 可先启动，后续补充可选输入",

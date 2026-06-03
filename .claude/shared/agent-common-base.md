@@ -44,22 +44,22 @@
 
 ## 三、Wiki 知识检索协议
 
-> **铁律：每次涉及协议/接口/CBB/选型/编码前，必须先完成 Wiki 检索。未完成检索不得输出任何设计内容、代码或评审意见。**
+> **铁律：涉及协议/接口/CBB/选型/编码前，必须先完成 Wiki 检索。stage0/stageA 阶段的定性探索（模块定位、核心功能、PPA 优先级排序）不受此约束。未完成检索不得输出协议选型、接口定义、CBB 集成或编码相关内容。**
 
 ### 架构：三层知识系统
 
 | 层 | 路径 | 说明 |
 |----|------|------|
-| **Wiki**（首选） | `.claude/wiki/` | LLM 预编译的结构化知识页面 |
-| **Raw Sources**（深入） | `.claude/knowledge/` | 原始协议/CBB 文档 |
-| **Schema** | `.claude/wiki/schema.md` | wiki 的规范和工作流 |
+| **Wiki**（首选） | `tools/claude-obsidian/wiki/` | LLM 预编译的结构化知识页面 |
+| **Raw Sources**（深入） | `tools/claude-obsidian/.raw/sources/` | 原始协议/CBB 文档 |
+| **Schema** | `tools/claude-obsidian/wiki/schema.md` | wiki 的规范和工作流 |
 
 ### 检索流程（3 阶段）
 
 **阶段 1：定位（读 index.md）** — 每次检索必须从 `index.md` 开始。
 
 ```
-Read .claude/wiki/index.md
+Read tools/claude-obsidian/wiki/index.md
 ```
 
 | 任务类型 | 索引区域 | 示例 |
@@ -73,13 +73,13 @@ Read .claude/wiki/index.md
 **阶段 2：读取 Wiki 页面** — 读取阶段 1 定位到的 wiki 页面（预编译结构化知识）。
 
 ```
-Read .claude/wiki/{type}/{name}.md
+Read tools/claude-obsidian/wiki/{type}/{name}.md
 ```
 
 **阶段 3：深入原始文档（按需）** — 仅当 wiki 页面信息不足时追溯原始文档。
 
 ```
-Read .claude/knowledge/{domain}/{name}.md
+Read tools/claude-obsidian/.raw/sources/{domain}/{name}.md
 ```
 
 触发条件：需要完整信号时序图 / 详细参数配置表 / wiki 标注"详见原始文档" / 涉及 RTL 代码示例。
@@ -180,6 +180,7 @@ Read .claude/knowledge/{domain}/{name}.md
 - **初始版本**：`v1.0`
 - **自动递增**：每次重大修改递增次版本号（v1.0 → v1.1）
 - **重大变更**：需求冻结后变更递增主版本号（v1.x → v2.0）
+- **Patch 修正**：Bug 修复、注释优化、格式调整递增 patch 号（v1.0 → v1.0.1）
 
 ### 文件命名规范
 

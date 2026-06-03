@@ -74,7 +74,7 @@
   },
 
   "feedback_schema": {
-    "description": "实验性规则反馈收集机制 — 每个项目运行 stageC0 后对 EXP 规则结果进行反馈标注",
+    "description": "实验性规则反馈收集机制 — 每个项目运行 stageC phase1 后对 EXP 规则结果进行反馈标注",
     "rule_feedback_template": {
       "project_id": "string — 项目标识",
       "hit": "boolean — 该规则是否触发",
@@ -98,6 +98,6 @@
         "recommendation": "hit_rate > 30% 且 precision > 50% → 建议升级；hit_rate < 10% → 建议删除；其余 → 保持 experimental"
       }
     },
-    "usage": "stageC0 执行后，agent 对每条触发的 EXP 规则要求用户反馈 hit/true_contradiction/false_positive，追加到 per_rule_feedback 对应数组。累计 ≥3 条时输出自动评审报告。"
+    "usage": "stageC phase1 执行后，agent 对每条触发的 EXP 规则要求用户反馈 hit/true_contradiction/false_positive，追加到 per_rule_feedback 对应数组。累计 ≥3 条时输出自动评审报告。"
   }
 }

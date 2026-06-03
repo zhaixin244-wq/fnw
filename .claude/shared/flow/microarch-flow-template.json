@@ -131,7 +131,7 @@
         },
         {
           "agent": "chip-low-power-architect",
-          "source_section": "方案文档 §10 低功耗设计",
+          "source_section": "方案文档 §10.2 低功耗设计",
           "target_section": "§5.6 IP/CBB 集成（如涉及功耗域）或独立 §10 低功耗设计",
           "target_content": "功耗域划分/隔离与电平转换/功耗状态机/功耗预算分配",
           "merge_rule": "LP 输出作为 §10 低功耗设计的基础框架，子模块级细化电源域边界"

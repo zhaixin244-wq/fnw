@@ -44,7 +44,7 @@
     "uncovered_with_experimental": ["REQ-014", "REQ-015", "REQ-016", "REQ-017", "REQ-019", "REQ-020"],
     "high_coverage": ["REQ-005 (7规则含实验)", "REQ-001 (5规则含实验)"],
     "low_coverage": ["REQ-013/021 (各1规则)", "REQ-025 (1规则)"],
-    "uncovered_note": "未覆盖 REQ 为接口细节/调试/软件接口类（REQ-014~020），通常在 stageB 直接记录不需交叉检测"
+    "uncovered_note": "未覆盖 REQ 为接口细节/调试/软件接口类（REQ-014~020），通常在 stageB phase1 直接记录不需交叉检测"
   },
 
   "pairwise_coverage_gap": {
@@ -58,7 +58,7 @@
     ],
     "remaining_gaps": [
       { "pair": ["REQ-006", "REQ-007"], "note": "已有 POWER-03 覆盖（CDC vs 低功耗），无需额外规则" },
-      { "pair": ["REQ-015", "REQ-016"], "note": "DMA + 中断 → 交互复杂度低，stageB 直接确认即可" }
+      { "pair": ["REQ-015", "REQ-016"], "note": "DMA + 中断 → 交互复杂度低，stageB phase1 直接确认即可" }
     ]
   },
 
@@ -70,5 +70,5 @@
     "frozen": { "description": "无覆盖", "reqs": ["REQ-014", "REQ-015", "REQ-016", "REQ-017", "REQ-019", "REQ-020"] }
   },
 
-  "usage": "stageC0 完成后自动运行覆盖率分析：1) 输出覆盖热力图（hot/warm/cold/frozen）；2) 标注 resolved_gaps 中已由实验性规则覆盖的组合；3) frozen 类 REQ 在 PR 沟通记录中标注'无交叉检测覆盖'；4) 实验性规则输出时标注[EXP]前缀"
+  "usage": "stageC phase1 完成后自动运行覆盖率分析：1) 输出覆盖热力图（hot/warm/cold/frozen）；2) 标注 resolved_gaps 中已由实验性规则覆盖的组合；3) frozen 类 REQ 在 PR 沟通记录中标注'无交叉检测覆盖'；4) 实验性规则输出时标注[EXP]前缀"
 }

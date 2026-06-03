@@ -1,11 +1,12 @@
 {
   "version": "1.3",
-  "description": "stageB 约束检查清单 - 详细执行规则",
+  "description": "stageB phase1 约束检查清单 - 详细执行规则",
 
   "execution_steps": [
     "1. 回顾stageA回答摘要（模块位置、核心功能、PPA优先级、阶段0结论），作为上下文锚点",
     "2. Read requirement-checklist.json",
     "3. 按constraint_items顺序逐项确认，利用execution_hint字段指导追问策略",
+    "3.5. 检查当前 REQ 的 dep 列表：前置 REQ 未确认 → 标记'等待前置 REQ'并跳过，前置 REQ 已确认 → 继续确认本项。dep 语义见 requirement-checklist.json dep_semantics 字段",
     "4. 用户不确定时（trigger_rules语义判断为不确定），按exploration_template输出推荐值+可选项",
     "5. 探索后用户仍无法确定 → 追问上限：最多2次。第1次：推荐值+可选项；第2次：A/B二选一；2次后强制使用推荐值",
     "6. 追问分级：按priority_inquiry_rules，根据stageA优先级状态决定追问深度",
@@ -41,11 +42,12 @@
       "追问上限仍为 2 次，但第 1 次追问必须提供 3 个选项（而非仅推荐值）",
       "默认值使用时必须标注「基于通用知识，待用户确认」，不可直接标记为确认"
     ],
-    "coverage_requirement": "vague 输入完成 stageB 后，确认项占比 ≥ 70% 方可进入 stageC0",
+    "coverage_requirement": "vague 输入完成 stageB 后，确认项占比 ≥ 70% 方可进入 stageC phase1",
     "default_value_limit": {
       "max_defaults": 5,
       "critical_req_no_default": ["REQ-004", "REQ-016", "REQ-020"],
-      "critical_req_ask_twice": "关键 REQ 追问 2 次，仍不明确才用默认值，且标注'基于通用知识，待用户确认'"
+      "critical_req_ask_twice": "关键 REQ 追问 2 次，仍不明确才用默认值，且标注'基于通用知识，待用户确认'",
+      "critical_req_handling": "REQ-004/016/020 在 vague 模式下：2次追问后使用推荐值，但必须标注'基于通用知识，待用户确认'，不可直接标记为已确认"
     },
     "default_value_statistics": {
       "description": "默认值统计规则",
@@ -58,6 +60,25 @@
     }
   },
 
+  "grey_expression_system": {
+    "description": "灰色表达系统化处理规则 — stageB phase1/phase2 和 stageC phase2 共同使用",
+    "detection": {
+      "keywords": ["大概", "可能", "应该", "差不多", "还行", "先这样", "暂定", "初步", "估计", "大约"],
+      "patterns": ["{keyword}+{value}", "{value}+{keyword}"]
+    },
+    "handling": {
+      "step1": "标注'部分确认'",
+      "step2": "追问 1 次：'您对这个值是否有疑虑？'",
+      "step3": "记录追问结果",
+      "step4": "如果仍不明确，使用默认值并标注'推断值-待确认'"
+    },
+    "documentation": {
+      "stageB": "⚠️ 部分确认 - 用户表达犹豫，已追问并记录",
+      "stageC": "⚠️ 部分确认 - 来源：stageB phase1 灰色表达处理",
+      "trace_graph": "confirmation_status: partial_confirmed"
+    }
+  },
+
   "realtime_conflict_check_pairs": [
     "REQ-001 ↔ REQ-013（工艺 vs PVT 温度范围）",
     "REQ-005 ↔ REQ-009（面积预算 vs ECC/TMR 开销）",
@@ -66,8 +87,9 @@
   ],
 
   "post_stageB_brainstorming": {
-    "description": "stageB 约束检查完成后，使用头脑风暴 skill 与用户探索是否需要追加新 feature（v7.1：多轮头脑风暴 + Wiki 知识库参考 + 新增 REQ 写入 requirement_summary）",
-    "trigger": "stageB 全部 28 项确认完成（主模块）或子模块从 B+ 阶段开始时",
+    "name": "stageB phase2 - 头脑风暴 Feature Discovery",
+    "description": "stageB phase1 约束检查完成后，使用头脑风暴 skill 与用户探索是否需要追加新 feature（v7.1：多轮头脑风暴 + Wiki 知识库参考 + 新增 REQ 写入 requirement_summary）",
+    "trigger": "stageB phase1 全部 28 项确认完成（主模块）或子模块从 stageB phase2 阶段开始时",
     "skill": "brainstorming",
     "wiki_integration": {
       "description": "头脑风暴前必须检索 Wiki 知识库，获取协议/CBB/行业实践参考",
@@ -81,10 +103,10 @@
     "new_req_persistence": {
       "description": "v7.1：头脑风暴新增的 REQ 必须实时写入 requirement_summary 文档",
       "rule": "每轮头脑风暴确认的新增 REQ，必须立即追加到 outputs/{name}_requirement_summary_v1.0.md",
-      "format": "| E-REQ-{N} | {约束项} | {确认值} | Must/Should/Could | stageB+ 头脑风暴新增 |",
-      "numbering": "从当前最大 E-REQ 编号 +1 起连续编号，不允许跳号",
+      "format": "| REQ-{N} | {约束项} | {确认值} | Must/Should/Could | stageB phase2 头脑风暴新增 |",
+      "numbering": "从 REQ-029 起连续编号，不允许跳号",
       "conflict_check": "新增 REQ 后立即执行实时矛盾检测（与已有 REQ 交叉检查）",
-      "blocking_rule": "未写入 requirement_summary 的 REQ 不得进入下一阶段"
+      "blocking_rule": "未写入 requirement_summary 的 REQ 不得进入 stageC phase1"
     },
     "multi_round_rules": {
       "description": "v7.1：多轮头脑风暴，用户确认后才进入下一阶段，新增 REQ 实时写入 requirement_summary",
@@ -106,11 +128,11 @@
       "max_rounds": 5,
       "user_confirmation_required": true
     },
-    "purpose": "发现 stageB 28 项约束清单未覆盖的隐含需求或用户未主动提出的 feature",
+    "purpose": "发现 stageB phase1 28 项约束清单未覆盖的隐含需求或用户未主动提出的 feature",
     "focus_dimensions": [
       {
         "dimension": "功能扩展",
-        "description": "stageB 28 项未覆盖的功能需求（如特殊协议支持、自定义命令、扩展寄存器）",
+        "description": "stageB phase1 28 项未覆盖的功能需求（如特殊协议支持、自定义命令、扩展寄存器）",
         "prompt": "基于已确认的 28 项约束，是否有额外的功能需求未被覆盖？比如特殊协议支持、自定义命令、扩展寄存器空间等？"
       },
       {
@@ -135,7 +157,7 @@
       }
     ],
     "execution_flow": [
-      "1. 回顾 stageB 确认结果摘要（28 项确认值 + 默认值 + 跳过项）",
+      "1. 回顾 stageB phase1 确认结果摘要（28 项确认值 + 默认值 + 跳过项）",
       "2. 按 5 个维度逐一与用户展开头脑风暴（每维度 1-2 轮 Q&A）",
       "3. 用户提出新 feature → 分配 REQ 编号（从 REQ-029 起连续）",
       "4. 新 REQ 逐一确认细节（约束项/确认值/优先级/备注）",
@@ -145,14 +167,14 @@
     "new_req_rules": {
       "numbering": "从 REQ-029 起连续编号，不允许跳号",
       "quality_standard": "每个新 REQ 必须对应一个可验证功能点，不允许一个 REQ 包含多个独立功能",
-      "confirmation": "新 REQ 逐一与用户确认，灰色表达规则同 stageB（犹豫→追问，转折→继续）",
+      "confirmation": "新 REQ 逐一与用户确认，灰色表达规则同 stageB（犹豫→追问，转折→继续）。灰色表达处理规则详见 stageC-detail.json confirmation_rules.grey_expression_system：stageB phase1/phase2 阶段负责追问确认，stageC phase2 阶段负责标注汇总。",
       "conflict_check": "新 REQ 确认后实时检查与已有 REQ 的矛盾（扩展 realtime_conflict_check_pairs）",
-      "max_rounds": "头脑风暴最多 3 轮 Q&A，避免无限扩展",
-      "exit_condition": "用户明确表示「没有更多需求」或 3 轮 Q&A 后自动结束"
+      "max_rounds": "头脑风暴最多 5 轮 Q&A，避免无限扩展",
+      "exit_condition": "用户明确表示「没有更多需求」或 5 轮 Q&A 后自动结束"
     },
     "output_template": {
       "new_req_added": "## 头脑风暴 Feature Discovery\n\n**主题**：基于已梳理需求的 feature 探索\n\n**Q&A 记录**：\n- Q: {问题}\n- A: {回答}\n\n**追加 REQ**：\n| REQ | 约束项 | 确认值 | 优先级 | 备注 |\n|-----|--------|--------|--------|------|\n| REQ-029 | {项} | {值} | Must/Should/Could | {说明} |",
-      "no_new_feature": "## 头脑风暴 Feature Discovery\n\n**结论**：头脑风暴未发现新需求，stageB 28 项约束已覆盖全部功能需求。"
+      "no_new_feature": "## 头脑风暴 Feature Discovery\n\n**结论**：头脑风暴未发现新需求，stageB phase1 28 项约束已覆盖全部功能需求。"
     }
   }
 }

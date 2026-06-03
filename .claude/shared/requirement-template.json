@@ -2,17 +2,7 @@
   "version": "1.3",
   "description": "芯片需求采集流程模板（主骨架）- 各 stage 详细规则在 .claude/shared/flow/ 目录下按需加载",
 
-  "context_layers": {
-    "L0_resident": "规则内联在 agent 定义中，始终加载",
-    "L1_startup": [".claude/shared/todo-mechanism.md", ".claude/shared/context-layers.json"],
-    "L2_stageB": [".claude/shared/requirement-checklist.json", ".claude/shared/flow/stageB-detail.json", ".claude/shared/flow/protocol-mapping.json"],
-    "L2_stageC0": [".claude/shared/flow/stageC0-detail.json", ".claude/shared/conflict-detection-rules.json"],
-    "L2_stageC": [".claude/shared/flow/stageC-detail.json"],
-    "L2_stageD": [".claude/shared/flow/stageD-detail.json", ".claude/shared/solution-template.json"],
-    "L2_arch_review": [".claude/shared/arch-review-rules.json（索引）→ 按需 Read 1-2 个类别文件"],
-    "L3_ephemeral": ["eda-tool-interfaces.json（仅首次 Read）", "Wiki 检索结果（用完即弃）"],
-    "file_registry": ".claude/shared/flow/file-registry.json"
-  },
+  "context_layers": "详见 .claude/shared/context-layers.json（唯一权威定义）",
 
   "flow": {
     "entry": {
@@ -23,9 +13,9 @@
     "input_triage": {
       "rules": ["≥6项约束维度且>500字 → complete", "2-5项 → partial", "仅模块名/一句话 → vague"],
       "paths": {
-        "complete": "stage0 → stageA → stageB核对 → stageC0 → stageC",
-        "partial": "stage0 → stageA → stageB补齐 → stageC0 → stageC",
-        "vague":   "stage0 → stageA → stageB全部 → stageC0 → stageC"
+        "complete": "stage0 → stageA → stageB phase1核对 → stageC phase1 → stageC phase2",
+        "partial": "stage0 → stageA → stageB phase1补齐 → stageC phase1 → stageC phase2",
+        "vague":   "stage0 → stageA → stageB phase1全部 → stageC phase1 → stageC phase2"
       }
     },
 
@@ -44,24 +34,31 @@
         { "q": "模块在SoC中的位置？上游/下游模块？", "maps_to": "REQ-002" },
         { "q": "核心功能一句话？", "maps_to": "REQ-003" },
         { "q": "PPA优先级排序？", "maps_to": "REQ-004/005" },
-        { "q": "stage0结论确认？", "maps_to": "stageB/方案设计" }
+        { "q": "stage0结论确认？", "maps_to": "stageB phase1/方案设计" }
       ],
-      "transition": "回答摘要带入stageB对应项"
+      "transition": "回答摘要带入stageB phase1对应项"
     },
 
     "stageB": {
       "name": "约束检查清单",
-      "description": "逐项确认。总计28项，按 cat 过滤 NOT_APPLICABLE 后计算适用项数",
+      "description": "逐项确认。总计28项，按 cat 过滤 NOT_APPLICABLE 后计算适用项数。分为 phase1（约束检查）和 phase2（头脑风暴）",
       "data_source": ".claude/shared/requirement-checklist.json",
       "detail_source": ".claude/shared/flow/stageB-detail.json",
       "protocol_map_source": ".claude/shared/flow/protocol-mapping.json",
       "applicable_count_calculation": "遍历 constraint_items，过滤 cat=conditional_optional 且未激活的项（按 trigger_rules 判断），剩余为适用项。进度 = 已确认数 / 适用项数 × 100%",
+      "phases": {
+        "phase1": {
+          "name": "约束检查（28项确认）",
+          "description": "逐项确认28个约束项",
+          "output": "flow/{module}_pr_v1.0.md 中的 [PHASE-START] stageB phase1"
+        }
+      },
       "intermediate_persistence": {
-        "trigger": "stageB完成 >8 项确认后自动触发",
+        "trigger": "stageB phase1完成 >8 项确认后自动触发",
         "target": "<module>_work/ds/doc/pr/{module}_intermediate_state_v{版本号}.json",
         "schema": {
           "module_name": "string",
-          "current_stage": "stageB/stageC0/stageC/stageD",
+          "current_stage": "stageB phase1/stageB phase2/stageC phase1/stageC phase2/stageD",
           "completed_reqs": [{ "req_id": "REQ-XXX", "status": "confirmed/default/skipped", "value": "确认值" }],
           "pending_reqs": ["REQ-XXX"],
           "stage0_summary": "string",
@@ -73,47 +70,40 @@
       }
     },
 
-    "stageB_plus": {
-      "name": "头脑风暴 Feature Discovery",
-      "description": "stageB 约束检查完成后，使用头脑风暴 skill 与用户分析已梳理的需求，探索是否需要追加新的 feature 到 REQ 列表。追加的 REQ 需逐一与用户确认细节。",
-      "trigger_condition": "stageB 全部 28 项确认完成",
+    "stageB phase2": {
+      "name": "头脑风暴 Feature Discovery（stageB phase2）",
+      "description": "stageB phase1 约束检查完成后，使用头脑风暴 skill 与用户分析已梳理的需求，探索是否需要追加新的 feature 到 REQ 列表。追加的 REQ 需逐一与用户确认细节。",
+      "trigger_condition": "stageB phase1 全部 28 项确认完成",
       "skill": "brainstorming",
-      "execution_steps": [
-        "1. 回顾 stageB 确认结果摘要（28 项确认值 + 默认值 + 跳过项）",
-        "2. 调用 brainstorming skill，以「基于已梳理的 28 项约束，是否需要追加新的 feature？」为主题与用户展开头脑风暴",
-        "3. 头脑风暴关注维度：功能扩展（stageB 未覆盖的功能需求）、性能优化（用户隐含的性能期望）、兼容性（协议/接口的向下兼容需求）、可测试性（用户对验证的额外要求）、可维护性（调试/诊断/日志需求）",
-        "4. 用户提出新 feature → 分配 REQ-XXX 编号（从 REQ-029 起连续编号）",
-        "5. 新 REQ 逐一与用户确认细节（约束项/确认值/优先级/备注）",
-        "6. 确认完成后输出追加 REQ 汇总表",
-        "7. 无新 feature → 记录「头脑风暴未发现新需求」，直接进入 stageC0"
-      ],
+      "execution_steps": ["详见主定义文件 §stageB phase2 — 流程步骤完整定义在 Agent 主文件中"],
       "output_format": {
         "brainstorming_record": "## 头脑风暴 Feature Discovery\n\n**主题**：基于已梳理需求的 feature 探索\n\n**Q&A 记录**：\n- Q: {问题}\n- A: {回答}\n\n**追加 REQ**：\n| REQ | 约束项 | 确认值 | 优先级 | 备注 |\n|-----|--------|--------|--------|------|",
-        "no_new_feature": "## 头脑风暴 Feature Discovery\n\n**结论**：头脑风暴未发现新需求，stageB 28 项约束已覆盖全部功能需求。"
+        "no_new_feature": "## 头脑风暴 Feature Discovery\n\n**结论**：头脑风暴未发现新需求，stageB phase1 28 项约束已覆盖全部功能需求。"
       },
       "new_req_rules": {
-        "numbering": "从 REQ-029 起连续编号，不允许跳号",
+        "numbering": "详见 stageB-detail.json post_stageB_brainstorming.new_req_rules.numbering（权威定义）",
         "quality_standard": "每个新 REQ 必须对应一个可验证功能点",
         "confirmation": "新 REQ 逐一与用户确认（约束项/确认值/优先级），灰色表达规则同 stageB",
         "conflict_check": "新 REQ 确认后执行实时矛盾检测（与已有 28 项 + 已追加 REQ 交叉检查）",
-        "max_rounds": "头脑风暴最多 3 轮 Q&A，避免无限扩展"
+        "max_rounds": "头脑风暴最多 5 轮 Q&A，避免无限扩展"
       },
-      "detail_source": ".claude/shared/flow/stageB-detail.json#post_stageB_brainstorming"
+      "detail_source": ".claude/shared/flow/stageB-detail.json",
+      "detail_section": "post_stageB_brainstorming"
     },
 
     "post_stageB": {
-      "description": "stageB_plus 完成后自动后处理。详见 flow/stageC0-detail.json#post_stageB_processing",
-      "detail_source": ".claude/shared/flow/stageC0-detail.json"
+      "description": "stageB phase2 完成后自动后处理。详见 flow/stageC-phase1-detail.json post_stageB_processing section",
+      "detail_source": ".claude/shared/flow/stageC-phase1-detail.json"
     },
 
-    "stageC0": {
-      "name": "矛盾检测",
-      "description": "自动执行全部17项基础检测 + 按需加载条件检测 + 可选实验性检测。详见 flow/stageC0-detail.json#stageC0",
+    "stageC phase1": {
+      "name": "矛盾检测（stageC phase1）",
+      "description": "自动执行全部17项基础检测 + 按需加载条件检测 + 可选实验性检测。详见 flow/stageC-phase1-detail.json stageC_phase1 section",
       "data_source": ".claude/shared/conflict-detection-rules.json",
-      "detail_source": ".claude/shared/flow/stageC0-detail.json",
+      "detail_source": ".claude/shared/flow/stageC-phase1-detail.json",
       "experimental_rules": {
         "source": ".claude/shared/flow/conflict-detection-experimental.json",
-        "load_condition": "可选加载，输出时标注[EXP]前缀。stageC0 基础检测完成后自动加载执行。",
+        "load_condition": "可选加载，输出时标注[EXP]前缀。stageC phase1 基础检测完成后自动加载执行。",
         "count": 5
       },
       "incremental_detection": {
@@ -122,7 +112,7 @@
         "execution": "查 mapping 获取变更 REQ 关联的规则ID，仅执行这些规则（条件：相关 REQ 均已确认）"
       },
       "coverage_analysis": {
-        "trigger": "stageC0 全部检测完成后自动执行",
+        "trigger": "stageC phase1 全部检测完成后自动执行",
         "data_source": ".claude/shared/flow/coverage-model.json",
         "output": "输出覆盖热力图（hot/warm/cold/frozen）+ pairwise_coverage_gap 高风险组合 + frozen 类 REQ 标注"
       },
@@ -133,9 +123,9 @@
       }
     },
 
-    "stageC": {
-      "name": "需求确认汇总",
-      "description": "汇总表 + 确认 + 优先级分级 + 冻结 + 团队协作。详见 flow/stageC-detail.json",
+    "stageC phase2": {
+      "name": "需求确认汇总（stageC phase2）",
+      "description": "汇总表 + 确认 + 优先级分级 + 冻结 + 团队协作。详见 flow/stageC-detail.json。stageC 分为 phase1（矛盾检测）和 phase2（需求汇总）",
       "output": "## 需求确认汇总\n| 编号 | 约束项 | 确认值 | 备注 |\n| REQ-001 | 工艺与频率 | {值} | - |\n| ... | ... | ... | ... |",
       "confirmation_prompt": "以上为需求理解汇总，请确认。确认后开始方案设计。",
       "detail_source": ".claude/shared/flow/stageC-detail.json",
@@ -143,7 +133,7 @@
     },
 
     "change_handling": {
-      "steps": ["记录变更日志", "重走变更项stageB", "stageC汇总", "重新确认", "方案阶段则重走受影响的D子阶段"],
+      "steps": ["记录变更日志", "重走变更项stageB phase1", "stageC phase2汇总", "重新确认", "方案阶段则重走受影响的D子阶段"],
       "incremental_diff": {
         "description": "变更时仅重检受影响的矛盾检测规则，避免全量重跑",
         "mapping_source": ".claude/shared/flow/req-to-rules-mapping.json",
@@ -153,17 +143,17 @@
 
     "stageD": {
       "name": "方案细化",
-      "iron_rule": "NO PPA CLAIMS WITHOUT QUANTITATIVE EVIdENCE",
-      "description": "将方案设计拆分为 D0~D14 共 15 个子阶段，每个子阶段通过 brainstorming 与用户深入交互，沟通记录沉淀到 ADR",
+      "iron_rule": "NO PPA CLAIMS WITHOUT QUANTITATIVE EVIDENCE",
+      "description": "将方案设计拆分为 stageD group1-step1~group5-step6 共 20 个子阶段，每个子阶段通过 brainstorming 与用户深入交互，沟通记录沉淀到 ADR",
       "detail_source": ".claude/shared/flow/stageD-detail.json",
       "data_source": ".claude/shared/solution-template.json",
-      "sub_stages": ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14"],
+      "sub_stages": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3", "stageD group2-step1", "stageD group2-step2", "stageD group2-step3", "stageD group2-step4", "stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4", "stageD group4-step1", "stageD group4-step2", "stageD group4-step3", "stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
       "default_execution_mode": "步进模式",
-      "adr_record": "每个 D 子阶段的头脑风暴沟通记录追加到 ADR 文档「方案细化记录」章节",
+      "adr_record": "每个 stageD 子阶段的头脑风暴沟通记录追加到 ADR 文档「方案细化记录」章节",
       "adr_format": "Nygard",
       "adr_skill": "architecture-decision-records",
-      "specialist_trigger": "D0 完成后触发专项 Agent 编排（详见 specialist-orchestration.json）",
-      "adversarial_trigger": "D14 完成后触发对抗性评审（devils-advocate gentle + balanced）"
+      "specialist_trigger": "stageD group1-step1 完成后触发专项 Agent 编排（详见 specialist-orchestration.json）",
+      "adversarial_trigger": "stageD group5-step4 完成后触发对抗性评审（devils-advocate gentle + balanced）"
     },
 
     "exception_handling": [
@@ -171,7 +161,7 @@
       { "scenario": "用户不了解某约束", "action": "按not_applicable_rules处理" },
       { "scenario": "用户频繁变更≥3次", "action": "维护变更日志，每次重走对应项" },
       { "scenario": "信息不足且用户无法补充", "action": "标注为假设条件" },
-      { "scenario": "用户跳过确认直接出方案", "action": "1.列出所有未确认项 2.标注为「假设值-待确认」3.在方案文档和ADR中单独记录假设条件 4.方案完成后要求用户逐项确认假设", "force_completion": true }
+      { "scenario": "用户跳过确认直接出方案", "action": "1.列出所有未确认项 2.标注为「假设值-待确认」3.在方案文档和ADR中单独记录假设条件 4.暂停，要求用户逐项确认假设后才能继续（步进模式，禁止强制完成）" }
     ]
   },
 

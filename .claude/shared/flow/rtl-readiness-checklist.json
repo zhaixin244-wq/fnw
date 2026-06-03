@@ -1,105 +1,78 @@
 {
   "version": "1.0",
-  "description": "RTL 就绪度检查清单：D 阶段输出的方案文档必须达到 RTL 就绪标准，chip-code-writer 可直接消费",
-
-  "readiness_level": {
-    "current": "architecture_level",
-    "target": "rtl_ready",
-    "gap_description": "当前输出为架构级（端口列表+协议类型），需要提升到 RTL 就绪级（精确信号名/位宽/编码/时序）"
-  },
+  "description": "RTL 就绪度 8 项检查 — D 阶段每个 Phase 完成后执行，确保方案文档可直接指导 code-writer 生成 RTL",
 
   "check_items": [
     {
-      "id": "R-01",
-      "name": "端口信号定义完整性",
-      "category": "interface",
-      "phase": "D_phase1",
-      "check_method": "检查方案文档 S4 接口定义中每个端口是否有：信号名、位宽、方向(I/O)、复位值、时序参数",
-      "pass_criteria": "每个端口全部 5 项齐全",
-      "fail_action": "阻断下一 Phase",
-      "rtl_impact": "code-writer 需要精确信号名和位宽生成端口声明"
+      "id": "RTL-01",
+      "name": "端口信号完整",
+      "check": "所有顶层端口有信号名、方向、位宽、功能描述",
+      "source": "方案文档 §4 接口定义",
+      "pass_criteria": "每个端口的 4 个字段均非空",
+      "fail_action": "补充端口定义"
     },
     {
-      "id": "R-02",
-      "name": "状态机编码定义",
-      "category": "control",
-      "phase": "D_phase2",
-      "check_method": "检查方案文档 S5 控制逻辑中每个 FSM 是否有：编码方式(独热/二进制)、状态位宽、状态编码表、非法状态回收策略",
-      "pass_criteria": "每个 FSM 全部 4 项齐全",
-      "fail_action": "阻断下一 Phase",
-      "rtl_impact": "code-writer 需要编码方式生成 localparam 状态定义"
+      "id": "RTL-02",
+      "name": "状态机编码声明",
+      "check": "所有 FSM 有状态名、编码方式（独热/二进制）、转移条件",
+      "source": "方案文档 §5.3 状态机",
+      "pass_criteria": "每个 FSM 的 3 个字段均非空，编码方式与状态数匹配",
+      "fail_action": "补充 FSM 定义"
     },
     {
-      "id": "R-03",
-      "name": "SRAM/FIFO 深度计算依据",
-      "category": "storage",
-      "phase": "D_phase3",
-      "check_method": "检查方案文档 S13.5 存储设计中每个 SRAM/FIFO 实例是否有：类型(1R1W/2P/同步/异步)、位宽、深度、深度计算公式、读写延迟、冲突策略",
-      "pass_criteria": "每个实例全部 6 项齐全",
-      "fail_action": "阻断下一 Phase",
-      "rtl_impact": "code-writer 需要精确参数生成 SRAM/FIFO 实例化"
+      "id": "RTL-03",
+      "name": "SRAM 深度计算",
+      "check": "所有 SRAM 实例有位宽、深度、容量、读写策略",
+      "source": "方案文档 §11.1 SRAM 设计",
+      "pass_criteria": "深度有计算依据（非拍脑袋），容量 = 位宽 × 深度",
+      "fail_action": "补充深度计算依据"
     },
     {
-      "id": "R-04",
-      "name": "Credit 流控完整定义",
-      "category": "flow_control",
-      "phase": "D_phase4",
-      "check_method": "检查方案文档 S13.2 流控机制中每个 Credit 实例是否有：位宽、初始值、消耗规则、回收规则、反压阈值、溢出保护",
-      "pass_criteria": "每个 Credit 全部 6 项齐全",
-      "fail_action": "阻断下一 Phase",
-      "rtl_impact": "code-writer 需要完整定义生成 Credit 计数器"
+      "id": "RTL-04",
+      "name": "Credit 定义完整",
+      "check": "所有 Credit 流控有 max_credit、消耗规则、回收规则、反压规则",
+      "source": "方案文档 §12.2 流控机制",
+      "pass_criteria": "4 个 mandatory 字段均非空",
+      "fail_action": "补充 Credit 定义"
     },
     {
-      "id": "R-05",
-      "name": "关键路径组合逻辑级数",
-      "category": "timing",
-      "phase": "D_phase5",
-      "check_method": "检查方案文档 S6 时序分析中每条关键路径是否有：起点寄存器、组合逻辑描述、级数、预估延迟(ns)、Tslack",
-      "pass_criteria": "每条路径全部 5 项齐全",
-      "fail_action": "阻断 F 阶段",
-      "rtl_impact": "code-writer 需要级数信息决定是否插入流水线"
+      "id": "RTL-05",
+      "name": "关键路径标注",
+      "check": "所有关键路径有起点、终点、组合逻辑级数、预估延迟",
+      "source": "方案文档 §6 关键时序分析",
+      "pass_criteria": "Tslack > 0 或标注待综合验证",
+      "fail_action": "补充时序分析"
     },
     {
-      "id": "R-06",
-      "name": "流水线握手依赖定义",
-      "category": "pipeline",
-      "phase": "D_phase2",
-      "check_method": "检查方案文档 S5.4 流水线设计中每级是否有：valid/ready 依赖关系、Forwarding 路径、Stall 条件、Flush 条件",
-      "pass_criteria": "每级全部 4 项齐全",
-      "fail_action": "阻断下一 Phase",
-      "rtl_impact": "code-writer 需要握手依赖生成 always 块"
+      "id": "RTL-06",
+      "name": "流水线握手协议",
+      "check": "所有流水线级间有 valid/ready 信号定义和依赖关系",
+      "source": "方案文档 §5.4 流水线设计",
+      "pass_criteria": "每级 valid 不依赖 ready（防组合环路）",
+      "fail_action": "补充握手协议"
     },
     {
-      "id": "R-07",
-      "name": "寄存器复位值定义",
-      "category": "register",
-      "phase": "D_phase3",
-      "check_method": "检查方案文档 S7 寄存器定义中每个寄存器是否有：复位值、更新条件、读逻辑、W1C/W0C/W1S 行为",
-      "pass_criteria": "每个寄存器全部 4 项齐全",
-      "fail_action": "阻断下一 Phase",
-      "rtl_impact": "code-writer 需要复位值生成 always 块复位分支"
+      "id": "RTL-07",
+      "name": "寄存器复位值",
+      "check": "所有寄存器有复位值定义",
+      "source": "方案文档 §7.1 寄存器定义",
+      "pass_criteria": "每个寄存器的复位值字段非空",
+      "fail_action": "补充复位值"
     },
     {
-      "id": "R-08",
-      "name": "CDC 同步级数定义",
-      "category": "cdc",
-      "phase": "D_phase5",
-      "check_method": "检查方案文档 S7 CDC 中每个跨域信号是否有：源时钟域、目标时钟域、同步策略(双触发器/异步FIFO/握手)、同步级数",
-      "pass_criteria": "每个信号全部 4 项齐全",
-      "fail_action": "阻断 F 阶段",
-      "rtl_impact": "code-writer 需要同步策略生成 CDC 同步链"
+      "id": "RTL-08",
+      "name": "CDC 同步策略",
+      "check": "所有跨时钟域信号有同步策略（双触发器/异步FIFO/握手）",
+      "source": "方案文档 §7.2 CDC 方案",
+      "pass_criteria": "每个 CDC 信号的同步策略字段非空",
+      "fail_action": "补充 CDC 策略"
     }
   ],
 
-  "phase_integration": {
-    "description": "RTL 就绪度检查集成到每个 Phase 的 todolist 中",
-    "rule": "每个 Phase 完成后，执行该 Phase 相关的 RTL 就绪度检查项",
-    "mapping": {
-      "D_phase1": ["R-01"],
-      "D_phase2": ["R-02", "R-06"],
-      "D_phase3": ["R-03", "R-07"],
-      "D_phase4": ["R-04"],
-      "D_phase5": ["R-05", "R-08"]
-    }
+  "execution_rule": {
+    "timing": "D 阶段每个 Phase 完成后自动执行",
+    "output": "RTL 就绪度检查报告（8 项 PASS/FAIL）",
+    "blocking": "全部 PASS 方可进入下一 Phase",
+    "on_fail": "标注 FAIL 项，要求补充后重新检查"
   }
 }

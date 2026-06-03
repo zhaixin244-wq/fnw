@@ -1,5 +1,14 @@
 # SDD 规格驱动追溯规范（共享）
 
+>
+> **精简版说明**：chip-requirement-arch 仅需本文件 §1~§5（概述+追溯模型+标注格式+职责+完整性检查）和 §10 L1 层级定义。§6~§9、§10 L2~L11、§11~§12 由下游 Agent（chip-fs-writer、chip-microarch-writer 等）使用。
+>
+> **快速定位**：
+> - 需求 Agent（L1）：仅需 §1~§5 + §10.1 L1 行
+> - FS Agent（L2/L3）：需 §1~§7 + §10.1 L2/L3 行
+> - 微架构 Agent（L4）：需 §1~§7 + §10.1 L4 行
+> - 全链路视图：需 §1~§12 全文
+
 > 本模板定义芯片设计中规格驱动开发（Specification-Driven Development）的全链路追溯规范。
 > 供所有芯片 Agent 共同引用，确保从需求到验证的每一步都可追溯到唯一真相源。
 
@@ -207,7 +216,7 @@ RTL 代码 → UA §5.x → FS §4.x → REQ-XXX
 每个模块在工作目录下维护一个追溯图文件：
 
 ```
-{work_dir}/ds/doc/{module}_trace_graph.yaml
+outputs/{module}_trace_graph.yaml
 ```
 
 ### 9.2 YAML Schema
@@ -263,7 +272,7 @@ grep "downstream: \[\]" {module}_trace_graph.yaml
 
 | 层级 | 节点类型 | ID 格式 | 示例 | 产生 Agent |
 |------|---------|---------|------|-----------|
-| L1 | 需求 REQ | `REQ-{NNN}` | `REQ-001` | chip-requirement-arch |
+| L1 | 需求 REQ | `REQ-{NNN}（三位数字，001~999。超过 999 时扩展为 REQ-{NNNN}）` | `REQ-001` | chip-requirement-arch |
 | L2 | FS 章节 | `FS-{mod}-§{N.N}` | `FS-data_adpt-§4.1` | chip-fs-writer |
 | L3 | BDD 场景 | `SCN-{NNN}` | `SCN-001` | chip-fs-writer |
 | L4 | UA 章节 | `UA-{mod}_{sub}-§{N.N}` | `UA-data_adpt_input_if-§5.1` | chip-microarch-writer |

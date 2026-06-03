@@ -7,7 +7,7 @@
       "id": "requirement-template",
       "path": ".claude/shared/requirement-template.json",
       "category": "core",
-      "dependents": ["requirement-checklist", "stageB-detail", "stageC-detail", "stageC0-detail"],
+      "dependents": ["requirement-checklist", "stageB-detail", "stageC-detail", "stageC-phase1-detail"],
       "hot_reload": true
     },
     {
@@ -81,8 +81,8 @@
       "hot_reload": true
     },
     {
-      "id": "stageC0-detail",
-      "path": ".claude/shared/flow/stageC0-detail.json",
+      "id": "stageC-phase1-detail",
+      "path": ".claude/shared/flow/stageC-phase1-detail.json",
       "category": "flow",
       "dependents": ["conflict-detection-rules", "conflict-detection-conditional", "conflict-detection-experimental"],
       "hot_reload": true
@@ -197,6 +197,27 @@
       "path": ".claude/shared/flow/microarch-e2e-coverage.json",
       "category": "coverage",
       "dependents": ["microarch-coverage-model", "end-to-end-coverage-report"],
+      "hot_reload": true
+    },
+    {
+      "id": "d-phase-context-isolation",
+      "path": ".claude/shared/flow/d-phase-context-isolation.json",
+      "category": "flow",
+      "dependents": ["stageD-detail"],
+      "hot_reload": true
+    },
+    {
+      "id": "d-phase-todolist-template",
+      "path": ".claude/shared/flow/d-phase-todolist-template.md",
+      "category": "flow",
+      "dependents": ["stageD-detail"],
+      "hot_reload": true
+    },
+    {
+      "id": "rtl-readiness-checklist",
+      "path": ".claude/shared/flow/rtl-readiness-checklist.json",
+      "category": "flow",
+      "dependents": ["stageD-detail"],
       "hot_reload": true
     }
   ],

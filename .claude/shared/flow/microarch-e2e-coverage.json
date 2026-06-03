@@ -3,13 +3,13 @@
   "description": "REQ 全生命周期联合覆盖报告 — 合并需求阶段矛盾检测覆盖 + 微架构阶段 MA 规则覆盖，输出端到端覆盖视图",
 
   "data_sources": {
-    "requirement_coverage": ".claude/shared/flow/coverage-model.json#req_coverage_matrix",
-    "microarch_coverage": ".claude/shared/flow/microarch-coverage-model.json#req_coverage_matrix",
-    "arch_review_coverage": ".claude/shared/flow/end-to-end-coverage-report.json#arch_review_checkpoints"
+    "requirement_coverage": ".claude/shared/flow/coverage-model.json（section: req_coverage_matrix）",
+    "microarch_coverage": ".claude/shared/flow/microarch-coverage-model.json（section: req_coverage_matrix）",
+    "arch_review_coverage": ".claude/shared/flow/end-to-end-coverage-report.json（section: arch_review_checkpoints）"
   },
 
   "lifecycle_phases": {
-    "requirement": "stageC0 矛盾检测（29 条规则：17 基础 + 7 条件 + 5 实验）",
+    "requirement": "stageC phase1 矛盾检测（29 条规则：17 基础 + 7 条件 + 5 实验）",
     "solution": "方案设计后架构评审（6 类规则文件，13 REQ 覆盖）",
     "microarch": "微架构编写（12 条 MA 规则 + 15 项 MC-QC）",
     "rtl": "RTL 实现（由 chip-code-writer 覆盖）"

@@ -1,0 +1,347 @@
+{
+  "version": "1.0",
+  "description": "统一 stage/phase/step 定义 - 所有编码规则集中管理",
+
+  "naming_convention": {
+    "description": "编码规则：大阶段用 stage，子阶段用 phase，stageD 内部用 group/step",
+    "rules": {
+      "stage": "顶层大阶段（stage0, stageA, stageB, stageC, stageD, stageE, stageF）",
+      "phase": "stageB/stageC 内部子阶段（stageB phase1, stageB phase2, stageC phase1, stageC phase2）",
+      "group": "stageD 内部大阶段（stageD group1~group5）",
+      "step": "stageD group 内部子阶段（stageD group1-step1, stageD group1-step2, ...）"
+    }
+  },
+
+  "stage_definitions": {
+    "stage0": {
+      "name": "前置探索",
+      "description": "了解模块在 SoC 中的角色，确认初步方向",
+      "has_phases": false,
+      "output": "PR 沟通记录"
+    },
+    "stageA": {
+      "name": "最小信息集",
+      "description": "收集 4 个核心问题的答案",
+      "has_phases": false,
+      "output": "PR 沟通记录"
+    },
+    "stageB": {
+      "name": "约束检查",
+      "description": "逐项确认约束项 + 头脑风暴",
+      "has_phases": true,
+      "phases": {
+        "stageB phase1": {
+          "name": "约束检查（28项确认）",
+          "original_name": "stageB",
+          "config_file": ".claude/shared/flow/stageB-detail.json",
+          "output": "PR 沟通记录"
+        },
+        "stageB phase2": {
+          "name": "头脑风暴（5维度探索）",
+          "original_name": "stageB+ / stageB_plus",
+          "config_file": ".claude/shared/flow/stageB-detail.json（section: post_stageB_brainstorming）",
+          "trigger": "stageB phase1 全部 28 项确认后自动触发",
+          "output": "PR 沟通记录 + 追加 REQ"
+        }
+      }
+    },
+    "stageC": {
+      "name": "需求汇总",
+      "description": "矛盾检测 + 需求汇总表输出",
+      "has_phases": true,
+      "phases": {
+        "stageC phase1": {
+          "name": "矛盾检测",
+          "original_name": "stageC0",
+          "config_file": ".claude/shared/flow/stageC-phase1-detail.json + .claude/shared/conflict-detection-rules.json",
+          "output": "PR 沟通记录"
+        },
+        "stageC phase2": {
+          "name": "需求汇总表输出",
+          "original_name": "stageC",
+          "config_file": ".claude/shared/flow/stageC-detail.json",
+          "trigger": "stageC phase1 完成后执行",
+          "output": "requirement_summary"
+        }
+      }
+    },
+    "stageD": {
+      "name": "方案细化",
+      "description": "架构方案详细设计",
+      "has_groups": true,
+      "groups": {
+        "stageD group1": {
+          "name": "架构规划",
+          "steps": {
+            "stageD group1-step1": {
+              "name": "初始架构方案 + RTL行数估算",
+              "original_name": "D0 / D_phase1-1",
+              "chapter": "§3",
+              "content": "子模块列表 + 架构框图 + RTL行数估算",
+              "skippable": false,
+              "special_rule": "RTL 行数 > 3000 行时跳转 stageE"
+            },
+            "stageD group1-step2": {
+              "name": "CBB选型与集成",
+              "original_name": "D_phase1-2",
+              "chapter": "§13",
+              "content": "CBB选型 + 集成方案",
+              "skippable": true,
+              "skip_condition": "无CBB"
+            },
+            "stageD group1-step3": {
+              "name": "子模块划分细化",
+              "original_name": "D_phase1-3",
+              "chapter": "§3.4",
+              "content": "子模块划分 + 接口定义",
+              "skippable": false
+            }
+          }
+        },
+        "stageD group2": {
+          "name": "数据通路",
+          "steps": {
+            "stageD group2-step1": {
+              "name": "数据通路设计",
+              "original_name": "D1 / D_phase2-1",
+              "chapter": "§5.1",
+              "content": "数据流图 + 关键路径",
+              "skippable": false
+            },
+            "stageD group2-step2": {
+              "name": "流水线设计",
+              "original_name": "D_phase2-2",
+              "chapter": "§5.4",
+              "content": "流水线级数 + 冒险处理",
+              "skippable": true,
+              "skip_condition": "无流水线"
+            },
+            "stageD group2-step3": {
+              "name": "性能优化",
+              "original_name": "D_phase2-3",
+              "chapter": "§8.1",
+              "content": "性能指标 + 优化策略",
+              "skippable": false
+            },
+            "stageD group2-step4": {
+              "name": "控制逻辑/FSM",
+              "original_name": "D2 / D_phase2-4",
+              "chapter": "§5.2-5.3",
+              "content": "状态机 + 控制信号 + 转移条件",
+              "skippable": false
+            }
+          }
+        },
+        "stageD group3": {
+          "name": "存储与资源",
+          "steps": {
+            "stageD group3-step1": {
+              "name": "SRAM设计",
+              "original_name": "D3 / D_phase3-1",
+              "chapter": "§11.1",
+              "content": "SRAM配置 + 选型",
+              "skippable": true,
+              "skip_condition": "无SRAM"
+            },
+            "stageD group3-step2": {
+              "name": "FIFO设计",
+              "original_name": "D_phase3-2",
+              "chapter": "§11.2",
+              "content": "FIFO深度 + 流控",
+              "skippable": true,
+              "skip_condition": "无FIFO"
+            },
+            "stageD group3-step3": {
+              "name": "链表设计",
+              "original_name": "D_phase3-3",
+              "chapter": "§11.3",
+              "content": "链表管理",
+              "skippable": true,
+              "skip_condition": "无链表"
+            },
+            "stageD group3-step4": {
+              "name": "寄存器定义",
+              "original_name": "D4 / D_phase3-4",
+              "chapter": "§7.1",
+              "content": "地址映射 + 位域",
+              "skippable": true,
+              "skip_condition": "无寄存器"
+            }
+          }
+        },
+        "stageD group4": {
+          "name": "流控与时钟",
+          "steps": {
+            "stageD group4-step1": {
+              "name": "调度策略",
+              "original_name": "D5 / D_phase4-1",
+              "chapter": "§12.1",
+              "content": "仲裁方案",
+              "skippable": true,
+              "skip_condition": "单通道"
+            },
+            "stageD group4-step2": {
+              "name": "流控机制",
+              "original_name": "D_phase4-2",
+              "chapter": "§12.2",
+              "content": "反压方案",
+              "skippable": true,
+              "skip_condition": "无数据流"
+            },
+            "stageD group4-step3": {
+              "name": "CDC方案",
+              "original_name": "D6 / D_phase4-3",
+              "chapter": "§7.2",
+              "content": "跨时钟域处理",
+              "skippable": true,
+              "skip_condition": "单时钟域"
+            }
+          }
+        },
+        "stageD group5": {
+          "name": "优化与可靠性",
+          "steps": {
+            "stageD group5-step1": {
+              "name": "面积预估",
+              "original_name": "D7 / D_phase5-1",
+              "chapter": "§8.3",
+              "content": "面积预估 + 优化策略",
+              "skippable": false
+            },
+            "stageD group5-step2": {
+              "name": "时序分析",
+              "original_name": "D8 / D_phase5-2",
+              "chapter": "§6",
+              "content": "时序分析 + SDC约束",
+              "skippable": false
+            },
+            "stageD group5-step3": {
+              "name": "DFX设计",
+              "original_name": "D9 / D_phase5-3",
+              "chapter": "§9",
+              "content": "DFT设计",
+              "skippable": true,
+              "skip_condition": "无DFX"
+            },
+            "stageD group5-step4": {
+              "name": "可靠性设计",
+              "original_name": "D10 / D_phase5-4",
+              "chapter": "§10.1",
+              "content": "异常检测 + 错误处理",
+              "skippable": false
+            },
+            "stageD group5-step5": {
+              "name": "接口定义",
+              "original_name": "D11 / D_phase5-5",
+              "chapter": "§4",
+              "content": "端口列表 + 接口时序",
+              "skippable": false
+            },
+            "stageD group5-step6": {
+              "name": "功耗设计",
+              "original_name": "D12 / D_phase5-6",
+              "chapter": "§10.2",
+              "content": "功耗域划分 + Clock Gating",
+              "skippable": true,
+              "skip_condition": "无低功耗"
+            }
+          }
+        }
+      }
+    },
+    "stageE": {
+      "name": "子模块递归分解",
+      "description": "递归分解大型模块直到每个子模块 <3000 行",
+      "has_phases": false,
+      "trigger": "stageD group1-step1 RTL 行数 > 3000 行",
+      "output": "子模块 PR 目录"
+    },
+    "stageF": {
+      "name": "顶层集成",
+      "description": "所有子模块完成后执行顶层集成",
+      "has_phases": false,
+      "output": "拓扑图 + 接口检查"
+    }
+  },
+
+  "old_to_new_mapping": {
+    "deprecated_note": "D0~D14 编码已废弃。权威编码为 stageD-detail.json 的 sub_stage id（stageD group{N}-step{M}）。以下映射仅作历史参考。D5~D14 映射已删除（与 stageD-detail.json 的 original_name 矛盾），以 stageD-detail 为权威。",
+    "description": "旧编码到新编码的映射表（用于关联文件迁移）",
+    "stageB+": "stageB phase2",
+    "stageC0": "stageC phase1",
+    "D0": "stageD group1-step1",
+    "D1": "stageD group1-step3 / stageD group2-step1",
+    "D2": "stageD group2-step1 / stageD group2-step4",
+    "D3": "stageD group3-step1 / stageD group2-step4",
+    "D4": "stageD group3-step4",
+    "D_phase1": "stageD group1",
+    "D_phase2": "stageD group2",
+    "D_phase3": "stageD group3",
+    "D_phase4": "stageD group4",
+    "D_phase5": "stageD group5",
+    "D_phase1-1": "stageD group1-step1",
+    "D_phase1-2": "stageD group1-step2",
+    "D_phase1-3": "stageD group1-step3",
+    "D_phase2-1": "stageD group2-step1",
+    "D_phase2-2": "stageD group2-step2",
+    "D_phase2-3": "stageD group2-step3",
+    "D_phase2-4": "stageD group2-step4",
+    "D_phase3-1": "stageD group3-step1",
+    "D_phase3-2": "stageD group3-step2",
+    "D_phase3-3": "stageD group3-step3",
+    "D_phase3-4": "stageD group3-step4",
+    "D_phase4-1": "stageD group4-step1",
+    "D_phase4-2": "stageD group4-step2",
+    "D_phase4-3": "stageD group4-step3",
+    "D_phase5-1": "stageD group5-step1",
+    "D_phase5-2": "stageD group5-step2",
+    "D_phase5-3": "stageD group5-step3",
+    "D_phase5-4": "stageD group5-step4",
+    "D_phase5-5": "stageD group5-step5",
+    "D_phase5-6": "stageD group5-step6"
+  },
+
+  "file_mapping": {
+    "description": "stage/phase 定义到配置文件的映射",
+    "stageB phase1": {
+      "config_files": [".claude/shared/requirement-checklist.json", ".claude/shared/flow/stageB-detail.json", ".claude/shared/flow/protocol-mapping.json"],
+      "data_files": [".claude/shared/flow/execution-hints.json"]
+    },
+    "stageB phase2": {
+      "config_files": [".claude/shared/flow/stageB-detail.json（section: post_stageB_brainstorming）"],
+      "data_files": []
+    },
+    "stageC phase1": {
+      "config_files": [".claude/shared/flow/stageC-phase1-detail.json", ".claude/shared/conflict-detection-rules.json"],
+      "data_files": [".claude/shared/flow/conflict-detection-conditional.json", ".claude/shared/flow/conflict-detection-experimental.json", ".claude/shared/flow/reference-values.json"]
+    },
+    "stageC phase2": {
+      "config_files": [".claude/shared/flow/stageC-detail.json"],
+      "data_files": []
+    },
+    "stageD": {
+      "config_files": [".claude/shared/flow/stageD-detail.json", ".claude/shared/solution-template.json"],
+      "data_files": [".claude/shared/flow/area-estimation.json"]
+    },
+    "stageE": {
+      "config_files": [".claude/shared/flow/e-stage-detail.json", ".claude/shared/flow/e-stage-template.md"],
+      "data_files": [".claude/shared/flow/todolist_template.md"]
+    }
+  },
+
+  "validation_rules": {
+    "description": "编码校验规则",
+    "stage_pattern": "^stage(0|[A-F])$",
+    "phase_pattern": "^stage[BC] phase[12]$",
+    "group_pattern": "^stageD group[1-5]$",
+    "step_pattern": "^stageD group[1-5]-step[1-6]$",
+    "step_pattern_detail": {
+      "group1": "^stageD group1-step[1-3]$",
+      "group2": "^stageD group2-step[1-4]$",
+      "group3": "^stageD group3-step[1-4]$",
+      "group4": "^stageD group4-step[1-3]$",
+      "group5": "^stageD group5-step[1-6]$"
+    },
+    "step_pattern_note": "通用 pattern 用于快速匹配，detail pattern 用于精确验证。每个 group 的 step 范围不同。"
+  }
+}

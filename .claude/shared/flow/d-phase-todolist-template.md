@@ -1,164 +1,55 @@
-# D 阶段 Phase Todolist（自包含）
+# D 阶段 Todolist 模板
 
-> 本文件是 D 阶段某个 Phase 的执行指南，包含执行所需的全部信息。
-> Agent 执行时只需读取本文件，无需回溯上下文。
-> v7.4：自包含 todolist + 上下文隔离 + RTL 就绪度检查。
+> 每个 Phase 完成后更新状态。subagent 按此 todolist 执行。
 
----
+## Phase 执行跟踪
 
-## 0. 规则重载清单
+| Phase | 名称 | sub_stage 数 | 状态 | 完成时间 | 摘要文件 |
+|-------|------|-------------|------|----------|----------|
+| stageD group1 | 架构规划 | 3 | ⬜ pending | - | flow/stageD_group1_summary.md |
+| stageD group2 | 数据通路与控制 | 4 | ⬜ pending | - | flow/stageD_group2_summary.md |
+| stageD group3 | 存储与资源 | 4 | ⬜ pending | - | flow/stageD_group3_summary.md |
+| stageD group4 | 流控与跨时钟域 | 3 | ⬜ pending | - | flow/stageD_group4_summary.md |
+| stageD group5 | PPA、接口与可靠性 | 6 | ⬜ pending | - | flow/stageD_group5_summary.md |
 
-> **铁律：Phase 执行前必须重新读取以下文件。**
+## sub_stage 明细
 
-| # | 文件 | 路径 | 必须读取的章节 |
-|---|------|------|---------------|
-| R-01 | Agent 定义 | `.claude/agents/chip-requirement-arch.md` | 核心指令、铁律、D 阶段规则 |
-| R-02 | 编码规范 | `.claude/rules/coding-style.md` | 命名规范、模块声明、状态机 |
-| R-03 | 本 Phase todolist | 本文件 | §1~§8 全部 |
-| R-04 | 上一 Phase 摘要 | `flow/phase{N-1}_summary.md` | 架构决策、接口、数据通路 |
+### stageD group1（架构规划）
+| sub_stage | 名称 | 状态 | Q&A 数 | 交付章节 |
+|-----------|------|------|--------|----------|
+| stageD group1-step1 | 初始架构方案 + RTL行数估算 | ⬜ | ≥4 | §3 |
+| stageD group1-step2 | CBB选型与集成 | ⬜ | ≥3 | §13 |
+| stageD group1-step3 | 子模块划分细化 | ⬜ | ≥3 | §3.4 |
 
----
+### stageD group2（数据通路与控制）
+| sub_stage | 名称 | 状态 | Q&A 数 | 交付章节 |
+|-----------|------|------|--------|----------|
+| stageD group2-step1 | 数据通路设计 | ⬜ | ≥3 | §5.1 |
+| stageD group2-step2 | 流水线设计 | ⬜ | ≥3 | §5.4 |
+| stageD group2-step3 | 性能优化 | ⬜ | ≥3 | §8.1 |
+| stageD group2-step4 | 控制逻辑/FSM | ⬜ | ≥4 | §5.2-5.3 |
 
-## 1. Phase 信息
+### stageD group3（存储与资源）
+| sub_stage | 名称 | 状态 | Q&A 数 | 交付章节 |
+|-----------|------|------|--------|----------|
+| stageD group3-step1 | SRAM设计 | ⬜ | ≥4 | §11.1 |
+| stageD group3-step2 | FIFO设计 | ⬜ | ≥4 | §11.2 |
+| stageD group3-step3 | 链表设计 | ⬜ | ≥3 | §11.3 |
+| stageD group3-step4 | 寄存器定义 | ⬜ | ≥3 | §7.1 |
 
-| 字段 | 内容 |
-|------|------|
-| Phase ID | {D_phase1~D_phase5} |
-| Phase 名称 | {架构规划/数据通路与流水线/存储与资源管理/流控与时钟域/优化与可靠性} |
-| 包含子阶段 | {D_phaseX-1, D_phaseX-2, ...} |
-| 依赖 Phase | {D_phase1~D_phaseX-1} |
+### stageD group4（流控与时钟）
+| sub_stage | 名称 | 状态 | Q&A 数 | 交付章节 |
+|-----------|------|------|--------|----------|
+| stageD group4-step1 | 调度策略 | ⬜ | ≥3 | §12.1 |
+| stageD group4-step2 | 流控机制 | ⬜ | ≥3 | §12.2 |
+| stageD group4-step3 | CDC方案 | ⬜ | ≥3 | §7.2 |
 
----
-
-## 2. 输入上下文
-
-### 2.1 父模块上下文摘要
-
-| 字段 | 内容 |
-|------|------|
-| 模块名称 | {module_name} |
-| 模块功能 | {一句话描述} |
-| 关键约束 | {频率/面积/功耗/接口} |
-| REQ 汇总 | {Must/Should/Could 数量} |
-
-### 2.2 上一 Phase 输出摘要
-
-> 如果是 Phase 1，此节内容来自 stageC 需求汇总表。
-
-| 字段 | 内容 |
-|------|------|
-| 架构拓扑 | {集中式/分布式} |
-| 子模块列表 | {列表} |
-| 接口定义 | {端口名/位宽/协议} |
-| 数据通路 | {路径/延迟} |
-| 状态机 | {FSM/状态数} |
-| 存储 | {SRAM/FIFO/深度x位宽} |
-| 关键约束 | {约束/值} |
-
----
-
-## 3. Wiki 知识库参考
-
-> 头脑风暴前必须检索以下 Wiki 页面。
-
-| 知识类型 | 检索关键词 | 用途 |
-|----------|----------|------|
-| {类型} | {关键词} | {用途} |
-
----
-
-## 4. 子阶段 flow 定义
-
-> **铁律：子阶段必须严格按以下 flow 顺序执行。缺失则 [TODOLIST-ERROR] 停止。**
-
-| 子阶段 ID | 名称 | 必须执行 | 最小 Q&A 数 | 必须产出文件 | Wiki 检索 |
-|-----------|------|----------|------------|-------------|----------|
-| {D_phaseX-1} | {名称} | 是 | {N} | {输出文件} | {关键词} |
-| {D_phaseX-2} | {名称} | 是 | {N} | {输出文件} | {关键词} |
-
-### 4.1 子阶段详细要求
-
-#### {D_phaseX-1}: {名称}
-
-- **前置分析**：{分析步骤}
-- **头脑风暴焦点**：{焦点列表}
-- **Wiki 检索**：{关键词}
-- **必须产出**：{文件和章节}
-- **跳过条件**：{条件或"无"}
-
----
-
-## 5. RTL 就绪度检查
-
-> **铁律：Phase 完成后必须执行 RTL 就绪度检查。不通过则阻断下一 Phase。**
-
-| # | 检查项 | 验证方法 | PASS 条件 | FAIL 处理 |
-|---|--------|----------|-----------|-----------|
-| R-01 | 端口有精确信号名 | grep 端口列表 | 每个端口有信号名 | 阻断 |
-| R-02 | 状态机有编码方式 | grep 状态机定义 | 每个 FSM 有编码+位宽 | 阻断 |
-| R-03 | SRAM/FIFO 有深度计算 | grep 深度公式 | 每个实例有计算依据 | 阻断 |
-| R-04 | Credit 有位宽和初始值 | grep Credit 定义 | 每个 Credit 有完整定义 | 阻断 |
-| R-05 | 关键路径有组合逻辑级数 | grep 关键路径 | 每条路径有级数 | 阻断 |
-| R-06 | 流水线有 valid/ready 依赖 | grep 流水线定义 | 每级有握手依赖 | 阻断 |
-| R-07 | 寄存器有复位值 | grep 寄存器定义 | 每个寄存器有复位值 | 阻断 |
-| R-08 | CDC 信号有同步级数 | grep CDC 定义 | 每个跨域信号有同步方案 | 阻断 |
-
----
-
-## 6. Phase 输出
-
-### 6.1 必须产出文件
-
-| # | 文件 | 写入目录 | 说明 |
-|---|------|----------|------|
-| 1 | {name}_solution_v1.0.md | outputs/ | 方案文档对应章节 |
-| 2 | {name}_ADR_v1.0.md | outputs/ | ADR 文档（本 Phase 相关决策） |
-| 3 | phase{N}_summary.md | flow/ | Phase 输出摘要（传递给下一 Phase） |
-
-### 6.2 Phase 输出摘要格式
-
-```markdown
-# Phase {N} 输出摘要
-
-## 架构决策
-- 拓扑：{集中式/分布式}
-- 子模块：{列表}
-
-## 关键接口
-- {端口名}: {位宽} {协议}
-
-## 数据通路
-- {路径}: {延迟} cycles
-
-## 状态机
-- {FSM}: {状态数} states
-
-## 存储
-- {SRAM/FIFO}: {深度}x{位宽}
-
-## 关键约束
-- {约束}: {值}
-```
-
----
-
-## 7. 质量门控检查清单
-
-| # | 检查项 | 验证命令 | PASS 条件 | FAIL 处理 |
-|---|--------|----------|-----------|-----------|
-| QG-01 | 子阶段全部完成 | 检查 todolist 状态 | 全部 completed | 阻断 |
-| QG-02 | Q&A 数达标 | grep "Q:" | >= min_qa_pairs | 阻断 |
-| QG-03 | RTL 就绪度检查通过 | 执行 §5 检查 | 全部 PASS | 阻断 |
-| QG-04 | Phase 摘要已生成 | ls flow/phase{N}_summary.md | 文件存在 | 阻断 |
-| QG-05 | ADR 已更新 | grep 子阶段 ID ADR | 有记录 | 阻断 |
-
----
-
-## 8. 执行进度跟踪
-
-| 子阶段 | 名称 | 状态 | Q&A 数 | RTL 检查 |
-|--------|------|------|--------|----------|
-| {D_phaseX-1} | {名称} | pending | 0/N | - |
-| {D_phaseX-2} | {名称} | pending | 0/N | - |
-
-**Phase 完成条件**：所有子阶段 completed + RTL 就绪度检查 PASS + 摘要已生成
+### stageD group5（PPA、接口与可靠性）
+| sub_stage | 名称 | 状态 | Q&A 数 | 交付章节 |
+|-----------|------|------|--------|----------|
+| stageD group5-step1 | 面积预估 | ⬜ | ≥3 | §8.3 |
+| stageD group5-step2 | 时序分析 | ⬜ | ≥3 | §6 |
+| stageD group5-step3 | DFX设计 | ⬜ | ≥3 | §9 |
+| stageD group5-step4 | 可靠性设计 | ⬜ | ≥3 | §10.1 |
+| stageD group5-step5 | 接口定义 | ⬜ | ≥3 | §4 |
+| stageD group5-step6 | 功耗设计 | ⬜ | ≥3 | §10.2 |

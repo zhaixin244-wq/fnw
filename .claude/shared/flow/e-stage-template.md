@@ -1,7 +1,7 @@
 # E 阶段：子模块需求与功能点梳理
 
 > **触发条件**：D0 子模块划分后，任意子模块预估行数 > 3000 行，或总行数 > 8000 行
-> **输入**：D0 子模块列表 + stageC 需求汇总表
+> **输入**：D0 子模块列表 + stageC phase2 需求汇总表
 > **输出**：子模块需求矩阵 + 子模块功能点列表
 
 ---
@@ -10,7 +10,7 @@
 
 | # | 子模块名 | 职责 | 预估行数 | 全局 REQ 映射 | 独立 REQ 范围 |
 |---|----------|------|----------|---------------|---------------|
-| 1 | {name} | {职责} | {行数} | REQ-XXX, REQ-YYY | E-001 ~ E-XXX |
+| 1 | {name} | {职责} | {行数} | REQ-XXX, REQ-YYY | REQ-001 ~ E-XXX |
 | 2 | {name} | {职责} | {行数} | REQ-XXX, REQ-YYY | E-XXX+1 ~ E-YYY |
 
 ---
@@ -26,11 +26,11 @@
 | REQ-002 | AXI4 Master 接口 | Must |
 | REQ-003 | 数据搬运功能 | Must |
 
-**独立需求（E-REQ）**：
+**独立需求（REQ）**：
 
-| E-REQ | 需求描述 | 来源 | 优先级 |
+| REQ | 需求描述 | 来源 | 优先级 |
 |-------|----------|------|--------|
-| E-001 | {需求描述} | {来源} | Must/Should/Could |
+| REQ-001 | {需求描述} | {来源} | Must/Should/Could |
 
 **子模块功能点**：
 1. {功能点 1}
@@ -85,12 +85,12 @@
 
 ## 1. 递归分解结果
 
-| ID | 名称 | 层级 | 父节点 | 预估行数 | 状态 | 执行顺序 | 依赖 | 全局 REQ | E-REQ |
+| ID | 名称 | 层级 | 父节点 | 预估行数 | 状态 | 执行顺序 | 依赖 | 全局 REQ | REQ |
 |----|------|------|--------|----------|------|----------|------|----------|-------|
-| 1 | {子模块A} | 1 | 顶层 | {N} | pending | 1 | - | REQ-XXX | E-001~E-005 |
-| 1.1 | {孙模块A1} | 2 | A | {N} | pending | 1.1 | - | REQ-XXX | E-001~E-003 |
-| 1.2 | {孙模块A2} | 2 | A | {N} | pending | 1.2 | 1.1 | REQ-XXX | E-004~E-005 |
-| 2 | {子模块B} | 1 | 顶层 | {N} | pending | 2 | - | REQ-XXX | E-006~E-010 |
+| 1 | {子模块A} | 1 | 顶层 | {N} | pending | 1 | - | REQ-XXX | REQ-001~REQ-005 |
+| 1.1 | {孙模块A1} | 2 | A | {N} | pending | 1.1 | - | REQ-XXX | REQ-001~REQ-003 |
+| 1.2 | {孙模块A2} | 2 | A | {N} | pending | 1.2 | 1.1 | REQ-XXX | REQ-004~REQ-005 |
+| 2 | {子模块B} | 1 | 顶层 | {N} | pending | 2 | - | REQ-XXX | REQ-006~REQ-010 |
 
 ## 2. 递归分解流程
 
@@ -141,7 +141,7 @@ mkdir -p <module>_work/ds/doc/pr/{父模块名}/{孙模块名}/
 | 1 | 目录存在 | 缺失 → 阻断 F 阶段 |
 | 2 | 5 文件齐全 | <3 → 阻断 F 阶段 |
 | 3 | 目录结构统一 | 不符合 → 阻断 |
-| 4 | E-REQ 连续 | 跳号 → 阻断 |
+| 4 | REQ 连续 | 跳号 → 阻断 |
 | 5 | 全部 completed | pending → 阻断 |
 
 ## 5. 执行进度跟踪
@@ -166,7 +166,7 @@ mkdir -p <module>_work/ds/doc/pr/{父模块名}/{孙模块名}/
 ### 6.1 E 阶段执行步骤
 
 1. 读取 D0 子模块列表，提取每个子模块的基本信息
-2. 读取 stageC 需求汇总表，提取全局 REQ
+2. 读取 stageC phase2 需求汇总表，提取全局 REQ
 3. 为每个子模块梳理独立的需求与功能点
 4. 输出 E 阶段文档：子模块需求矩阵
 5. 用户逐个子模块确认
@@ -176,12 +176,12 @@ mkdir -p <module>_work/ds/doc/pr/{父模块名}/{孙模块名}/
 
 ### 6.2 子模块执行规则（v6.6：多级递归 + todolist 强制执行）
 
-- **子模块起始阶段**：子模块从 **stageB+**（头脑风暴 Feature Discovery）开始，而非直接跳到 D0
+- **子模块起始阶段**：子模块从 **stageB phase2**（头脑风暴 Feature Discovery）开始，而非直接跳到 D0
 - **B+ 多轮头脑风暴**：
   - 第 1 轮：按 5 个维度（功能扩展/性能优化/兼容性/可测试性/可维护性）探索子模块特有 feature，参考 Wiki 知识库
-  - 用户确认第 1 轮结果 → 追加 E-REQ → 进入第 2 轮
+  - 用户确认第 1 轮结果 → 追加 REQ → 进入第 2 轮
   - 用户不确认 → 根据反馈调整 → 重新探索
-  - 第 2 轮：基于已追加的 E-REQ，深入探索子 feature
+  - 第 2 轮：基于已追加的 REQ，深入探索子 feature
   - 重复直到：用户明确「没有更多需求」或连续 2 轮无新 feature（最多 5 轮）
 - **多级递归**（v6.6）：递归不限于两级，持续到所有叶子节点 <3000 行。目录为 level{N}_{name}/ 逐级嵌套
 - **逐级执行**（v6.6）：每级独立执行，通过该级 todolist 跟踪状态。先生成顶层 outputs+todolist，再逐个子模块执行
@@ -190,7 +190,7 @@ mkdir -p <module>_work/ds/doc/pr/{父模块名}/{孙模块名}/
   - 子模块**严格按上级 todolist 定义的 flow 执行**
   - **如果 todolist 缺失 → 立即报错 `[TODOLIST-ERROR]` → 通知用户 → 停止 Agent 所有后续执行**
 - **全局完成检查**（v6.6）：所有流程完成后，扫描所有层级 todolist，确认全部 completed → 才进入 F 阶段
-- **B+ 后续流程**：stageC0 → stageC → stageD（D0 估算 + D1~D14）→ stageE（如有下级模块）
+- **stageB phase2 后续流程**：stageC phase1 → stageC phase2 → stageD（D0 估算 + D1~D14）→ stageE（如有下级模块）
 - **完整交付文档**：每个子模块产出 6 个文件（PR/需求汇总/方案/ADR/追溯图/todolist）+ flow/ 记录
 
 ### 6.3 子模块交付文档要求
@@ -252,18 +252,18 @@ for each 子模块 in todolist:
 
 | # | outputs/ 文件 | flow/ 文件 | 说明 |
 |---|--------------|------------|------|
-| 1 | `{name}_pr_v1.0.md` | `stageB_plus.md` | PR / 头脑风暴（必须） |
-| 2 | `{name}_requirement_summary_v1.0.md` | `stageC0.md` | 需求汇总 / 矛盾检测 |
-| 3 | `{name}_solution_v1.0.md` | `stageC.md` | 方案 / 需求确认 |
+| 1 | `{name}_pr_v1.0.md` | `stageB_phase2.md` | PR / 头脑风暴（必须） |
+| 2 | `{name}_requirement_summary_v1.0.md` | `stageC_phase1.md` | 需求汇总 / 矛盾检测 |
+| 3 | `{name}_solution_v1.0.md` | `stageC_phase2.md` | 方案 / 需求确认 |
 | 4 | `{name}_ADR_v1.0.md` | `stageD.md` | ADR / 方案细化 |
 | 5 | `{name}_trace_graph.yaml` | `stageE.md` | 追溯图 / 递归分解 |
 | 6 | `{name}_todolist.md` | - | todolist（如有下级） |
 
 **质量标准**：
-- 需求汇总表：E-REQ 编号连续无跳号，每个 REQ 对应一个可验证功能点，优先级分级
+- 需求汇总表：REQ 编号连续无跳号，每个 REQ 对应一个可验证功能点，优先级分级
 - 方案文档：覆盖 §3~§14 所有章节，PPA 必须量化或标注"待综合验证"
 - ADR：跳过的 D 子阶段必须标注原因+影响+替代方案
-- 追溯图：节点数 = E-REQ 总数，每个节点有 title/ref/upstream/downstream
+- 追溯图：节点数 = REQ 总数，每个节点有 title/ref/upstream/downstream
 - 规格自检：每个子模块完成后执行 5 项自检（占位符/一致性/范围/模糊性/REQ覆盖度）
 
 **目录结构示例**：

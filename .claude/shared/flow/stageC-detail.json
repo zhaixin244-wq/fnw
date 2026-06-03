@@ -1,6 +1,6 @@
 {
   "version": "1.3",
-  "description": "stageC 需求确认汇总 - 详细规则",
+  "description": "stageC phase2 需求确认汇总 - 详细规则",
 
   "confirmation_rules": {
     "confirm": ["确认", "正确", "没问题", "对", "OK"],
@@ -9,30 +9,7 @@
     "reject_partial": ["大部分没问题，XX有点疑问"],
     "rule": "正向确认词后紧跟转折词/省略号/疑问 → 不确认。仅纯正向确认词 → 确认。",
     "semantic_judgment": "关键词列表仅作辅助参考。实际判断优先利用 LLM 理解用户意图：对于'大概可以'、'先这样'、'还行吧'等灰色地带表达，结合上下文语义判断是否真正确认。若语义倾向确认但存在犹豫，标注为'部分确认'并记录犹豫点。",
-    "grey_expression_handling": {
-      "description": "灰色表达处理增强规则",
-      "grey_expressions": ["大概", "可能", "应该", "差不多", "还行", "先这样", "暂定", "初步"],
-      "action": "标注'部分确认'，记录犹豫点，追问 1 次：'您对这个值是否有疑虑？如果有，我可以提供其他选项。'",
-      "documentation": "在 stageB 输出中标注：'⚠️ 部分确认 - 用户表达犹豫，已追问并记录'"
-    },
-    "grey_expression_system": {
-      "description": "灰色表达系统化处理规则",
-      "detection": {
-        "keywords": ["大概", "可能", "应该", "差不多", "还行", "先这样", "暂定", "初步", "估计", "大约"],
-        "patterns": ["{keyword}+{value}", "{value}+{keyword}"]
-      },
-      "handling": {
-        "step1": "标注'部分确认'",
-        "step2": "追问 1 次：'您对这个值是否有疑虑？'",
-        "step3": "记录追问结果",
-        "step4": "如果仍不明确，使用默认值并标注'推断值-待确认'"
-      },
-      "documentation": {
-        "stageB": "⚠️ 部分确认 - 用户表达犹豫，已追问并记录",
-        "stageC": "⚠️ 部分确认 - 来源：stageB 灰色表达处理",
-        "trace_graph": "confirmation_status: partial_confirmed"
-      }
-    }
+    "grey_expression_system": "详见 stageB-detail.json grey_expression_system（权威定义，stageB 首次使用该规则）"
   },
 
   "priority_grading": {
@@ -52,6 +29,7 @@
       "REQ-027 → conditional_optional，仅汽车/工业场景激活",
       "REQ-028 → conditional_optional，仅高频模块激活"
     ],
+    "conditional_optional_note": "conditional_optional 类型的 REQ（REQ-022~028），在激活后（trigger_rules 触发）按上述 default_rules 分配优先级；未激活时标记为「不适用」，不参与优先级分配。例如 REQ-026 在芯片级项目中激活后为 Should，IP 级项目未激活时为不适用。",
     "dynamic_overrides": [
       { "req": "REQ-007", "default": "Could", "tag": "low_power_critical", "override": "Must", "condition": "场景 tag 含 low_power_critical（如 IoT/穿戴设备）" },
       { "req": "REQ-008", "default": "Could", "tag": "dft_critical", "override": "Should", "condition": "场景 tag 含 dft_critical（如车规/高可靠性芯片）" },
@@ -64,9 +42,8 @@
     "description": "变更冷却机制 — 防止同一 REQ 无限循环修改",
     "max_changes_per_req": 3,
     "rules": [
-      "同一 REQ 变更次数 < 3 → 正常记录变更日志，重走 stageB 对应项",
-      "同一 REQ 变更次数 = 3 → 强制暂停，提示'该约束项已变更3次，请给出最终决策'",
-      "同一 REQ 变更次数 > 3 → 标记为'已冻结待定'，要求用户提供书面确认或跳过"
+      "同一 REQ 变更次数 < 3 → 正常记录变更日志，重走 stageB phase1 对应项",
+      "同一 REQ 变更次数 ≥ 3 → 强制暂停，提示'该约束项已变更3次，请给出最终决策'"
     ],
     "tracking": "变更次数在 PR 沟通记录的 change_log 中累加计数，按 req_id 统计"
   },

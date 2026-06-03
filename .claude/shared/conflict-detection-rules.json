@@ -1,6 +1,6 @@
 {
   "version": "1.5",
-  "description": "芯片需求矛盾检测规则（基础14条）- reference_values 在 flow/reference-values.json 按规则ID索引。条件规则（ANA/VER）在 flow/conflict-detection-conditional.json。",
+  "description": "芯片需求矛盾检测规则（基础17条）- reference_values 在 flow/reference-values.json 按规则ID索引。条件规则（ANA/VER）在 flow/conflict-detection-conditional.json。",
 
   "reference_values_ref": ".claude/shared/flow/reference-values.json",
 
@@ -158,6 +158,33 @@
       "example": "12个功能 + 3个接口 + 多时钟域，验证周期仅4周",
       "involved_keys": ["REQ-003", "REQ-004", "REQ-006"],
       "detection_tip": "从REQ-003的功能数量和REQ-006的时钟域数量推算验证复杂度系数，与REQ-004的交付时间约束对比：功能数×接口数×CDC系数对应的验证周期 > 交付预算 → 标记矛盾，建议减少功能或增加验证资源。"
+    },
+    {
+      "id": "DYN-01",
+      "name": "功能重叠检测",
+      "logic": "新增 REQ 与已有 REQ 的功能描述是否存在语义重叠",
+      "ref_values_key": null,
+      "example": "REQ-029 追加「支持 AXI 写突发」但 REQ-002 已确认 AXI4 接口",
+      "involved_keys": ["REQ-029+"],
+      "detection_tip": "将新增 REQ 的功能描述与 REQ-001~REQ-028 的描述做语义相似度比较，重叠度>70% 标记警告。不阻断流程，仅提示用户确认是否重复。"
+    },
+    {
+      "id": "DYN-02",
+      "name": "PPA 交叉矛盾",
+      "logic": "新增 REQ 的 PPA 约束是否与已有 REQ 的 PPA 约束矛盾",
+      "ref_values_key": null,
+      "example": "REQ-029 要求延迟≤1cycle 但 REQ-004 已确认延迟≤5cycles 且功能复杂度不变",
+      "involved_keys": ["REQ-029+", "REQ-004", "REQ-005"],
+      "detection_tip": "检查新增 REQ 是否包含延迟/面积/功耗约束，与 REQ-004/005 的已确认值交叉验证。新增约束更严格时标记矛盾。"
+    },
+    {
+      "id": "DYN-03",
+      "name": "接口冲突检测",
+      "logic": "新增 REQ 的接口需求是否与 REQ-002 已确认的接口协议冲突",
+      "ref_values_key": null,
+      "example": "REQ-029 要求 SPI 接口但 REQ-002 已确认仅 AXI4+APB",
+      "involved_keys": ["REQ-029+", "REQ-002"],
+      "detection_tip": "检查新增 REQ 是否引入 REQ-002 未涵盖的新接口协议。如有，标记需更新 REQ-002。"
     }
   ],
 
@@ -165,7 +192,7 @@
   "conditional_rules_note": "ANA-01~04 和 VER-01~03 共 7 条条件检测规则在独立文件中，仅当 REQ-022/023/024/025 激活时加载",
 
   "experimental_rules_ref": ".claude/shared/flow/conflict-detection-experimental.json",
-  "experimental_rules_note": "EXP-01~05 共 5 条实验性规则，从 coverage-model gap 自动生成。stageC0 检测时可选加载，输出时标注[实验性]。需人工评审后升级。",
+  "experimental_rules_note": "EXP-01~05 共 5 条实验性规则，从 coverage-model gap 自动生成。stageC phase1 检测时可选加载，输出时标注[实验性]。需人工评审后升级。",
 
   "output_format": {
     "conflict_detected": "## 矛盾检测结果\n\n| 矛盾编号 | 涉及REQ | 矛盾描述 |\n|----------|---------|----------|\n| {id} | {req_ids} | {description} |\n\n**调和方案**：\n| 方案 | 调整 | 影响 |\n|------|------|------|\n| A | {adjustment_a} | {impact_a} |\n| B | {adjustment_b} | {impact_b} |\n\n请选择调和方案，或提供其他调整方向。",

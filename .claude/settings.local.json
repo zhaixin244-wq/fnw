@@ -687,7 +687,24 @@
       "Bash(echo \"29: $\\(wc -c < 29_marvell_structera_s_260lane_newsroom.html\\) bytes\")",
       "Bash(echo \"30: $\\(wc -c < 30_marvell_pcie_scale_up_blog.html\\) bytes\")",
       "Bash(docker context ls *)",
-      "Bash(docker context *)"
+      "Bash(docker context *)",
+      "Bash([ -f \"D:/work/ai/fnw/arch/$f\" ])",
+      "Bash(echo '✅ __TRACKED_VAR__')",
+      "Bash(echo '❌ __TRACKED_VAR__ \\(不存在\\)')",
+      "Bash(grep -c \"D[0-9]\" .claude/shared/solution-template.json)",
+      "Bash(grep \"deprecated_note\" .claude/shared/flow/stage-definition.json)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\link_\\\\.claude\\\\agents\\\\*requirement*\")",
+      "Bash(scoop install *)",
+      "Bash(ln -sf /d/npm-global/node_modules/@vscode/ripgrep/node_modules/@vscode/ripgrep-win32-x64/bin/rg.exe /usr/local/bin/rg.exe)",
+      "Bash(cp /d/npm-global/node_modules/@vscode/ripgrep/node_modules/@vscode/ripgrep-win32-x64/bin/rg.exe /usr/local/bin/rg.exe)",
+      "Bash(mkdir -p /c/Users/link_/bin)",
+      "Bash(cp /d/npm-global/node_modules/@vscode/ripgrep/node_modules/@vscode/ripgrep-win32-x64/bin/rg.exe /c/Users/link_/bin/rg.exe)",
+      "Bash(cp /c/Users/link_/bin/rg.exe /mingw64/bin/rg.exe)",
+      "Bash(cp /c/Users/link_/bin/rg.exe /usr/bin/rg.exe)",
+      "Bash(cp /c/Users/link_/bin/rg.exe /c/Windows/system32/rg.exe)",
+      "Bash(cp /c/Users/link_/bin/rg.exe /c/Users/link_/AppData/Local/Microsoft/WindowsApps/rg.exe)",
+      "Bash(cp /c/Users/link_/bin/rg.exe /c/Users/link_/AppData/Roaming/npm/rg.exe)",
+      "Bash(cp /c/Users/link_/bin/rg.exe /c/ProgramData/chocolatey/bin/rg.exe)"
     ]
   }
 }

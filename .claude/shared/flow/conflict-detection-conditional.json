@@ -4,7 +4,7 @@
 
   "reference_values_ref": ".claude/shared/flow/reference-values.json",
   "trigger_condition": "仅当 checklist 中对应 REQ-022/023/024/025 状态为 confirmed 时执行检测",
-  "load_condition": "stageC0 时，若任何 REQ-022~025 激活，则 Read 本文件；否则跳过",
+  "load_condition": "stageC phase1 时，若任何 REQ-022~025 激活，则 Read 本文件；否则跳过",
 
   "detection_rules": [
     {
