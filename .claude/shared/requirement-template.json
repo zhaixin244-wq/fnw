@@ -98,9 +98,10 @@
 
     "stageC phase1": {
       "name": "矛盾检测（stageC phase1）",
-      "description": "自动执行全部17项基础检测 + 按需加载条件检测 + 可选实验性检测。详见 flow/stageC-phase1-detail.json stageC_phase1 section",
+      "description": "自动执行全部17项基础检测 + 按需加载条件检测 + 可选实验性检测。检测完成后必须暂停等待用户确认结果。详见 flow/stageC-phase1-detail.json stageC_phase1 section",
       "data_source": ".claude/shared/conflict-detection-rules.json",
       "detail_source": ".claude/shared/flow/stageC-phase1-detail.json",
+      "step_mode_note": "检测自动执行，但结果必须经用户确认后才能进入 stageC phase2",
       "experimental_rules": {
         "source": ".claude/shared/flow/conflict-detection-experimental.json",
         "load_condition": "可选加载，输出时标注[EXP]前缀。stageC phase1 基础检测完成后自动加载执行。",
@@ -146,6 +147,7 @@
 
     "change_handling": {
       "steps": ["记录变更日志", "重走变更项stageB phase1", "stageC phase2汇总", "重新确认", "方案阶段则重走受影响的D子阶段"],
+      "transitions_ref": "详见 stage-definition.json change_transitions 字段",
       "incremental_diff": {
         "description": "变更时仅重检受影响的矛盾检测规则，避免全量重跑",
         "mapping_source": ".claude/shared/flow/req-to-rules-mapping.json",
@@ -159,8 +161,8 @@
       "description": "将方案设计拆分为 stageD group1-step1~group5-step6 共 20 个子阶段，每个子阶段通过 brainstorming 与用户深入交互，沟通记录沉淀到 ADR",
       "detail_source": ".claude/shared/flow/stageD-detail.json",
       "data_source": ".claude/shared/solution-template.json",
-      "sub_stages": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3", "stageD group2-step1", "stageD group2-step2", "stageD group2-step4", "stageD group2-step3", "stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4", "stageD group4-step1", "stageD group4-step2", "stageD group4-step3", "stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
-      "sub_stages_note": "group2 内 step4（控制逻辑/FSM）在 step3（性能优化）之前执行，因为性能优化需参考 FSM 状态数。执行顺序以 stageD-detail.json recommended_execution_order 为权威。",
+      "sub_stages": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3", "stageD group2-step1", "stageD group2-step2", "stageD group2-step3", "stageD group2-step4", "stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4", "stageD group4-step1", "stageD group4-step2", "stageD group4-step3", "stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
+      "sub_stages_note": "group2 内 step3（控制逻辑/FSM）在 step4（性能优化）之前执行，因为性能优化需参考 FSM 状态数。自然编号顺序即为正确执行顺序。",
       "default_execution_mode": "步进模式",
       "adr_record": "每个 stageD 子阶段的头脑风暴沟通记录追加到 ADR 文档「方案细化记录」章节",
       "adr_format": "Nygard",
@@ -176,6 +178,64 @@
       { "scenario": "信息不足且用户无法补充", "action": "标注为假设条件" },
       { "scenario": "用户跳过确认直接出方案", "action": "1.列出所有未确认项 2.标注为「假设值-待确认」3.在方案文档和ADR中单独记录假设条件 4.暂停，要求用户逐项确认假设后才能继续（步进模式，禁止强制完成）", "step_mode_enforcement": true }
     ]
+  },
+
+  "progress_tracking": {
+    "description": "执行进度追踪机制 - agent 必须维护以下计数器，用于判断跳转条件",
+    "counters": {
+      "stageB phase1": {
+        "name": "REQ 确认进度",
+        "current": "completed_reqs_count",
+        "total": 28,
+        "check_point": "current == total 时跳转 stageB phase2",
+        "output_format": "[PROGRESS] stageB phase1 进度：{current}/28 项已确认",
+        "source": "requirement-checklist.json constraint_items 数量"
+      },
+      "stageD": {
+        "name": "step 执行进度",
+        "current_step": "当前 step 编码（如 stageD group2-step4）",
+        "completed_steps": ["已完成 step 列表"],
+        "skipped_steps": ["已跳过 step 列表（含跳过原因）"],
+        "total_steps": 20,
+        "check_point": "所有 step 完成或跳过后进入 stageF",
+        "output_format": "[PROGRESS] stageD 进度：{completed}/{total} step 已完成，{skipped} 已跳过",
+        "execution_order_source": "stageD-detail.json recommended_execution_order"
+      },
+      "stageE": {
+        "name": "子模块完成进度",
+        "completed_submodules": ["已完成子模块列表"],
+        "pending_submodules": ["待完成子模块列表"],
+        "total_submodules": ["所有子模块列表"],
+        "check_point": "completed == total 时进入 stageF",
+        "output_format": "[PROGRESS] stageE 进度：{completed}/{total} 子模块已完成",
+        "completion_mark": "每个子模块完成 stageD group5-step6 后在 todolist 中标记 status: completed"
+      }
+    },
+    "progress_check_rules": {
+      "description": "进度检查规则 - agent 在每个关键节点必须检查进度",
+      "check_points": [
+        {
+          "stage": "stageB phase1",
+          "trigger": "每确认 1 个 REQ 后",
+          "action": "检查 completed_reqs_count == 28，是则输出 [STAGE-TRANSITION] stageB phase1 → stageB phase2"
+        },
+        {
+          "stage": "stageD group1-step1",
+          "trigger": "RTL 行数估算完成后",
+          "action": "检查 rtl_line_estimate > 3000，是则输出 [STAGE-TRANSITION] stageD → stageE"
+        },
+        {
+          "stage": "stageD 各 step",
+          "trigger": "每个 step 完成后",
+          "action": "检查当前 step 是否为 recommended_execution_order 中的最后一个，是则检查是否所有 step 都已完成或跳过"
+        },
+        {
+          "stage": "stageE",
+          "trigger": "每个子模块完成 stageD 后",
+          "action": "检查 all_submodules_completed == true，是则输出 [STAGE-END] stageE 并进入 stageF"
+        }
+      ]
+    }
   },
 
   "skill_contracts": [

@@ -97,7 +97,7 @@
       "phase": "stageD group2"
     },
     {
-      "id": "stageD group2-step4",
+      "id": "stageD group2-step3",
       "name": "控制逻辑/FSM",
       "description": "通过头脑风暴与用户沟通，细化模块的控制流细节。",
       "trigger_condition": "默认触发",
@@ -125,7 +125,7 @@
       "output": {
         "solution_section": "§5.2 控制逻辑 + §5.3 状态机",
         "deliverables": [
-          "状态机图（stageD group2-step4 FSM 图）",
+          "状态机图（stageD group2-step3 FSM 图）",
           "控制信号列表",
           "状态转移条件表"
         ]
@@ -134,18 +134,18 @@
       "phase": "stageD group2"
     },
     {
-      "id": "stageD group2-step3",
+      "id": "stageD group2-step4",
       "name": "性能优化",
       "description": "通过头脑风暴与用户沟通，分析模块的性能瓶颈并制定优化方案。",
       "trigger_condition": "默认触发",
       "depends_on": [
         "stageD group2-step1",
-        "stageD group2-step4"
+        "stageD group2-step3"
       ],
       "input_analysis": {
         "source": [
           "stageD group2-step1 数据流图",
-          "stageD group2-step4 控制逻辑",
+          "stageD group2-step3 控制逻辑",
           "stageC phase2 REQ-004 延迟与吞吐"
         ],
         "analysis_steps": [

@@ -1,0 +1,84 @@
+{
+  "scenario_id": "edge_cases",
+  "name": "边界条件需求采集",
+  "description": "测试 Agent 处理边界条件和异常情况的能力。包括需求变更、矛盾发现、复杂约束等场景。",
+  "module_name": "hybrid_controller",
+  "user_persona": "challenging_reviewer",
+
+  "initial_input": "帮我做一下混合控制器的需求采集，这个有点复杂",
+
+  "context": {
+    "soc_position": "多总线桥接器",
+    "upstream": "APB + AXI + SPI",
+    "downstream": "AXI4 + 自定义接口",
+    "complexity": "高",
+    "constraints": ["面积严格限制", "功耗严格限制", "性能必须满足"],
+    "priority": "面积 = 功耗 = 性能（同等重要）",
+    "process": "14nm",
+    "frequency": "400MHz"
+  },
+
+  "expected_stages": [
+    "stage0",
+    "stageA",
+    "stageB phase1",
+    "stageB phase2",
+    "stageC phase1",
+    "stageC phase2",
+    "stageD"
+  ],
+
+  "expected_deliverables": [
+    "flow/hybrid_controller_pr_v1.0.md",
+    "outputs/hybrid_controller_requirement_summary_v1.0.md",
+    "outputs/hybrid_controller_solution_v1.0.md",
+    "outputs/hybrid_controller_ADR_v1.0.md",
+    "outputs/hybrid_controller_trace_graph.yaml"
+  ],
+
+  "timeout_minutes": 50,
+  "max_dialog_rounds": 100,
+
+  "evaluation_focus": [
+    "矛盾处理",
+    "需求变更应对",
+    "复杂约束平衡",
+    "对抗性问题回答"
+  ],
+
+  "pass_criteria": {
+    "min_stages_completed": 5,
+    "min_req_count": 25,
+    "required_deliverables": 4,
+    "max_gate_failures": 0,
+    "conflict_resolution_required": true
+  },
+
+  "dialog_hints": {
+    "stage0": {
+      "expected_questions": 4,
+      "key_topics": ["桥接角色", "多协议支持", "复杂约束"],
+      "user_behavior": "提出挑战性问题，如'如何平衡性能和面积？'"
+    },
+    "stageA": {
+      "expected_questions": 5,
+      "key_topics": ["SoC 位置", "核心功能", "PPA 优先级"],
+      "user_behavior": "要求详细解释权衡方案"
+    },
+    "stageB": {
+      "expected_questions": 30,
+      "key_topics": ["多协议约束", "冲突检测", "复杂流控"],
+      "user_behavior": "故意设置矛盾需求，测试检测能力"
+    },
+    "stageC": {
+      "expected_questions": 4,
+      "key_topics": ["矛盾检测", "调和方案", "需求确认"],
+      "user_behavior": "对调和方案提出质疑"
+    },
+    "stageD": {
+      "expected_questions": 30,
+      "key_topics": ["架构方案", "多协议桥接", "复杂流控", "时序分析"],
+      "user_behavior": "挑战设计决策，要求详细论证"
+    }
+  }
+}

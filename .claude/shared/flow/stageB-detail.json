@@ -13,6 +13,22 @@
     "7. 每项确认后实时矛盾检查（REQ-001↔REQ-013, REQ-005↔REQ-009, REQ-002↔REQ-003, REQ-004↔REQ-006↔REQ-011）",
     "8. 每项确认前检查变更频率：同一 REQ 已变更 ≥3 次 → 强制暂停，要求用户给出最终决策（详见 stageC-detail.json change_cooldown）"
   ],
+  "step_mode_enforcement": {
+    "description": "stageB phase1 步进模式强制执行规则",
+    "rule": "每确认 1 个约束项后必须暂停，等待用户确认后再处理下一项",
+    "pause_marker": "[STEP-PAUSE] REQ-{NNN} ({约束项名}) 已确认，当前进度 {N}/28。等待用户确认后继续下一项。",
+    "prohibited": [
+      "禁止批量确认多个约束项而不暂停",
+      "禁止在用户说'继续'后自动确认多个 REQ",
+      "禁止跳过暂停检查点"
+    ],
+    "batch_confirmation_optimization": {
+      "description": "用户可选择批量确认以加速流程",
+      "trigger": "用户明确说'批量确认'或'自动确认剩余项'",
+      "behavior": "Agent 展示剩余项清单，用户确认后批量处理，但每 5 项仍需暂停一次",
+      "pause_marker_batch": "[STEP-PAUSE] 已批量确认 REQ-{NNN}~REQ-{MMM}，进度 {N}/28。等待用户确认后继续。"
+    }
+  },
 
   "output_template": {
     "confirmed": "| REQ-XXX | {约束项} | ✅ {确认值} | - |",

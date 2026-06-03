@@ -1,14 +1,73 @@
 # 代办清单门控机制（共享）
 
 > 所有芯片架构 Agent 激活后的第一步行为规范。
+> **权威源声明**：步进模式的定义以本文件为准，其他文件（agent 定义、JSON 配置）引用本文件。
 
-## 执行模式选择
+---
+
+## 步进铁律（权威定义）
 
 > **铁律：仅支持步进模式，禁止连续模式。每步完成后必须暂停等待用户确认。**
 
+### 步进粒度定义
+
+| 层级 | 编码格式 | 最小执行单元 | 暂停检查点 |
+|------|----------|-------------|-----------|
+| 大阶段 | `stage{X}` | stage0/stageA/stageE/stageF | stage 完成后暂停 |
+| 子阶段 | `stage{X} phase{N}` | stageB phase1/phase2, stageC phase1/phase2 | phase 完成后暂停 |
+| D 子阶段 | `stageD group{N}-step{M}` | stageD group1-step1 ~ group5-step6 | **每个 step 完成后暂停** |
+
+### 阶段切换重载规则（防遗忘机制）
+
+> **铁律：每次进入新 stage、新 phase 或新 group 时，必须重新 Read 该阶段对应的 detail 文件。**
+> 长对话中 L2 阶段层会被压缩/替换，仅靠记忆无法保证规则完整性。
+
+| 切换场景 | 必须重新 Read 的文件 | 检查点 |
+|----------|---------------------|--------|
+| 进入 stageB phase1 | `requirement-checklist.json` + `stageB-detail.json` + `protocol-mapping.json` | Read 完成后输出确认 |
+| 进入 stageB phase2 | `stageB-detail.json`（section: post_stageB_brainstorming） | Read 完成后输出确认 |
+| 进入 stageC phase1 | `conflict-detection-rules.json` + `stageC-phase1-detail.json` | Read 完成后输出确认 |
+| 进入 stageC phase2 | `stageC-detail.json` | Read 完成后输出确认 |
+| 进入 stageD 每个 group | `stageD-group{N}.json`（N=当前 group 编号） | Read 完成后输出确认 |
+| 进入 stageE | `e-stage-detail.json` | Read 完成后输出确认 |
+
+**违反处理**：如果 Agent 未重新 Read 就开始执行，用户应要求 Agent 先 Read 对应文件再继续。
+
+### 进度跟踪规则（防漂移机制）
+
+> **每次 stage/phase/step 切换时，必须更新 PR 流文件头部的进度字段。**
+
+| 字段 | 更新时机 | 格式 |
+|------|----------|------|
+| `当前进度` | 每次进入新执行单元 | `当前进度：{stage/phase/step}` |
+| `已完成` | 每次完成执行单元后追加 | `已完成：{单元1}, {单元2}, ...` |
+
+**用途**：即使上下文被压缩，Agent 可通过 Read PR 流文件头部快速恢复当前位置，无需依赖上下文记忆。
+
+### 强制暂停标记
+
+> **每个执行单元完成后，必须输出以下标记并暂停等待用户确认：**
+
+```
+[STEP-PAUSE] {stage/phase/step} 已完成，等待用户确认后继续。
+```
+
+**禁止行为**：
+- ❌ 禁止自动继续下一个 step/phase/stage
+- ❌ 禁止批量处理多个约束项而不暂停
+- ❌ 禁止将多个 step 视为一个任务连续执行
+
+**确认信号**：
+- 用户明确回复"确认"/"OK"/"继续"/"下一步"等肯定表达
+- 用户回复具体内容时，视为对当前步骤的反馈，处理后再次暂停
+
+---
+
+## 执行模式选择
+
 | 模式 | 触发条件 | 行为 |
 |------|----------|------|
-| **步进模式** （默认模式）| 默认，所有场景 | 每步独立执行，完成后暂停等待用户确认 |
+| **步进模式** （默认模式）| 默认，所有场景 | 每步独立执行，完成后输出 `[STEP-PAUSE]` 并暂停等待用户确认 |
 | **调试模式** | 用户明确说"调试模式"、"debug mode"、"后台测试" | Agent 后台执行，自动完成全流程，输出评估报告。**仅用于测试 Agent 流程和文档质量** |
 
 **判断规则**：

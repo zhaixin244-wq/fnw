@@ -20,6 +20,41 @@
       "conditional_load": "检查 REQ-022/023/024/025 状态，任一 confirmed → Read conflict-detection-conditional.json 执行额外7条检测",
       "passive": "stageB中用户发现矛盾 → 立即暂停输出调和方案"
     },
+    "step_mode_enforcement": {
+      "description": "stageC phase1 步进模式强制执行规则",
+      "rule": "矛盾检测自动执行，但检测完成后必须暂停等待用户确认结果",
+      "execution_phases": [
+        {
+          "phase": "detection",
+          "behavior": "自动执行全部 17 项基础检测 + 条件检测 + 实验性检测",
+          "pause": false,
+          "note": "检测过程无需用户干预"
+        },
+        {
+          "phase": "result_review",
+          "behavior": "展示检测结果，等待用户确认",
+          "pause": true,
+          "pause_marker": "[STEP-PAUSE] stageC phase1 矛盾检测完成。检测结果如下，请确认后继续。\n- 基础检测：17 项\n- 条件检测：{N} 项\n- 实验性检测：{N} 项\n- 发现矛盾：{N} 个"
+        },
+        {
+          "phase": "conflict_resolution",
+          "behavior": "如有矛盾，展示调和方案并等待用户选择",
+          "pause": true,
+          "pause_marker": "[STEP-PAUSE] 发现 {N} 个矛盾，请选择调和方案后继续。",
+          "skip_if": "无矛盾时跳过此阶段"
+        },
+        {
+          "phase": "coverage_analysis",
+          "behavior": "自动执行覆盖率分析",
+          "pause": false,
+          "note": "覆盖率分析自动执行，结果随矛盾检测结果一起展示"
+        }
+      ],
+      "prohibited": [
+        "禁止在检测完成后直接进入 stageC phase2 而不等待用户确认",
+        "禁止自动选择调和方案"
+      ]
+    },
     "data_source": ".claude/shared/conflict-detection-rules.json",
     "conditional_rules_source": ".claude/shared/flow/conflict-detection-conditional.json",
     "conditional_rules_note": "仅当 REQ-022/023/024/025 中任一状态为 confirmed 时加载",

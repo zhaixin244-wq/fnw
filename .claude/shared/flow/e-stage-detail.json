@@ -474,6 +474,74 @@
     },
     "completion_criteria": "5 个文件全部生成 + 规格自检 5 项通过 + 用户确认"
   },
+  "submodule_jump_rules": {
+    "description": "stageE 子模块跳转规则 - 定义子模块间和子模块内的跳转逻辑",
+    "authority_source": "stage-definition.json state_transitions",
+    "inter_submodule_transitions": {
+      "description": "子模块间的跳转规则",
+      "rules": [
+        {
+          "from": "子模块 A completed",
+          "to": "子模块 B in_progress",
+          "condition": "todolist 中下一个 pending 子模块",
+          "action": "更新 todolist 状态，开始下一个子模块",
+          "check_point": "next_pending_submodule != null"
+        },
+        {
+          "from": "最后一个子模块 completed",
+          "to": "stageF",
+          "condition": "所有叶子节点 completed",
+          "action": "触发全局完成检查 → 进入 stageF",
+          "check_point": "all_submodules_completed == true"
+        },
+        {
+          "from": "子模块 A 阻塞（todolist 错误）",
+          "to": "暂停",
+          "condition": "todolist 内容缺失",
+          "action": "[TODOLIST-ERROR] 停止执行",
+          "check_point": "todolist 完整性检查失败"
+        }
+      ]
+    },
+    "intra_submodule_transitions": {
+      "description": "子模块内部的跳转规则（每个子模块独立执行）",
+      "flow": [
+        {"step": "a0", "name": "parent_requirement_sync", "next": "stageB phase2", "blocking": true},
+        {"step": "a", "name": "stageB phase2", "next": "stageC phase1", "blocking": true},
+        {"step": "b", "name": "stageC phase1", "next": "stageC phase2", "blocking": true},
+        {"step": "c", "name": "stageC phase2", "next": "stageD group1-step1", "blocking": true},
+        {"step": "d", "name": "stageD group1-step1", "next": "stageD group1-step2 或 stageE", "blocking": true, "condition": "RTL ≤ 3000 → group1-step2; RTL > 3000 → stageE"},
+        {"step": "d2", "name": "stageD group1-step2 ~ group5-step6", "next": "完成检查", "blocking": true},
+        {"step": "e", "name": "stageE（递归）", "next": "完成检查", "blocking": true, "condition": "仅当 RTL > 3000 时执行"}
+      ],
+      "completion_check": {
+        "trigger": "子模块 stageD group5-step6 完成后",
+        "checks": [
+          "outputs/ 文件齐全（5 个基础文件 + 条件 todolist）",
+          "flow/ 记录完整（stageB_phase2.md 存在）",
+          "规格自检 5 项通过"
+        ],
+        "on_pass": "更新 todolist 状态为 completed",
+        "on_fail": "记录缺失项，暂停等待用户决策"
+      }
+    },
+    "stageE_to_stageF_transition": {
+      "description": "stageE → stageF 跳转规则",
+      "trigger": "所有叶子节点子模块 completed",
+      "verification_steps": [
+        "1. 扫描所有层级的 todolist 文件",
+        "2. 检查每个条目的 status 字段",
+        "3. 如果发现 status != completed → [TODOLIST-INCOMPLETE] → 停止",
+        "4. 如果全部 completed → 输出 [STAGE-END] stageE → 进入 stageF"
+      ],
+      "output_marker": "[STAGE-TRANSITION] stageE → stageF（所有叶子节点已完成）",
+      "prohibited": [
+        "禁止在有子模块未完成时进入 stageF",
+        "禁止跳过全局完成检查",
+        "禁止在 todolist 状态不一致时继续"
+      ]
+    }
+  },
   "execution_tracking": {
     "description": "执行状态跟踪",
     "tracking_rules": [

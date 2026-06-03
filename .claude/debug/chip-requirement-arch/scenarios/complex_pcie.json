@@ -1,0 +1,79 @@
+{
+  "scenario_id": "complex_pcie",
+  "name": "复杂 PCIe 控制器需求采集",
+  "description": "测试复杂协议场景，涉及多通道、高性能要求、复杂流控机制。验证 Agent 处理高级需求的能力。",
+  "module_name": "pcie_ctrl",
+  "user_persona": "clear_expert",
+
+  "initial_input": "帮我做一下 PCIe 控制器的需求采集，这是一个高性能场景",
+
+  "context": {
+    "soc_position": "PCIe Root Complex",
+    "upstream": "CPU（AXI4）",
+    "downstream": "PCIe Endpoint 设备",
+    "protocol": "PCIe Gen4 x16",
+    "bandwidth": "16 GT/s per lane",
+    "channels": "4 个虚拟通道",
+    "priority": "性能优先",
+    "process": "7nm",
+    "frequency": "500MHz"
+  },
+
+  "expected_stages": [
+    "stage0",
+    "stageA",
+    "stageB phase1",
+    "stageB phase2",
+    "stageC phase1",
+    "stageC phase2",
+    "stageD"
+  ],
+
+  "expected_deliverables": [
+    "flow/pcie_ctrl_pr_v1.0.md",
+    "outputs/pcie_ctrl_requirement_summary_v1.0.md",
+    "outputs/pcie_ctrl_solution_v1.0.md",
+    "outputs/pcie_ctrl_ADR_v1.0.md",
+    "outputs/pcie_ctrl_trace_graph.yaml"
+  ],
+
+  "timeout_minutes": 45,
+  "max_dialog_rounds": 80,
+
+  "evaluation_focus": [
+    "复杂协议处理",
+    "多通道管理",
+    "高性能要求",
+    "流控机制设计"
+  ],
+
+  "pass_criteria": {
+    "min_stages_completed": 5,
+    "min_req_count": 30,
+    "required_deliverables": 4,
+    "max_gate_failures": 0
+  },
+
+  "dialog_hints": {
+    "stage0": {
+      "expected_questions": 3,
+      "key_topics": ["PCIe 角色", "性能要求", "通道配置"]
+    },
+    "stageA": {
+      "expected_questions": 4,
+      "key_topics": ["SoC 位置", "核心功能", "PPA 优先级", "性能目标"]
+    },
+    "stageB": {
+      "expected_questions": 28,
+      "key_topics": ["PCIe 协议", "TLP 处理", "流控 Credit", "中断", "DMA", "安全", "低功耗"]
+    },
+    "stageC": {
+      "expected_questions": 3,
+      "key_topics": ["矛盾检测", "性能 vs 功耗", "需求汇总确认"]
+    },
+    "stageD": {
+      "expected_questions": 25,
+      "key_topics": ["架构方案", "数据通路", "流控机制", "存储设计", "接口定义", "时序分析"]
+    }
+  }
+}

@@ -35,6 +35,15 @@ includes:
 - **方案探索**：始终提出 2-3 种方案及其权衡
 - **研究优先**：提出方案前先研究已有实现
 - **HARD-GATE**：需求确认前禁止进入方案设计
+- **步进铁律**：**权威定义见 `todo-mechanism.md` §步进铁律**。核心规则：
+  - 每个 stage/phase/step 完成后必须暂停等待用户确认，禁止连续执行多步骤
+  - 必须输出 `[STEP-PAUSE]` 标记后暂停
+  - 确认信号为用户明确回复"确认"/"OK"/"继续"等肯定表达
+  - **stageD**：每个 step 是最小执行单元，完成后必须暂停
+  - **stageB phase1**：每确认 1 个约束项后暂停
+  - **stageC phase1**：检测自动执行，但结果必须经用户确认
+- **阶段切换重载**：**权威定义见 `todo-mechanism.md` §阶段切换重载规则**。每次进入新 stage/phase/group 时必须重新 Read 对应 detail 文件，防止长对话中规则被压缩遗忘
+- **进度跟踪**：**权威定义见 `todo-mechanism.md` §进度跟踪规则**。每次切换执行单元时更新 PR 流文件头部的 `当前进度` 和 `已完成` 字段
 
 ## 编码规则速查
 
@@ -182,7 +191,7 @@ includes:
 | Group | 推荐执行顺序 | 说明 |
 |-------|-------------|------|
 | group1 | step1 → step2 → step3 | 线性依赖 |
-| group2 | step1 → step2 → **step4** → **step3** | step4（控制逻辑/FSM）在 step3（性能优化）之前，因性能优化需参考 FSM 状态数 |
+| group2 | step1 → step2 → step3 → step4 | step3（控制逻辑/FSM）在 step4（性能优化）之前，因性能优化需参考 FSM 状态数 |
 | group3 | step1 → step2 → step3 → step4 | 线性依赖 |
 | group4 | step1 → step2 → step3 | 线性依赖 |
 | group5 | step1 → step2 → step3 → step4 → step5 → step6 | 线性依赖 |
@@ -205,10 +214,10 @@ includes:
 ## 2. 修订历史
 ## 3. 架构概述（stageD group1-step1 + group1-step3）
 ## 4. 接口定义（stageD group5-step5）
-## 5. 数据通路与控制逻辑（stageD group2-step1 + group2-step2 + group2-step4）
+## 5. 数据通路与控制逻辑（stageD group2-step1 + group2-step2 + group2-step3）
 ## 6. 关键时序分析（stageD group5-step2）
 ## 7. 寄存器定义与 CDC 方案（stageD group3-step4 + group4-step3）
-## 8. PPA 预估（stageD group5-step1 + group2-step3）
+## 8. PPA 预估（stageD group5-step1 + group2-step4）
 ## 9. DFX 设计（stageD group5-step3）
 ## 10.1 可靠性设计（stageD group5-step4）
 ## 10.2 低功耗设计（stageD group5-step6）
@@ -256,6 +265,50 @@ includes:
 5. 生成树形 todolist → 逐个子模块执行 stageB phase2 ~ stageD
 6. 所有叶子节点完成 → stageF 顶层集成
 
+## stageE 递归返回规则（权威定义）
+
+> **铁律：stageE 的返回点必须明确定义，禁止模糊跳转。**
+
+### 返回点定义
+
+| 场景 | 返回条件 | 目标阶段 | 检查点 |
+|------|----------|----------|--------|
+| 所有叶子节点完成 | 所有子模块的 `stageD_complete` 标记为 true | stageF | `all_submodules_completed == true` |
+| 部分子模块完成 | 还有子模块未完成 | 下一个未完成的子模块 | `next_pending_submodule` |
+| 单个子模块完成 | 当前子模块 stageD group5-step6 完成 | 下一个子模块 | `current_submodule_completed == true` |
+
+### 子模块完成标记
+
+每个子模块完成 stageD group5-step6 后，必须在 todolist 中标记：
+
+```markdown
+| 子模块 | 状态 | 完成时间 | 备注 |
+|--------|------|----------|------|
+| {submodule_name} | ✅ completed | {timestamp} | stageD group5-step6 已完成 |
+```
+
+### 返回流程
+
+```
+stageE 递归分解完成
+    ↓
+生成树形 todolist
+    ↓
+逐个子模块执行 stageB phase2 ~ stageD
+    ↓
+每完成一个子模块 → 更新 todolist 状态
+    ↓
+检查：所有子模块完成？
+    ├── 是 → 输出 [STAGE-END] stageE，进入 stageF
+    └── 否 → 继续下一个子模块
+```
+
+### 禁止行为
+
+- ❌ 禁止在 stageE 完成后忘记执行 stageF
+- ❌ 禁止跳过未完成的子模块
+- ❌ 禁止在子模块 stageD 未完成时标记为 completed
+
 **防飘逸机制**（详见 `.claude/shared/flow/e-stage-detail.json`）：
 - 自包含 todolist：每个 todolist 包含执行所需的全部信息
 - 规则重载：每级子模块执行前重新读取 Agent 规则
@@ -291,6 +344,8 @@ cat > "${PR_DIR}/flow/${MODULE}_pr_v1.0.md" << 'EOF'
 > 版本：v1.0
 > 日期：YYYY-MM-DD
 > 阶段：stage0（待执行）
+> 当前进度：stage0（待执行）
+> 已完成：（无）
 
 ---
 EOF
@@ -311,8 +366,8 @@ EOF
 | stageD | group1-step3 | 子模块划分 | `outputs/{module}_solution_v{X}.md` §3.4 |
 | stageD | group2-step1 | 数据通路 | `outputs/{module}_solution_v{X}.md` §5.1 |
 | stageD | group2-step2 | 流水线 | `outputs/{module}_solution_v{X}.md` §5.4 |
-| stageD | group2-step4 | 控制逻辑 | `outputs/{module}_solution_v{X}.md` §5.2-5.3 |
-| stageD | group2-step3 | 性能优化 | `outputs/{module}_solution_v{X}.md` §8.1 |
+| stageD | group2-step3 | 控制逻辑 | `outputs/{module}_solution_v{X}.md` §5.2-5.3 |
+| stageD | group2-step4 | 性能优化 | `outputs/{module}_solution_v{X}.md` §8.1 |
 | stageD | group3-step1 | SRAM | `outputs/{module}_solution_v{X}.md` §11.1 |
 | stageD | group3-step2 | FIFO | `outputs/{module}_solution_v{X}.md` §11.2 |
 | stageD | group3-step3 | 链表 | `outputs/{module}_solution_v{X}.md` §11.3 |
@@ -421,3 +476,11 @@ EOF
 # 示例对话
 
 > 完整示例已外置到 `agents/examples/chip-requirement-arch-stage0-C-example.md`。
+
+---
+
+# 调试与评估
+
+> 调试模式：`/debug chip-requirement-arch [scenario_id]`
+> 详见 `.claude/debug/chip-requirement-arch/README.md`
+> 评估标准：`.claude/evaluation_criteria/chip-requirement-arch-eva.md`

@@ -29626,3 +29626,4 @@ print('OK')
 [2026-06-01 23:32:30.718] [INFO ] [SYSTEM] Cached onboarding explainer at boot {path=C:\Users\link_\.claude\plugins\marketplaces\thedotmack\plugin\skills\how-it-works\onboarding-explainer.md, bytes=1009}
 [2026-06-01 23:32:30.722] [INFO ] [SYSTEM] Worker PID file points to a live process, skipping duplicate spawn
 [2026-06-01 23:32:30.743] [INFO ] [SYSTEM] Worker became healthy while waiting on live PID
+[2026-06-03 19:53:55.000] [INFO ] [SYSTEM] MCP server shutting down {reason=stdio-closed}

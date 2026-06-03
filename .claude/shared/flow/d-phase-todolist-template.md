@@ -26,8 +26,8 @@
 |-----------|------|------|--------|----------|
 | stageD group2-step1 | 数据通路设计 | ⬜ | ≥3 | §5.1 |
 | stageD group2-step2 | 流水线设计 | ⬜ | ≥3 | §5.4 |
-| stageD group2-step3 | 性能优化 | ⬜ | ≥3 | §8.1 |
-| stageD group2-step4 | 控制逻辑/FSM | ⬜ | ≥4 | §5.2-5.3 |
+| stageD group2-step3 | 控制逻辑/FSM | ⬜ | ≥4 | §5.2-5.3 |
+| stageD group2-step4 | 性能优化 | ⬜ | ≥3 | §8.1 |
 
 ### stageD group3（存储与资源）
 | sub_stage | 名称 | 状态 | Q&A 数 | 交付章节 |

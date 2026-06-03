@@ -307,8 +307,8 @@
     "D_phase1-3": "stageD group1-step3",
     "D_phase2-1": "stageD group2-step1",
     "D_phase2-2": "stageD group2-step2",
-    "D_phase2-3": "stageD group2-step3",
-    "D_phase2-4": "stageD group2-step4",
+    "D_phase2-3": "stageD group2-step4",
+    "D_phase2-4": "stageD group2-step3",
     "D_phase3-1": "stageD group3-step1",
     "D_phase3-2": "stageD group3-step2",
     "D_phase3-3": "stageD group3-step3",
@@ -374,6 +374,224 @@
     ".claude/shared/flow/stageD-group5.json": ["stageD group5"],
     ".claude/shared/flow/e-stage-detail.json": ["stageE"],
     ".claude/shared/flow/rtl-readiness-checklist.json": ["stageD（RTL 就绪度检查）"]
+  },
+
+  "state_transitions": {
+    "description": "统一状态转移表 - 所有跳转规则集中定义，agent 必须按此表执行跳转",
+    "authority_source": "本文件为权威定义，其他文件引用本表",
+    "transitions": [
+      {"from": "entry", "to": "input_triage", "condition": "always", "action": "Read todo-mechanism.md 输出代办清单"},
+      {"from": "input_triage", "to": "stage0", "condition": "用户确认清单", "action": "根据输入类型确定后续路径"},
+      {"from": "stage0", "to": "stageA", "condition": "always", "action": "stage0 结论直接带入 stageA"},
+      {"from": "stageA", "to": "stageB phase1", "condition": "always", "action": "回答摘要带入 stageB phase1 对应项"},
+      {"from": "stageB phase1", "to": "stageB phase2", "condition": "28 项全部确认完成", "check_point": "completed_reqs_count == 28", "action": "调用 brainstorming skill"},
+      {"from": "stageB phase2", "to": "stageC phase1", "condition": "用户明确「没有更多需求」或达到 5 轮", "action": "自动执行矛盾检测"},
+      {"from": "stageC phase1", "to": "stageC phase2", "condition": "用户确认检测结果", "action": "输出需求汇总表"},
+      {"from": "stageC phase2", "to": "stageD group1-step1", "condition": "用户确认需求汇总并冻结", "action": "开始方案细化"},
+      {"from": "stageD group1-step1", "to": "stageE", "condition": "RTL 行数 > 3000", "check_point": "rtl_line_estimate > RTL_LINE_THRESHOLD", "action": "跳过 group1-step2~group5-step6，进入递归分解"},
+      {"from": "stageD group1-step1", "to": "stageD group1-step2", "condition": "RTL 行数 ≤ 3000", "check_point": "rtl_line_estimate <= RTL_LINE_THRESHOLD", "action": "继续标准流程"},
+      {"from": "stageD group1-step2", "to": "stageD group1-step3", "condition": "always（可跳过：无 CBB）", "skip_condition": "无可用 CBB 或用户明确不使用 CBB"},
+      {"from": "stageD group1-step3", "to": "stageD group2-step1", "condition": "always", "action": "进入数据通路设计"},
+      {"from": "stageD group2-step1", "to": "stageD group2-step2", "condition": "always", "action": "进入流水线设计"},
+      {"from": "stageD group2-step2", "to": "stageD group2-step3", "condition": "always", "action": "进入控制逻辑/FSM 设计"},
+      {"from": "stageD group2-step3", "to": "stageD group2-step4", "condition": "always", "action": "进入性能优化（需参考 FSM 状态数）"},
+      {"from": "stageD group2-step4", "to": "stageD group3-step1", "condition": "always（可跳过：无 SRAM）", "skip_condition": "模块无 SRAM 使用", "action": "进入存储与资源管理"},
+      {"from": "stageD group3-step1", "to": "stageD group3-step2", "condition": "always（可跳过：无 FIFO）", "skip_condition": "模块无 FIFO/Buffer 需求", "action": "进入 FIFO 设计"},
+      {"from": "stageD group3-step2", "to": "stageD group3-step3", "condition": "always（可跳过：无链表）", "skip_condition": "模块无描述符/缓冲区/队列管理", "action": "进入链表设计"},
+      {"from": "stageD group3-step3", "to": "stageD group3-step4", "condition": "always（可跳过：无寄存器）", "skip_condition": "REQ-002 无 APB/寄存器映射接口", "action": "进入寄存器定义"},
+      {"from": "stageD group3-step4", "to": "stageD group4-step1", "condition": "always（可跳过：单通道）", "skip_condition": "单通道/单源模块", "action": "进入流控与时钟"},
+      {"from": "stageD group4-step1", "to": "stageD group4-step2", "condition": "always（可跳过：无数据流）", "skip_condition": "纯寄存器配置模块", "action": "进入流控机制"},
+      {"from": "stageD group4-step2", "to": "stageD group4-step3", "condition": "always（可跳过：单时钟域）", "skip_condition": "REQ-011 未确认多时钟域", "action": "进入 CDC 方案"},
+      {"from": "stageD group4-step3", "to": "stageD group5-step1", "condition": "always", "action": "进入优化与可靠性"},
+      {"from": "stageD group5-step1", "to": "stageD group5-step2", "condition": "always", "action": "进入时序分析"},
+      {"from": "stageD group5-step2", "to": "stageD group5-step3", "condition": "always（可跳过：无 DFX）", "skip_condition": "用户明确表示「不需要 DFX/DFT/调试功能」", "action": "进入 DFX 设计"},
+      {"from": "stageD group5-step3", "to": "stageD group5-step4", "condition": "always", "action": "进入可靠性设计"},
+      {"from": "stageD group5-step4", "to": "stageD group5-step5", "condition": "always", "action": "进入接口定义"},
+      {"from": "stageD group5-step5", "to": "stageD group5-step6", "condition": "always（可跳过：无低功耗）", "skip_condition": "使用全局 Clock Gating 方案且无特殊低功耗需求", "action": "进入功耗设计"},
+      {"from": "stageD group5-step6", "to": "stageF", "condition": "所有 step 完成或跳过", "action": "进入顶层集成"},
+
+      {"from": "stageE", "to": "stageF", "condition": "所有叶子节点子模块完成 stageD", "check_point": "all_submodules_completed == true", "action": "执行顶层集成"},
+      {"from": "stageF", "to": "end", "condition": "always", "action": "输出拓扑图和接口检查报告"}
+    ],
+    "stageD_internal_order": {
+      "description": "stageD 内部 step 执行顺序（权威定义，优先于 sub_stages 数组顺序）",
+      "authority": "stageD-detail.json recommended_execution_order",
+      "group1": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3"],
+      "group2": ["stageD group2-step1", "stageD group2-step2", "stageD group2-step3", "stageD group2-step4"],
+      "group3": ["stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4"],
+      "group4": ["stageD group4-step1", "stageD group4-step2", "stageD group4-step3"],
+      "group5": ["stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
+      "note": "group2 中 step3（控制逻辑/FSM）在 step4（性能优化）之前，因为性能优化需参考 FSM 状态数。自然编号顺序即为正确执行顺序。"
+    },
+    "conditional_skip_rules": {
+      "description": "stageD 各 step 的跳过条件（详见 stageD-detail.json conditional_skip_rules）",
+      "skippable_steps": [
+        "stageD group1-step2（无 CBB）",
+        "stageD group2-step2（无流水线）",
+        "stageD group2-step4（REQ-004 为 Could 且无明确性能要求）",
+        "stageD group3-step1（无 SRAM）",
+        "stageD group3-step2（无 FIFO）",
+        "stageD group3-step3（无链表）",
+        "stageD group3-step4（无寄存器）",
+        "stageD group4-step1（单通道）",
+        "stageD group4-step2（无数据流）",
+        "stageD group4-step3（单时钟域）",
+        "stageD group5-step3（无 DFX）",
+        "stageD group5-step6（无低功耗）"
+      ],
+      "non_skippable_steps": [
+        "stageD group1-step1（RTL 行数估算）",
+        "stageD group1-step3（子模块划分细化）",
+        "stageD group2-step1（数据通路设计）",
+        "stageD group2-step3（控制逻辑/FSM）",
+        "stageD group5-step1（面积预估）",
+        "stageD group5-step2（时序分析）",
+        "stageD group5-step4（可靠性设计）",
+        "stageD group5-step5（接口定义）"
+      ]
+    },
+    "exception_transitions": {
+      "description": "异常处理跳转规则 - 当发生异常时的跳转逻辑",
+      "rules": [
+        {
+          "scenario": "需求自相矛盾",
+          "current_stage": "任意 stage",
+          "action": "暂停，输出调和方案供用户选择",
+          "resume_condition": "用户选择调和方案后继续当前 stage"
+        },
+        {
+          "scenario": "用户频繁变更 ≥3 次",
+          "current_stage": "stageB phase1",
+          "action": "强制暂停，要求用户给出最终决策",
+          "resume_condition": "用户给出最终决策后继续"
+        },
+        {
+          "scenario": "信息不足且用户无法补充",
+          "current_stage": "任意 stage",
+          "action": "标注为假设条件，记录到 ADR",
+          "resume_condition": "继续当前 stage，假设条件待后续确认"
+        },
+        {
+          "scenario": "用户跳过确认直接出方案",
+          "current_stage": "任意 stage",
+          "action": "列出所有未确认项，标注「假设值-待确认」，暂停要求用户逐项确认",
+          "resume_condition": "用户确认假设后继续",
+          "step_mode_enforcement": true
+        },
+        {
+          "scenario": "stageB phase1 部分 REQ 无法确认",
+          "current_stage": "stageB phase1",
+          "action": "使用默认值并标注「基于通用知识，待用户确认」",
+          "resume_condition": "继续后续 REQ 确认",
+          "max_defaults": 5
+        },
+        {
+          "scenario": "stageD 某 step 无法完成",
+          "current_stage": "stageD 任意 step",
+          "action": "记录阻塞原因，暂停等待用户决策",
+          "resume_condition": "用户解决阻塞后继续"
+        }
+      ]
+    },
+    "change_transitions": {
+      "description": "变更处理跳转规则 - 当用户变更需求时的跳转逻辑",
+      "rules": [
+        {
+          "change_type": "REQ 值变更",
+          "affected_scope": "单个 REQ",
+          "action": "重走变更项 stageB phase1 对应 REQ",
+          "jump_back": "stageB phase1（仅变更项）",
+          "resume_from": "变更项确认后回到原 stage 继续"
+        },
+        {
+          "change_type": "新增 REQ",
+          "affected_scope": "新增需求",
+          "action": "执行实时矛盾检测，更新需求汇总表",
+          "jump_back": "stageC phase1（仅新增 REQ 相关检测）",
+          "resume_from": "检测完成后回到原 stage 继续"
+        },
+        {
+          "change_type": "删除 REQ",
+          "affected_scope": "删除需求",
+          "action": "更新需求汇总表，检查依赖关系",
+          "jump_back": "无（直接更新）",
+          "resume_from": "回到原 stage 继续"
+        },
+        {
+          "change_type": "PPA 指标大幅调整（>20%）",
+          "affected_scope": "PPA 相关 step",
+          "action": "重走受影响的 stageD step",
+          "jump_back": "stageD group5-step1（面积）/ group5-step2（时序）/ group2-step4（性能）",
+          "resume_from": "受影响 step 完成后继续"
+        },
+        {
+          "change_type": "接口协议变更",
+          "affected_scope": "接口相关 step",
+          "action": "重走 stageD group5-step5 + 受影响的子模块",
+          "jump_back": "stageD group5-step5",
+          "resume_from": "接口定义完成后继续"
+        },
+        {
+          "change_type": "子模块划分变更",
+          "affected_scope": "stageE 子模块",
+          "action": "重新执行 stageE 递归分解",
+          "jump_back": "stageE",
+          "resume_from": "新的子模块 todolist 生成后继续"
+        }
+      ],
+      "incremental_diff": {
+        "description": "变更时仅重检受影响的部分，避免全量重跑",
+        "mapping_source": ".claude/shared/flow/req-to-rules-mapping.json",
+        "execution": "查 mapping 获取变更 REQ 关联的规则 ID，仅执行这些规则"
+      }
+    },
+    "session_recovery": {
+      "description": "会话恢复跳转规则 - 会话中断后恢复时的跳转逻辑",
+      "data_source": "requirement-template.json intermediate_persistence",
+      "recovery_steps": [
+        "1. Read 中间状态文件（{module}_intermediate_state_v{版本号}.json）",
+        "2. 获取 current_stage 字段，确定恢复点",
+        "3. 检查 completed_reqs 列表，跳过已确认的 REQ",
+        "4. 仅处理 pending_reqs 列表中的 REQ",
+        "5. 从 current_stage 继续执行"
+      ],
+      "recovery_check_points": {
+        "stageB phase1": "检查 completed_reqs_count，从下一个 pending REQ 继续",
+        "stageB phase2": "检查已执行轮数，从下一轮继续",
+        "stageC phase1": "重新执行矛盾检测（检测结果不持久化）",
+        "stageC phase2": "从需求汇总表继续",
+        "stageD": "检查 completed_steps 列表，从下一个 step 继续",
+        "stageE": "检查 completed_submodules 列表，从下一个子模块继续"
+      }
+    }
+  },
+
+  "step_mode_rules": {
+    "description": "步进模式执行规则 - 权威定义见 todo-mechanism.md §步进铁律",
+    "authority_source": ".claude/shared/todo-mechanism.md",
+    "pause_marker_format": "[STEP-PAUSE] {stage/phase/step} 已完成，等待用户确认后继续。",
+    "granularity": {
+      "stage0": "stage 级别暂停",
+      "stageA": "stage 级别暂停",
+      "stageB phase1": "每确认 1 个约束项后暂停（共 28 项）",
+      "stageB phase2": "每轮头脑风暴后暂停（最多 5 轮）",
+      "stageC phase1": "检测自动执行，结果展示后暂停",
+      "stageC phase2": "需求汇总表展示后暂停",
+      "stageD": "每个 step 完成后暂停（最小执行单元）",
+      "stageE": "每个子模块完成递归分解后暂停",
+      "stageF": "顶层集成完成后暂停"
+    },
+    "prohibited_behaviors": [
+      "禁止自动继续下一个执行单元",
+      "禁止批量处理多个约束项而不暂停",
+      "禁止将多个 step 视为一个任务连续执行",
+      "禁止在用户说'继续'后执行多个执行单元"
+    ],
+    "user_confirmation_semantics": {
+      "继续/OK/确认": "仅执行下一个执行单元",
+      "批量确认/自动确认": "需用户明确指定范围，且每 5 项仍需暂停",
+      "跳过": "需用户明确指定跳过的执行单元"
+    }
   },
 
   "validation_rules": {

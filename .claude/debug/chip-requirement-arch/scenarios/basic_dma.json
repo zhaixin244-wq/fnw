@@ -1,0 +1,78 @@
+{
+  "scenario_id": "basic_dma",
+  "name": "基础 DMA 引擎需求采集",
+  "description": "测试标准流程执行，验证完整的需求采集流程。适用于单通道 DMA + APB 控制 + AXI4 Master 的典型场景。",
+  "module_name": "dma_engine",
+  "user_persona": "clear_expert",
+
+  "initial_input": "帮我做一下 DMA 引擎的需求采集",
+
+  "context": {
+    "soc_position": "APB 从设备",
+    "upstream": "传感器接口（SPI）",
+    "downstream": "主存（DDR，AXI4）",
+    "data_rate": "50Mbps",
+    "data_size": "4~64 bytes，可变长度",
+    "priority": "面积优先",
+    "process": "28nm",
+    "frequency": "200MHz"
+  },
+
+  "expected_stages": [
+    "stage0",
+    "stageA",
+    "stageB phase1",
+    "stageB phase2",
+    "stageC phase1",
+    "stageC phase2",
+    "stageD"
+  ],
+
+  "expected_deliverables": [
+    "flow/dma_engine_pr_v1.0.md",
+    "outputs/dma_engine_requirement_summary_v1.0.md",
+    "outputs/dma_engine_solution_v1.0.md",
+    "outputs/dma_engine_ADR_v1.0.md",
+    "outputs/dma_engine_trace_graph.yaml"
+  ],
+
+  "timeout_minutes": 30,
+  "max_dialog_rounds": 50,
+
+  "evaluation_focus": [
+    "流程完整性",
+    "REQ 编号规范",
+    "交付物完整",
+    "阶段标记正确"
+  ],
+
+  "pass_criteria": {
+    "min_stages_completed": 5,
+    "min_req_count": 20,
+    "required_deliverables": 4,
+    "max_gate_failures": 0
+  },
+
+  "dialog_hints": {
+    "stage0": {
+      "expected_questions": 2,
+      "key_topics": ["模块角色", "数据特征", "初步方向"]
+    },
+    "stageA": {
+      "expected_questions": 4,
+      "key_topics": ["SoC 位置", "核心功能", "PPA 优先级", "stage0 确认"]
+    },
+    "stageB": {
+      "expected_questions": 28,
+      "key_topics": ["工艺频率", "接口协议", "数据流", "中断", "DMA", "安全", "低功耗"]
+    },
+    "stageC": {
+      "expected_questions": 2,
+      "key_topics": ["矛盾检测", "需求汇总确认"]
+    },
+    "stageD": {
+      "expected_questions": 20,
+      "key_topics": ["架构方案", "数据通路", "控制逻辑", "存储设计", "接口定义"]
+    }
+  }
+}

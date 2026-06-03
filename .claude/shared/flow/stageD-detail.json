@@ -8,6 +8,36 @@
     "exit_condition": "stageD group1-step1~group5-step6 全部完成（或跳过）+ 用户确认方案文档",
     "execution_mode": "步进模式（默认），每个 D 子阶段独立执行，完成后暂停等待确认",
     "adr_record": "每个 D 子阶段的头脑风暴沟通记录追加到 ADR 文档的「方案细化记录」章节",
+    "rtl_line_threshold_check": {
+      "description": "stageD group1-step1 特殊跳转检查点 - RTL 行数估算后决定是否进入 stageE",
+      "check_point": "stageD group1-step1 RTL 行数估算完成后",
+      "threshold": 3000,
+      "source": "stage-definition.json constants.RTL_LINE_THRESHOLD",
+      "action_if_over": {
+        "trigger": "rtl_line_estimate > 3000",
+        "steps": [
+          "1. 输出 [STAGE-TRANSITION] stageD group1-step1 → stageE",
+          "2. 跳过 stageD group1-step2 ~ stageD group5-step6",
+          "3. 进入 stageE 递归分解",
+          "4. stageE 完成后，每个子模块独立执行 stageB phase2 ~ stageD",
+          "5. 所有子模块完成后进入 stageF"
+        ],
+        "output_marker": "[STAGE-TRANSITION] RTL 行数 {N} > 3000，跳过 stageD group1-step2~group5-step6，进入 stageE 递归分解"
+      },
+      "action_if_under": {
+        "trigger": "rtl_line_estimate <= 3000",
+        "steps": [
+          "1. 继续执行 stageD group1-step2",
+          "2. 按 recommended_execution_order 顺序执行剩余 step"
+        ],
+        "output_marker": "[STAGE-CONTINUE] RTL 行数 {N} ≤ 3000，继续标准 stageD 流程"
+      },
+      "prohibited": [
+        "禁止跳过 RTL 行数检查",
+        "禁止在 RTL 行数 > 3000 时继续执行 group1-step2",
+        "禁止在 RTL 行数 ≤ 3000 时进入 stageE"
+      ]
+    },
     "edge_case_handling": {
       "description": "极端输入（有效信息 <50 字）的处理策略",
       "detection": "input_triage 判定为 vague 且用户首条消息有效信息 <50 字时触发",
@@ -137,7 +167,7 @@
         "action": "skip"
       },
       {
-        "stage": "stageD group2-step3",
+        "stage": "stageD group2-step4",
         "condition": "REQ-004 为 Could 级且无明确性能要求",
         "action": "skip"
       },
@@ -158,8 +188,8 @@
       "stageD group1-step3": 3,
       "stageD group2-step1": 3,
       "stageD group2-step2": 3,
-      "stageD group2-step3": 3,
-      "stageD group2-step4": 4,
+      "stageD group2-step3": 4,
+      "stageD group2-step4": 3,
       "stageD group3-step1": 4,
       "stageD group3-step2": 4,
       "stageD group3-step3": 3,
@@ -189,7 +219,7 @@
       "stageD group5-step3": "检查 stageC phase2 需求汇总表 REQ-008/009 状态",
       "stageD group1-step2": "检查 Wiki CBB 索引是否有可用 CBB",
       "stageD group2-step2": "检查 stageD group1-step1 架构是否涉及流水线",
-      "stageD group2-step3": "检查 REQ-004 优先级",
+      "stageD group2-step4": "检查 REQ-004 优先级",
       "stageD group5-step6": "检查 REQ 汇总表是否有功耗预算约束或特殊低功耗需求"
     }
   },
@@ -326,14 +356,14 @@
         "forwarding bypass"
       ],
       "stageD group2-step3": [
-        "性能优化",
-        "吞吐量分析",
-        "延迟优化"
-      ],
-      "stageD group2-step4": [
         "FSM 设计模式",
         "状态机编码",
         "控制逻辑设计"
+      ],
+      "stageD group2-step4": [
+        "性能优化",
+        "吞吐量分析",
+        "延迟优化"
       ],
       "stageD group3-step1": [
         "SRAM 设计",
@@ -506,11 +536,25 @@
   "recommended_execution_order": {
     "description": "基于依赖图拓扑排序的 group 内 step 推荐执行顺序。**铁律：当 sub_stages 数组顺序与本字段矛盾时，以本字段为准。Agent 必须按 recommended_execution_order 执行，不得按 sub_stages 数组顺序执行。**",
     "stageD group1": ["stageD group1-step1", "stageD group1-step2", "stageD group1-step3"],
-    "stageD group2": ["stageD group2-step1", "stageD group2-step2", "stageD group2-step4", "stageD group2-step3"],
+    "stageD group2": ["stageD group2-step1", "stageD group2-step2", "stageD group2-step3", "stageD group2-step4"],
     "stageD group3": ["stageD group3-step1", "stageD group3-step2", "stageD group3-step3", "stageD group3-step4"],
     "stageD group4": ["stageD group4-step1", "stageD group4-step2", "stageD group4-step3"],
     "stageD group5": ["stageD group5-step1", "stageD group5-step2", "stageD group5-step3", "stageD group5-step4", "stageD group5-step5", "stageD group5-step6"],
-    "note": "group2 中 step4（控制逻辑/FSM）在 step3（性能优化）之前执行，因为性能优化需要参考控制逻辑的 FSM 状态数和延迟。"
+    "note": "group2 中 step3（控制逻辑/FSM）在 step4（性能优化）之前执行，因为性能优化需要参考控制逻辑的 FSM 状态数和延迟。自然编号顺序即为正确执行顺序。",
+    "step_mode_enforcement": {
+      "rule": "每个 step 是最小执行单元，完成后必须暂停等待用户确认",
+      "pause_marker": "[STEP-PAUSE] stageD {group}-step{M} 已完成，等待用户确认后继续。",
+      "prohibited": [
+        "禁止自动继续下一个 step",
+        "禁止将整个 group 视为一个任务连续执行",
+        "禁止在用户说'继续'后执行多个 step"
+      ],
+      "user_confirmation_semantics": {
+        "继续/OK/确认": "仅执行 recommended_execution_order 中的下一个 step",
+        "继续执行 group": "仍需逐步执行，每个 step 后暂停",
+        "跳过剩余 step": "需用户明确指定跳过的 step 编号"
+      }
+    }
   },
   "phase_context_isolation": {
     "description": "D 阶段上下文隔离配置（v7.4）",

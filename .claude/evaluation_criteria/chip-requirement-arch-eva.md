@@ -2,7 +2,7 @@
 
 > 评估芯片需求探索 & 方案论证 Agent（苏启辰/Sean）的流程执行质量。
 > 满分 100 分，按维度加权评分。
-> 版本：v12.0（同步 agent v12.0 — D 阶段上下文隔离 + RTL 就绪度检查 + 自包含 todolist + stageD group/step 编码 + 调试模式 + 路径统一 + REQ 编号全局唯一 + stageD 执行顺序统一）
+> 版本：v12.0（同步 agent v12.0 — D 阶段上下文隔离 + RTL 就绪度检查 + 自包含 todolist + stageD group/step 统一编码 + 调试模式 + 路径统一 + REQ 编号全局唯一 + stageD 执行顺序统一 + Wiki 头脑风暴集成 + 专项 Agent 编排）
 
 ---
 
@@ -16,6 +16,7 @@
 4. **文档质量必须检查实际内容**：读取文件内容验证章节完整性、REQ 连续性、格式规范性，**禁止仅凭文件存在给分**
 5. **评估结果必须可复现**：同一输入必须产生相同评分，**禁止主观调整分数**
 6. **门控违规必须输出清单**：evaluation.md §0 必须列出所有门控检查结果，**禁止跳过 §0**
+7. **stageD 编码必须符合统一规则**：验证 stageD 使用 `group{N}-step{M}` 格式，禁止使用旧 D0-D14 编码
 
 ### 主观性维度说明
 
@@ -151,16 +152,11 @@ for d in $(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null); do
 done
 
 # G-08b: 目录结构统一性
-# 检查孙模块是否在子模块目录下（而非根目录下）
-# 逻辑：如果存在 level2+ 目录，它们必须在 level1 目录下
 GRANDCHILD_IN_ROOT=0
 for d in $(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null); do
-  # 检查子模块目录下是否有孙模块目录
   SUB_SUB=$(find "$d" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
   if [ "$SUB_SUB" -gt 0 ]; then
-    # 有孙模块，检查孙模块是否在正确位置（子模块目录下）
     for sd in $(find "$d" -mindepth 1 -maxdepth 1 -type d 2>/dev/null); do
-      # 验证孙模块目录下有 outputs/ 和 flow/ 子目录
       HAS_OUTPUTS=$(find "$sd" -maxdepth 1 -type d -name "outputs" 2>/dev/null | wc -l)
       HAS_FLOW=$(find "$sd" -maxdepth 1 -type d -name "flow" 2>/dev/null | wc -l)
       if [ "$HAS_OUTPUTS" -eq 0 ] && [ "$HAS_FLOW" -eq 0 ]; then
@@ -169,7 +165,6 @@ for d in $(find "${ROOT}" -mindepth 2 -maxdepth 2 -type d 2>/dev/null); do
     done
   fi
 done
-# G-08b 通过条件：孙模块在子模块目录下，不在根目录下
 
 # G-09: F 阶段执行
 grep -q "§14\|顶层集成\|接口一致性" "${ROOT}/${MODULE}_solution_v1.0.md" 2>/dev/null || { echo "G-09 FAIL: F 阶段未执行"; PASS=false; }
@@ -187,7 +182,7 @@ $PASS && echo "门控 1: 全部 PASS" || echo "门控 1: 存在 FAIL → D 级"
 |---|----------|----------|-----------|-----------|
 | G-10 | REQ 编号连续 | `grep -oP "REQ-\d+" outputs/{module}_requirement_summary_v1.0.md \| sort -t- -k2 -n` | 无跳号无重复 | 跳号或重复 → C 级 |
 | G-11 | 汇总表含 schema_version | `grep "schema_version" outputs/{module}_requirement_summary_v1.0.md` | 存在匹配 | 不存在 → C 级 |
-| G-12 | 方案文档 §3~§14 完整 | `grep -c "^## §\|^## [0-9]" outputs/{module}_solution_v1.0.md` | ≥10 个章节 | <10 → C 级 |
+| G-12 | 方案文档 §3~§15 完整 | `grep -c "^## §\|^## [0-9]" outputs/{module}_solution_v1.0.md` | ≥10 个章节 | <10 → C 级 |
 | G-13 | ADR 含 Nygard 格式 | `grep -c "背景\|决策\|方案对比\|后果" outputs/{module}_ADR_v1.0.md` | ≥4 个关键词 | <4 → C 级 |
 | G-14 | 追溯图节点数 = REQ 总数 | `grep -c "id:" outputs/{module}_trace_graph.yaml` 与 `grep -c "REQ-" outputs/{module}_requirement_summary_v1.0.md` | 数量相等 | 不等 → C 级 |
 | G-15 | 子模块方案文档完整 | `for d in <submodule_dirs>; do grep -c "^##" "${d}/*_solution_v1.0.md"; done` | 每个 ≥8 章节 | 任意 <8 → C 级 |
@@ -293,8 +288,8 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 按 5 维度完整执行，新 REQ 正确编号并逐一确认 | `grep -c "维度\|功能扩展\|性能优化\|兼容性\|可测试性\|可维护性" PR 文件` ≥5 |
-| 1 | 执行但维度覆盖不全（<5） | 匹配 <5 |
+| 2 | 按 5 维度完整执行，新 REQ 正确编号并逐一确认，Wiki 检索已完成 | `grep -c "维度\|功能扩展\|性能优化\|兼容性\|可测试性\|可维护性" PR 文件` ≥5，`grep -c "Wiki\|wiki" PR 文件` ≥1 |
+| 1 | 执行但维度覆盖不全（<5）或未检索 Wiki | 匹配 <5 |
 | 0 | 跳过 | `grep -c "stageB phase2" PR 文件` = 0 |
 
 ---
@@ -376,50 +371,56 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 正确估算行数，>3000 行时跳转 E 阶段 | `grep -c "估算\|行数\|E 阶段" 方案文档` ≥2 |
+| 3 | 正确估算行数，>3000 行时跳转 E 阶段，估算结果记录在方案文档 §3.3 | `grep -c "估算\|行数\|E 阶段" 方案文档` ≥2 |
 | 2 | 估算但方法不够系统 | 匹配 = 1 |
 | 1 | 估算粗糙或路由有误 | 读取方案文档 |
 | 0 | 未做行数估算 | 匹配 = 0 |
 
 ### D4.2 D 子阶段执行完整性（5 分）
 
+> **v12.0 关键变化**：stageD 使用 `group{N}-step{M}` 统一编码，执行顺序以 `stageD-detail.json` 的 `recommended_execution_order` 为权威。
+
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 5 | group1-step1~group5-step6 全部执行，Q&A ≥ 64 | `grep -cP "^\| stageD group\d+-step\d+" 方案文档` ≥20，`grep -c "^- Q:" 方案文档` ≥64 |
-| 4 | 执行完整，个别 Q&A 不足 | 章节 ≥14，Q&A ≥45 |
+| 5 | group1-step1~group5-step6 全部执行（或按 conditional_skip_rules 正确跳过），Q&A ≥ 64，执行顺序符合 recommended_execution_order | `grep -cP "stageD group\d+-step\d+" 方案文档` ≥20，`grep -c "^- Q:" 方案文档` ≥64，检查 group2 执行顺序为 step1→step2→step3→step4 |
+| 4 | 执行完整，个别 Q&A 不足或执行顺序有误 | 章节 ≥14，Q&A ≥45 |
 | 3 | 遗漏 1-2 个子阶段 | 章节 ≥12 |
 | 2 | 遗漏 >3 个 | 章节 <12 |
 | 0 | 跳过 stageD | 章节 = 0 |
 
 > **说明**：条件跳过的子阶段（按 stageD-detail.json conditional_skip_rules）不计入"遗漏"，但需在 ADR 中标注「原因+影响+替代方案」。跳过的子阶段无 Q&A 要求。
+>
+> **执行顺序验证**：group2 按自然编号顺序 step1→step2→step3→step4 执行（step3 控制逻辑/FSM 在 step4 性能优化之前）。
 
 ### D4.3~D4.6 数据通路/控制逻辑/存储设计/流控（各 2 分）
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 完整定义，有量化依据 | `grep -c "数据通路\|状态机\|SRAM\|FIFO\|反压\|Credit" 方案文档` ≥4 |
-| 1 | 基本完整，个别模糊 | 匹配 ≥2 |
+| 2 | 完整定义，有量化依据，Wiki 知识库已检索并引用 | `grep -c "数据通路\|状态机\|SRAM\|FIFO\|反压\|Credit" 方案文档` ≥4，`grep -c "Wiki\|wiki" 方案文档` ≥1 |
+| 1 | 基本完整，个别模糊或未引用 Wiki | 匹配 ≥2 |
 | 0 | 未定义 | 匹配 = 0 |
 
 ### D4.7 条件子阶段处理（2 分）
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 跳过时标注原因+影响+替代方案 | `grep -c "原因.*影响.*替代" ADR 文件` ≥1 |
+| 2 | 跳过时标注原因+影响+替代方案，符合 conditional_skip_rules | `grep -c "原因.*影响.*替代" ADR 文件` ≥1 |
 | 1 | 仅标注原因 | `grep -c "原因" ADR 文件` ≥1 |
 | 0 | 未标注 | 匹配 = 0 |
 
 ### D4.8 专项 Agent 编排（2 分）
 
+> **v12.0 变化**：专项 Agent 编排在 stageD group1-step1 完成后触发，参考 `specialist-orchestration.json`。
+
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 正确触发 specialist-orchestration | `grep -c "specialist\|CDC\|LP\|Reliability" 方案文档` ≥2 |
-| 1 | 触发但分组有误 | 匹配 = 1 |
+| 2 | stageD group1-step1 完成后正确触发 specialist-orchestration，CDC/LP/Reliability 专项 Agent 输出回流到方案文档 | `grep -c "specialist\|CDC\|LP\|Reliability\|专项" 方案文档` ≥2 |
+| 1 | 触发但分组有误或回流不完整 | 匹配 = 1 |
 | 0 | 未触发 | 匹配 = 0 |
 
 ### D4.9 RTL 就绪度检查（2 分）
 
-> D 阶段每个 Phase 完成后执行 8 项 RTL 就绪度检查，确保方案文档可直接指导 code-writer 生成 RTL。
+> **v12.0 新增**：D 阶段每个 Phase 完成后执行 8 项 RTL 就绪度检查，确保方案文档可直接指导 code-writer 生成 RTL。检查清单见 `rtl-readiness-checklist.json`。
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
@@ -437,7 +438,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 所有叶子节点 <3000 行，分解层级合理 | 读取 todolist §1 表格，检查所有叶子节点行数 |
+| 3 | 所有叶子节点 <3000 行，分解层级合理，使用头脑风暴确认划分原则 | 读取 todolist §1 表格，检查所有叶子节点行数，`grep -c "头脑风暴\|brainstorming" todolist` ≥1 |
 | 2 | 个别叶子节点接近或略超 3000 行 | 读取 todolist |
 | 1 | 分解不充分或过度碎片化 | 读取 todolist |
 | 0 | 未执行 E 阶段 | todolist 不存在 |
@@ -463,7 +464,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 先递归分解 → 再 todolist → 再逐个 D 阶段 | 读取 todolist §2 流程完整性 |
+| 2 | 先递归分解 → 再 todolist → 再逐个 D 阶段，每个子模块独立执行 stageB phase2 → stageD → stageF | 读取 todolist §2 流程完整性 |
 | 1 | 基本正确，个别交叉 | 读取 todolist |
 | 0 | 顺序混乱 | 读取 todolist |
 
@@ -489,7 +490,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 4 | 子模块间接口信号名/位宽/方向完全一致 | `grep -c "接口一致\|位宽匹配\|方向一致" 方案文档` ≥3 |
+| 4 | 子模块间接口信号名/位宽/方向完全一致，内部连线定义完整 | `grep -c "接口一致\|位宽匹配\|方向一致" 方案文档` ≥3 |
 | 3 | 基本一致，1-2 处需微调 | 匹配 ≥2 |
 | 2 | 多处不一致 | 匹配 = 1 |
 | 1 | 检查不完整 | 匹配 = 0 |
@@ -525,9 +526,11 @@ done
 
 ### D7.2 头脑风暴记录完整性（3 分）
 
+> **v12.0 增强**：简单模块（<500 行）的 ADR 记录不降低 Q&A 质量，每个 D 子阶段 Q&A 必须额外覆盖方案选型原因、替代方案、验证重点。
+
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 每个 D 子阶段有 Q&A 记录，≥ min_qa_pairs | `grep -c "Q:" ADR 文件` ≥30 |
+| 3 | 每个 D 子阶段有 Q&A 记录，≥ min_qa_pairs（64），简单模块有额外覆盖 | `grep -c "Q:" ADR 文件` ≥30，`grep -c "替代方案\|验证重点" ADR 文件` ≥5 |
 | 2 | 基本完整，个别不足 | 匹配 ≥20 |
 | 1 | 不完整 | 匹配 <20 |
 | 0 | 未记录 | 匹配 = 0 |
@@ -536,7 +539,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 每个决策追溯到 REQ | `grep -c "REQ-" ADR 文件` ≥10 |
+| 2 | 每个决策追溯到 REQ，ADR 中有 Wiki 引用 | `grep -c "REQ-" ADR 文件` ≥10，`grep -c "Wiki 引用\|wiki" ADR 文件` ≥1 |
 | 1 | 大部分可追溯 | 匹配 ≥5 |
 | 0 | 无法追溯 | 匹配 <5 |
 
@@ -544,7 +547,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 1 | 跳过时标注原因+影响+替代方案 | `grep -c "原因.*影响.*替代" ADR 文件` ≥1 |
+| 1 | 跳过时标注原因+影响+替代方案，符合 conditional_skip_rules | `grep -c "原因.*影响.*替代" ADR 文件` ≥1 |
 | 0 | 未标注或仅标注原因 | 匹配 = 0 |
 
 ---
@@ -555,7 +558,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | gentle + balanced 均执行 | `grep -c "devils-advocate\|对抗性\|假设挑战" PR 文件` ≥2 |
+| 2 | gentle + balanced 均执行，stageC phase2 后 gentle，stageD group5-step4 后 gentle+balanced | `grep -c "devils-advocate\|对抗性\|假设挑战" PR 文件` ≥2 |
 | 1 | 执行但强度不当 | 匹配 = 1 |
 | 0 | 未执行 | 匹配 = 0 |
 
@@ -584,7 +587,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 连续编号，无跳号无重复 | `grep -oP "REQ-\d+" 需求汇总表 \| sort -t- -k2 -n \| uniq -d` 为空 |
+| 3 | 连续编号，无跳号无重复，stageB phase2 新增 REQ 从 REQ-029 起连续 | `grep -oP "REQ-\d+" 需求汇总表 \| sort -t- -k2 -n \| uniq -d` 为空 |
 | 2 | 基本连续 | 1-2 处异常 |
 | 1 | 有跳号或重复 | >2 处异常 |
 | 0 | 编号混乱 | 大量异常 |
@@ -614,7 +617,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 激活后第一步输出清单 | `grep -c "代办清单\|todolist\|执行组" PR 文件` ≥3 |
+| 3 | 激活后第一步输出清单，包含执行组和状态标记 | `grep -c "代办清单\|todolist\|执行组" PR 文件` ≥3 |
 | 2 | 输出了但执行组不合理 | 匹配 ≥1 |
 | 1 | 输出延迟 | 匹配 = 1 |
 | 0 | 未输出 | 匹配 = 0 |
@@ -623,7 +626,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 3 | 所有输出持久化，命名规范，版本号正确 | `find outputs/ -type f \| wc -l` ≥6，文件名含版本号 |
+| 3 | 所有输出持久化，命名规范，版本号正确，stageD 使用统一编码 `group{N}-step{M}` | `find outputs/ -type f \| wc -l` ≥6，文件名含版本号，`grep -cP "group\d+-step\d+" 方案文档` ≥10 |
 | 2 | 基本齐全，个别不规范 | 文件数 ≥4 |
 | 1 | 部分仅在对话中 | 文件数 <4 |
 | 0 | 未写入文件 | 文件数 = 0 |
@@ -632,7 +635,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 方案设计前完成 Wiki + 项目搜索 + 行业调研 | `grep -c "Wiki\|搜索\|调研\|参考" PR 文件` ≥3 |
+| 2 | 方案设计前完成 Wiki + 项目搜索 + 行业调研，D 阶段每轮头脑风暴前检索 Wiki | `grep -c "Wiki\|搜索\|调研\|参考" PR 文件` ≥3 |
 | 1 | 仅部分检索 | 匹配 = 1~2 |
 | 0 | 跳过 | 匹配 = 0 |
 
@@ -640,7 +643,7 @@ done
 
 | 分值 | 标准 | 验证方法 |
 |------|------|----------|
-| 2 | 外部资源不可用时正确降级 | `grep -c "降级\|内化执行\|基于通用知识" PR 文件` ≥1 |
+| 2 | 外部资源不可用时正确降级，标注"基于通用知识" | `grep -c "降级\|内化执行\|基于通用知识" PR 文件` ≥1 |
 | 1 | 降级但标注不清 | 匹配 = 0 但有相关记录 |
 | 0 | 因资源缺失中断 | 无记录 |
 
@@ -675,11 +678,13 @@ done
 | 灰色表达误判 | -1~2 | D1.4 | 犹豫表达被当作确认 |
 | stageB phase2 跳过 | -2 | D1.5 | 未执行 Feature Discovery |
 | stageB phase2 维度不全 | -1 | D1.5 | <5 维度覆盖 |
+| stageB phase2 未检索 Wiki | -1 | D1.5 | 头脑风暴前未查 Wiki |
 | 矛盾检测跳过 | -5~8 | D2 | 需求不一致风险 |
 | 规格自检未执行 | -2 | D3.4 | stageC phase2 出口门控缺失 |
 | group1-step1 未估算行数 | -3 | D4.1 | 无法判断是否需 E 阶段 |
 | D 子阶段 Q&A 不足 | -1~3 | D4.2 | 未达 min_qa_pairs |
 | D 子阶段遗漏 | -1~5 | D4.2 | 方案不完整 |
+| D 子阶段执行顺序错误 | -1~2 | D4.2 | group2 未按 step1→step2→step3→step4 |
 | 跳过未标注 | -1 | D7.4 | ADR 缺原因+影响+替代方案 |
 | 专项编排未触发 | -2 | D4.8 | group1-step1 后未触发 specialist |
 | RTL 就绪度检查未通过 | -1~2 | D4.9 | 端口/状态机/存储/Credit/时序/流水线/寄存器/CDC 定义不完整 |
@@ -692,11 +697,13 @@ done
 | F 阶段接口不一致 | -2~4 | D6.1 | 信号名/位宽/方向不匹配 |
 | F 阶段拓扑图缺失 | -2 | D6.2 | 未可视化 |
 | 未记录头脑风暴 | -3 | D7.2 | 决策不可追溯 |
+| ADR 未引用 Wiki | -1 | D7.3 | 方案决策缺知识库支撑 |
 | 未执行对抗性评审 | -2 | D8.1 | 假设盲点未暴露 |
 | Critical 规则遗漏 | -2~3 | D8.3 | RAM/CDC/DFT/FSM 未检查 |
 | 代办清单缺失 | -3 | D10.1 | 过程不可控 |
 | 输出未持久化 | -3 | D10.2 | 文件丢失风险 |
 | 版本号管理缺失 | -1~2 | D10.2 | 文件版本混乱 |
+| stageD 编码不规范 | -1~2 | D10.2 | 使用旧 D0-D14 而非 group/step |
 | 记忆系统未集成 | -2 | D10.5 | 启动未查询/完成未沉淀 |
 
 ---
@@ -719,6 +726,8 @@ done
 | 8 | evaluation.md §0 已输出门控结果 | ⬜ |
 | 9 | 扣分项清单已列出 | ⬜ |
 | 10 | 优化建议已生成 | ⬜ |
+| 11 | stageD 编码格式已验证（group/step） | ⬜ |
+| 12 | stageD 执行顺序已验证（recommended_execution_order） | ⬜ |
 
 ### 评估报告格式
 

@@ -1,0 +1,129 @@
+# chip-requirement-arch 状态机图
+# 生成命令：d2 --layout dagre state-machine.d2 state-machine.png
+
+direction: right
+
+# 样式定义
+classes: {
+  stage: {style: {fill: "#E8F8F5"; stroke: "#1ABC9C"; border-radius: 8}}
+  phase: {style: {fill: "#EBF5FB"; stroke: "#3498DB"; border-radius: 8}}
+  step: {style: {fill: "#FEF9E7"; stroke: "#F39C12"; border-radius: 8}}
+  special: {style: {fill: "#FDEDEC"; stroke: "#E74C3C"; border-radius: 8}}
+  terminal: {style: {fill: "#F5F5F5"; stroke: "#95A5A6"; border-radius: 8}}
+}
+
+# 入口和出口
+entry: "entry" {class: terminal}
+input_triage: "input_triage" {class: phase}
+end: "end" {class: terminal}
+
+# 主流程 stage
+stage0: "stage0\n前置探索" {class: stage}
+stageA: "stageA\n最小信息集" {class: stage}
+stageB_p1: "stageB phase1\n约束检查(28项)" {class: phase}
+stageB_p2: "stageB phase2\n头脑风暴" {class: phase}
+stageC_p1: "stageC phase1\n矛盾检测" {class: phase}
+stageC_p2: "stageC phase2\n需求汇总" {class: phase}
+stageE: "stageE\n递归分解" {class: special}
+stageF: "stageF\n顶层集成" {class: stage}
+
+# stageD group1
+d_g1_s1: "group1-step1\nRTL行数估算" {class: step}
+d_g1_s2: "group1-step2\nCBB选型" {class: step}
+d_g1_s3: "group1-step3\n子模块划分" {class: step}
+
+# stageD group2
+d_g2_s1: "group2-step1\n数据通路" {class: step}
+d_g2_s2: "group2-step2\n流水线" {class: step}
+d_g2_s3: "group2-step3\n控制逻辑/FSM" {class: step}
+d_g2_s4: "group2-step4\n性能优化" {class: step}
+
+# stageD group3
+d_g3_s1: "group3-step1\nSRAM" {class: step}
+d_g3_s2: "group3-step2\nFIFO" {class: step}
+d_g3_s3: "group3-step3\n链表" {class: step}
+d_g3_s4: "group3-step4\n寄存器" {class: step}
+
+# stageD group4
+d_g4_s1: "group4-step1\n调度" {class: step}
+d_g4_s2: "group4-step2\n流控" {class: step}
+d_g4_s3: "group4-step3\nCDC" {class: step}
+
+# stageD group5
+d_g5_s1: "group5-step1\n面积预估" {class: step}
+d_g5_s2: "group5-step2\n时序分析" {class: step}
+d_g5_s3: "group5-step3\nDFX" {class: step}
+d_g5_s4: "group5-step4\n可靠性" {class: step}
+d_g5_s5: "group5-step5\n接口定义" {class: step}
+d_g5_s6: "group5-step6\n功耗" {class: step}
+
+# 主流程连接
+entry -> input_triage: "always"
+input_triage -> stage0: "用户确认清单"
+stage0 -> stageA: "always"
+stageA -> stageB_p1: "always"
+stageB_p1 -> stageB_p2: "28项全部确认"
+stageB_p2 -> stageC_p1: "用户确认/5轮"
+stageC_p1 -> stageC_p2: "用户确认结果"
+stageC_p2 -> d_g1_s1: "用户确认并冻结"
+
+# stageD group1 内部
+d_g1_s1 -> d_g1_s2: "RTL ≤ 3000"
+d_g1_s1 -> stageE: "RTL > 3000" {style: {stroke: "#E74C3C"; stroke-dash: 5}}
+d_g1_s2 -> d_g1_s3: "always"
+
+# stageD group1 → group2
+d_g1_s3 -> d_g2_s1: "always"
+
+# stageD group2 内部（自然编号顺序：step3 控制逻辑/FSM → step4 性能优化）
+d_g2_s1 -> d_g2_s2: "always"
+d_g2_s2 -> d_g2_s3: "always"
+d_g2_s3 -> d_g2_s4: "always"
+
+# stageD group2 → group3
+d_g2_s3 -> d_g3_s1: "always"
+
+# stageD group3 内部
+d_g3_s1 -> d_g3_s2: "always"
+d_g3_s2 -> d_g3_s3: "always"
+d_g3_s3 -> d_g3_s4: "always"
+
+# stageD group3 → group4
+d_g3_s4 -> d_g4_s1: "always"
+
+# stageD group4 内部
+d_g4_s1 -> d_g4_s2: "always"
+d_g4_s2 -> d_g4_s3: "always"
+
+# stageD group4 → group5
+d_g4_s3 -> d_g5_s1: "always"
+
+# stageD group5 内部
+d_g5_s1 -> d_g5_s2: "always"
+d_g5_s2 -> d_g5_s3: "always"
+d_g5_s3 -> d_g5_s4: "always"
+d_g5_s4 -> d_g5_s5: "always"
+d_g5_s5 -> d_g5_s6: "always"
+
+# stageD → stageF
+d_g5_s6 -> stageF: "所有step完成"
+
+# stageE → stageF
+stageE -> stageF: "所有子模块完成"
+
+# stageF → end
+stageF -> end: "always"
+
+# 可跳过 step 标注（虚线框）
+d_g1_s2: {class: step; style: {stroke-dash: 5}}
+d_g2_s2: {class: step; style: {stroke-dash: 5}}
+d_g2_s4: {class: step; style: {stroke-dash: 5}}
+d_g3_s1: {class: step; style: {stroke-dash: 5}}
+d_g3_s2: {class: step; style: {stroke-dash: 5}}
+d_g3_s3: {class: step; style: {stroke-dash: 5}}
+d_g3_s4: {class: step; style: {stroke-dash: 5}}
+d_g4_s1: {class: step; style: {stroke-dash: 5}}
+d_g4_s2: {class: step; style: {stroke-dash: 5}}
+d_g4_s3: {class: step; style: {stroke-dash: 5}}
+d_g5_s3: {class: step; style: {stroke-dash: 5}}
+d_g5_s6: {class: step; style: {stroke-dash: 5}}

@@ -1,0 +1,83 @@
+{
+  "scenario_id": "vague_input",
+  "name": "模糊输入需求采集",
+  "description": "测试 Agent 处理模糊、不完整输入的能力。用户表达不清晰，需要 Agent 主动追问和澄清。",
+  "module_name": "data_processor",
+  "user_persona": "vague_beginner",
+
+  "initial_input": "我想做一个数据处理的东西",
+
+  "context": {
+    "soc_position": "不确定",
+    "upstream": "可能是 CPU 或 DMA",
+    "downstream": "可能是内存或外设",
+    "data_type": "不确定，可能是传感器数据",
+    "priority": "不确定",
+    "process": "未定",
+    "frequency": "未定"
+  },
+
+  "expected_stages": [
+    "stage0",
+    "stageA",
+    "stageB phase1",
+    "stageB phase2",
+    "stageC phase1",
+    "stageC phase2",
+    "stageD"
+  ],
+
+  "expected_deliverables": [
+    "flow/data_processor_pr_v1.0.md",
+    "outputs/data_processor_requirement_summary_v1.0.md",
+    "outputs/data_processor_solution_v1.0.md",
+    "outputs/data_processor_ADR_v1.0.md",
+    "outputs/data_processor_trace_graph.yaml"
+  ],
+
+  "timeout_minutes": 40,
+  "max_dialog_rounds": 70,
+
+  "evaluation_focus": [
+    "追问能力",
+    "澄清技巧",
+    "需求收敛",
+    "灰色表达处理"
+  ],
+
+  "pass_criteria": {
+    "min_stages_completed": 5,
+    "min_req_count": 15,
+    "required_deliverables": 4,
+    "max_gate_failures": 0,
+    "min_follow_up_questions": 10
+  },
+
+  "dialog_hints": {
+    "stage0": {
+      "expected_questions": 5,
+      "key_topics": ["模块角色", "数据来源", "处理目标", "应用场景"],
+      "user_behavior": "回答模糊，需要多次追问"
+    },
+    "stageA": {
+      "expected_questions": 6,
+      "key_topics": ["SoC 位置", "核心功能", "PPA 优先级"],
+      "user_behavior": "不确定，需要 Agent 引导"
+    },
+    "stageB": {
+      "expected_questions": 35,
+      "key_topics": ["工艺频率", "接口协议", "数据流", "中断", "安全"],
+      "user_behavior": "部分项不确定，需要默认值"
+    },
+    "stageC": {
+      "expected_questions": 3,
+      "key_topics": ["矛盾检测", "需求汇总确认"],
+      "user_behavior": "确认但有疑虑"
+    },
+    "stageD": {
+      "expected_questions": 25,
+      "key_topics": ["架构方案", "数据通路", "控制逻辑"],
+      "user_behavior": "需要 Agent 解释后确认"
+    }
+  }
+}

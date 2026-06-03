@@ -50,16 +50,16 @@
       "trigger_condition": "默认触发",
       "depends_on": [
         "stageD group2-step1",
-        "stageD group2-step4"
+        "stageD group2-step3"
       ],
       "input_analysis": {
         "source": [
           "stageD group2-step1 数据流图",
-          "stageD group2-step4 控制逻辑",
+          "stageD group2-step3 控制逻辑",
           "stageC phase2 REQ-001 频率"
         ],
         "analysis_steps": [
-          "1. 从 stageD group2-step1/group2-step4 中识别关键路径",
+          "1. 从 stageD group2-step1/group2-step3 中识别关键路径",
           "2. 估算组合逻辑级数",
           "3. 对比 REQ-001 频率约束的时序预算"
         ]
@@ -138,13 +138,13 @@
       "trigger_condition": "默认触发",
       "depends_on": [
         "stageD group2-step1",
-        "stageD group2-step4",
+        "stageD group2-step3",
         "stageD group4-step2"
       ],
       "input_analysis": {
         "source": [
           "stageD group2-step1 数据流",
-          "stageD group2-step4 控制逻辑",
+          "stageD group2-step3 控制逻辑",
           "stageD group4-step2 流控机制"
         ],
         "analysis_steps": [
