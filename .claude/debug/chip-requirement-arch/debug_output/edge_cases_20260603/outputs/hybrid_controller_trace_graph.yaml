@@ -1,0 +1,297 @@
+# 混合控制器 追溯图
+# 版本：v1.0
+# 日期：2026-06-03
+
+module: hybrid_controller
+version: "1.0"
+date: "2026-06-03"
+status: frozen
+
+requirements:
+  - id: REQ-001
+    name: "工艺与频率"
+    value: "28nm / 200MHz"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§9 时钟与复位"
+    solution_section: "§3 架构概述"
+    verification: "时序仿真"
+
+  - id: REQ-002
+    name: "接口协议"
+    value: "上游：APB32 + AXI4(64bit) + SPI；下游：AXI4(64bit) + 自定义流式 DMA"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§6 顶层接口定义"
+    solution_section: "§4 接口定义"
+    verification: "接口协议仿真"
+
+  - id: REQ-003
+    name: "数据流特征"
+    value: "AXI 突发 16beat/32B；SPI 单拍 1~4B；APB 单拍 4B"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§4.3 数据流描述"
+    solution_section: "§5.1 数据通路"
+    verification: "数据流仿真"
+
+  - id: REQ-004
+    name: "延迟与吞吐"
+    value: "AXI→AXI4：≤4cycles；SPI→DMA：≤6cycles；APB→AXI4：≤3cycles"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§8.1 性能指标"
+    solution_section: "§6 关键时序分析"
+    verification: "时序仿真 + SDC"
+
+  - id: REQ-005
+    name: "面积与功耗"
+    value: "面积 ≤50kGates；SRAM ≤2KB；功耗 ≤15mW"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§8 PPA 规格"
+    solution_section: "§8 PPA 预估"
+    verification: "综合报告"
+
+  - id: REQ-006
+    name: "时钟与复位"
+    value: "单时钟域 200MHz；异步复位同步释放 rst_n"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§9 时钟与复位"
+    solution_section: "§7.2 CDC 方案"
+    verification: "复位仿真"
+
+  - id: REQ-007
+    name: "低功耗"
+    value: "无独立功耗域，使用全局 Clock Gating"
+    priority: Could
+    source: stageB phase1
+    fs_section: "§10 低功耗设计"
+    solution_section: "§10.2 低功耗设计"
+    verification: "功耗分析"
+
+  - id: REQ-008
+    name: "DFT"
+    value: "标准扫描链 + ICG，无特殊要求"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§11 DFT 设计"
+    solution_section: "§9 DFX 设计"
+    verification: "DFT 检查"
+
+  - id: REQ-009
+    name: "可靠性"
+    value: "无 ECC/TMR，SRAM 使用 Parity"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§12 可靠性设计"
+    solution_section: "§10.1 可靠性设计"
+    verification: "Parity 注入仿真"
+
+  - id: REQ-010
+    name: "其他约束"
+    value: "无安全/合规/特殊工艺限制"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "§13 约束与假设"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-011
+    name: "CDC 策略"
+    value: "单时钟域，无 CDC"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "§9 时钟与复位"
+    solution_section: "§7.2 CDC 方案"
+    verification: "-"
+
+  - id: REQ-012
+    name: "存储器选型"
+    value: "SRAM 1920B + 寄存器阵列 ~128B"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§8.3 面积指标"
+    solution_section: "§11 存储设计"
+    verification: "综合面积报告"
+
+  - id: REQ-013
+    name: "PVT 操作条件"
+    value: "TT / 0.9V / 25°C（商业级）"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§13 约束与假设"
+    solution_section: "§8 PPA 预估"
+    verification: "综合 PVT 仿真"
+
+  - id: REQ-014
+    name: "接口时序约束"
+    value: "AXI：setup ≤0.5ns, delay ≤1ns；APB：setup ≤1ns, delay ≤2ns"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§6.3 接口时序要求"
+    solution_section: "§6 关键时序分析"
+    verification: "STA"
+
+  - id: REQ-015
+    name: "DMA 握手接口"
+    value: "自定义流式 DMA，Valid-Ready 握手，burst 长度可配"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§5.1 子模块详细设计"
+    solution_section: "§4 接口定义"
+    verification: "DMA 握手仿真"
+
+  - id: REQ-016
+    name: "中断接口"
+    value: "1 路中断输出，W1C 清除，支持错误/完成事件"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§6.2 信号详细列表"
+    solution_section: "§7.1 寄存器定义"
+    verification: "中断仿真"
+
+  - id: REQ-017
+    name: "调试接口"
+    value: "无特殊调试接口"
+    priority: Could
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-018
+    name: "安全隔离"
+    value: "无 TrustZone/防火墙需求"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-019
+    name: "软件接口约束"
+    value: "APB 寄存器访问，中断+轮询混合模式"
+    priority: Should
+    source: stageB phase1
+    fs_section: "§7 寄存器定义"
+    solution_section: "§7.1 寄存器定义"
+    verification: "寄存器读写仿真"
+
+  - id: REQ-020
+    name: "系统级约束"
+    value: "固定地址映射，无 QoS，无 Cache"
+    priority: Must
+    source: stageB phase1
+    fs_section: "§4.2 工作模式"
+    solution_section: "§5.1 数据通路"
+    verification: "地址映射仿真"
+
+  - id: REQ-021
+    name: "功耗状态机"
+    value: "无独立功耗域，不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-022
+    name: "PLL/Jitter"
+    value: "不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-023
+    name: "SerDes/PHY"
+    value: "不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-024
+    name: "形式验证"
+    value: "不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-025
+    name: "验证方法学"
+    value: "功能仿真为主"
+    priority: Could
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-026
+    name: "封装约束"
+    value: "不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-027
+    name: "EMC/ESD 合规"
+    value: "不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-028
+    name: "时钟树约束"
+    value: "不适用"
+    priority: N/A
+    source: stageB phase1
+    fs_section: "-"
+    solution_section: "-"
+    verification: "-"
+
+  - id: REQ-029
+    name: "AXI 写突发合并"
+    value: "支持将多个小 burst 合并为单个大 burst 写入下游 AXI4"
+    priority: Should
+    source: "stageB phase2 头脑风暴"
+    fs_section: "§4.4 控制流描述"
+    solution_section: "§5.1 数据通路"
+    verification: "突发合并仿真"
+
+  - id: REQ-030
+    name: "错误注入接口"
+    value: "APB 可配置的地址解码错误注入寄存器"
+    priority: Could
+    source: "stageB phase2 头脑风暴"
+    fs_section: "§7 寄存器定义"
+    solution_section: "§7.1 寄存器定义"
+    verification: "错误注入仿真"
+
+  - id: REQ-031
+    name: "事务计数器"
+    value: "APB 可读的各接口事务计数 + 错误计数寄存器"
+    priority: Should
+    source: "stageB phase2 头脑风暴"
+    fs_section: "§7 寄存器定义"
+    solution_section: "§7.1 寄存器定义"
+    verification: "计数器仿真"
+
+traceability:
+  total_requirements: 31
+  must: 7
+  should: 9
+  could: 4
+  na: 10
+  frozen: true
+  freeze_date: "2026-06-03"

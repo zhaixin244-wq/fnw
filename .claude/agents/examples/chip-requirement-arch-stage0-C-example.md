@@ -191,12 +191,12 @@ Agent：数据从 SPI 到 DDR 的路径：SPI 采样 → 内部缓冲 → AXI4 �
 
 ✅ stageD group2-step1 记录。
 
---- stageD group2-step4: 控制逻辑/FSM ---
+--- stageD group2-step3: 控制逻辑/FSM ---
 Agent：DMA 控制状态机：IDLE → FETCH → TRANSFER → DONE。FETCH 状态读取描述符，TRANSFER 状态执行数据搬运，DONE 状态更新状态寄存器。是否 OK？
 
 用户：OK
 
-✅ stageD group2-step4 记录。
+✅ stageD group2-step3 记录。
 
 --- stageD group3-step1: SRAM 设计 ---
 Agent：本模块无 SRAM 使用，纯寄存器实现。跳过。

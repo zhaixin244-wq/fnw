@@ -203,3 +203,40 @@ Read tools/claude-obsidian/.raw/sources/{domain}/{name}.md
 > **文档编号**：{project_code}-{doc_type}-{module_name}-v{X}.{Y}
 > **作者/日期**：{author} / {YYYY-MM-DD}
 ```
+
+### 文件路径验证规则（防路由错误）
+
+> **铁律：每次 Write/Edit 文件前，必须验证目标路径在指定工作目录内。**
+
+#### 验证流程
+
+```
+写入文件前：
+  1. 检查目标路径是否以用户指定的工作目录开头
+  2. 如果路径不匹配，输出警告并暂停：
+     [PATH-WARNING] 目标路径 {path} 不在工作目录 {work_dir} 内
+     是否继续？（需要用户确认）
+  3. 用户确认后才执行写入
+```
+
+#### 工作目录来源
+
+| 场景 | 工作目录来源 |
+|------|-------------|
+| 用户指定 | 用户输入中明确给出的路径 |
+| 默认路径 | `{module}_work/ds/doc/pr/` |
+| 调试模式 | `.claude/debug/chip-requirement-arch/debug_output/{scenario}_{timestamp}/` |
+
+#### 路径校验规则
+
+1. **主输出文件**：必须写入 `outputs/` 子目录
+2. **PR 流文件**：必须写入 `flow/` 子目录
+3. **子模块文件**：必须写入 `level*_{name}/outputs/` 或 `level*_{name}/flow/`
+4. **禁止写入无关目录**：不得写入其他模块的工作目录或项目根目录
+
+#### 路径偏移检测
+
+如果 Agent 发现自己在对话中引用了错误的模块名（如从 `hybrid_controller` 偏移到 `bubble_squeeze`），必须：
+1. 立即暂停
+2. 输出：`[CONTEXT-DRIFT] 模块名从 {old_name} 偏移到 {new_name}，请确认正确模块名`
+3. 等待用户确认后继续

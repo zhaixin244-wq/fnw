@@ -1,0 +1,401 @@
+# GPU Shader Core 追溯图
+# 版本：v1.0
+# 日期：2026-06-04
+# schema_version: 1.0
+
+module: GPU Shader Core
+version: v1.0
+date: 2026-06-04
+total_requirements: 35
+
+# 需求节点
+requirements:
+  # 基础约束需求（stageB phase1）
+  - id: REQ-001
+    name: 工艺与频率
+    description: "5nm 工艺, 2.5GHz 工作频率"
+    priority: Must
+    source: stageB phase1
+    status: Confirmed
+    frozen: true
+    freeze_reason: "产品规格锁定"
+    downstream: [FS, UA, RTL, STA]
+
+  - id: REQ-002
+    name: 接口协议
+    description: "AXI4 512-bit 主/从接口"
+    priority: Must
+    source: stageB phase1
+    status: Confirmed
+    frozen: true
+    freeze_reason: "SoC 总线架构锁定"
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-003
+    name: 数据流特征
+    description: "SIMT 128-wide SIMD, 4x32 sub-partition"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-004
+    name: 延迟约束
+    description: "管线深度 ≤10 cycles"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL, STA]
+
+  - id: REQ-005
+    name: PPA 约束
+    description: "面积 ≤3mm², 功耗 ≤500mW"
+    priority: Must
+    source: stageB phase1
+    status: Confirmed
+    frozen: true
+    freeze_reason: "封装/散热锁定"
+    conflicts: [REQ-029, REQ-030, REQ-031, REQ-012]
+    resolution: "面积压缩方案（保守 3.09mm² / 激进 3.00mm²）"
+    downstream: [FS, UA, RTL, STA, SYN]
+
+  - id: REQ-006
+    name: 时钟域
+    description: "3 个时钟域：core/uncore/axi"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    frozen: true
+    freeze_reason: "时钟架构锁定"
+    downstream: [FS, UA, RTL, CDC]
+
+  - id: REQ-007
+    name: 低功耗设计
+    description: "4 个独立功耗域, 支持 Power Gating"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    conflicts: [REQ-011]
+    resolution: "CDC 模块放在 Always-On 域"
+    downstream: [FS, UA, RTL, LP]
+
+  - id: REQ-008
+    name: DFT 设计
+    description: "128 扫描链, 压缩比 20x, 3 MBIST 控制器"
+    priority: Could
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL, DFT]
+
+  - id: REQ-009
+    name: 可靠性设计
+    description: "ECC SECDED 保护关键存储器"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-010
+    name: 复位策略
+    description: "异步复位同步释放, 低有效"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-011
+    name: CDC 策略
+    description: "集中式 CDC 模块, Always-On 域"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    conflicts: [REQ-007]
+    resolution: "CDC 模块放在 Always-On 域"
+    downstream: [FS, UA, RTL, CDC]
+
+  - id: REQ-012
+    name: 存储器选型
+    description: "RF 16bank + SM 64KB + D-Cache 64KB + I-Cache 32KB + L2 256KB + Const 16KB + TC 64KB"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    revised: true
+    revision_note: "面积压缩：RF 32→16bank, SM 128→64KB, I-Cache 64→32KB"
+    downstream: [FS, UA, RTL, SYN]
+
+  - id: REQ-013
+    name: PVT 条件
+    description: "TT/SS/FF corner, -40~125°C"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [STA, SYN]
+
+  - id: REQ-014
+    name: 封装约束
+    description: "BGA 封装, 引脚数 ≤1000"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [PKG]
+
+  - id: REQ-015
+    name: 电压域
+    description: "核心 0.75V, IO 1.05V"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [LP, STA]
+
+  - id: REQ-016
+    name: 带宽约束
+    description: "内存带宽 ≥51.2 GB/s"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-017
+    name: 线程配置
+    description: "最大 2048 线程/SM, 32 线程/Warp"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-018
+    name: 安全隔离
+    description: "VF 级隔离, 支持 SR-IOV"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-019
+    name: 调试接口
+    description: "JTAG + 调试断点/单步"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL, DFT]
+
+  - id: REQ-020
+    name: 性能监控
+    description: "PMU 硬件性能计数器"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-021
+    name: 热管理
+    description: "温度传感器 + DVFS 接口"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [FS, UA, RTL, LP]
+
+  - id: REQ-022
+    name: 形式验证属性
+    description: "SVA 属性覆盖关键路径"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [VER]
+
+  - id: REQ-023
+    name: 时序约束
+    description: "SDC 约束完整, 时序裕量 ≥10%"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [STA, SYN]
+
+  - id: REQ-024
+    name: 形式验证
+    description: "形式验证覆盖关键模块"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [VER]
+
+  - id: REQ-025
+    name: UVM 验证
+    description: "UVM 4 层验证环境, 功能覆盖率 ≥90%"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    revised: true
+    revision_note: "验证团队 2→4 人, 分阶段验证"
+    downstream: [VER]
+
+  - id: REQ-026
+    name: 封装热阻
+    description: "θJA ≤15°C/W"
+    priority: Should
+    source: stageB phase1
+    status: Confirmed
+    downstream: [PKG]
+
+  - id: REQ-027
+    name: 老化裕量
+    description: "老化裕量 ≥10%"
+    priority: Could
+    source: stageB phase1
+    status: Confirmed
+    downstream: [STA, REL]
+
+  - id: REQ-028
+    name: 时钟抖动
+    description: "时钟抖动 ≤50ps RMS"
+    priority: Could
+    source: stageB phase1
+    status: Confirmed
+    downstream: [STA]
+
+  # 头脑风暴新增需求（stageB phase2）
+  - id: REQ-029
+    name: Ray Tracing 单元
+    description: "硬件 RT Core, BVH 遍历加速, Ray-Box/Ray-Triangle 交集测试"
+    priority: Must
+    source: stageB phase2
+    status: Confirmed
+    conflicts: [REQ-005]
+    resolution: "面积压缩中, RT 单元可简化（共享 ALU 复用）"
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-030
+    name: Mesh Shader
+    description: "替代传统 VS+GS 管线, 支持 Meshlet 渲染"
+    priority: Must
+    source: stageB phase2
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-031
+    name: Async Compute
+    description: "独立计算队列, 图形/计算并行执行"
+    priority: Must
+    source: stageB phase2
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-032
+    name: Programmable Blending
+    description: "像素级可编程混合操作"
+    priority: Should
+    source: stageB phase2
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-033
+    name: VRS 2.0
+    description: "Variable Rate Shading 2.0, Per-Draw + Per-Primitive"
+    priority: Should
+    source: stageB phase2
+    status: Confirmed
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-034
+    name: Geometry Shader
+    description: "传统几何着色器（微码模拟, 无专用硬件）"
+    priority: Could
+    source: stageB phase2
+    status: Confirmed
+    revised: true
+    revision_note: "调和方案 C：微码模拟, 不增加专用硬件"
+    downstream: [FS, UA, RTL]
+
+  - id: REQ-035
+    name: Tile-Based Rendering
+    description: "分块渲染, 降低带宽需求"
+    priority: Could
+    source: stageB phase2
+    status: Deferred
+    defer_reason: "延后至下一代"
+    downstream: []
+
+# 矛盾关系
+conflicts:
+  - id: CONFLICT-001
+    name: 面积预算超标
+    severity: CRITICAL
+    involved_reqs: [REQ-005, REQ-029, REQ-030, REQ-031, REQ-012, REQ-003]
+    resolution: "去掉 GS 硬件 + RF 32→16 + SM 128→64KB + I-Cache 64→32KB + 进一步压缩"
+    resolved: true
+
+  - id: CONFLICT-002
+    name: 功耗预算偏紧
+    severity: HIGH
+    involved_reqs: [REQ-001, REQ-005, REQ-029, REQ-031]
+    resolution: "强制 Clock Gating, 未使用功能单元自动关时钟"
+    resolved: true
+
+  - id: CONFLICT-003
+    name: 功耗域 vs CDC 复杂度
+    severity: MEDIUM
+    involved_reqs: [REQ-007, REQ-011, REQ-006]
+    resolution: "CDC 模块放在 Always-On 域"
+    resolved: true
+
+  - id: CONFLICT-004
+    name: 验证复杂度 vs 周期
+    severity: MEDIUM
+    involved_reqs: [REQ-024, REQ-025, REQ-029, REQ-030, REQ-031]
+    resolution: "4 人团队 + 分阶段验证"
+    resolved: true
+
+  - id: CONFLICT-005
+    name: GS vs MS 功能重叠
+    severity: LOW
+    involved_reqs: [REQ-034, REQ-030]
+    resolution: "GS 用微码模拟, 无专用硬件"
+    resolved: true
+
+# 阶段追溯
+stage_traceability:
+  stage0:
+    output: "模块定位探索"
+    status: completed
+    flow_file: "flow/stage0.md"
+
+  stageA:
+    output: "4 个核心问题确认"
+    status: completed
+    flow_file: "flow/stageA.md"
+
+  stageB_phase1:
+    output: "28 项约束确认"
+    status: completed
+    confirmed_count: 28
+    flow_file: "flow/stageB_phase1.md"
+
+  stageB_phase2:
+    output: "头脑风暴 5 轮, 7 项新需求"
+    status: completed
+    new_reqs: [REQ-029, REQ-030, REQ-031, REQ-032, REQ-033, REQ-034, REQ-035]
+    flow_file: "flow/stageB_phase2.md"
+
+  stageC_phase1:
+    output: "矛盾检测, 5 个矛盾发现"
+    status: completed
+    conflicts_found: 5
+    flow_file: "flow/stageC_phase1.md"
+
+  stageC_phase2:
+    output: "需求汇总表, 35 项需求冻结"
+    status: completed
+    total_reqs: 35
+    flow_file: "flow/stageC_phase2.md"
+    output_file: "outputs/gpu_shader_core_requirement_summary_v1.0.md"
+
+# 冻结 REQ
+frozen_requirements:
+  - id: REQ-001
+    reason: "产品规格锁定（工艺+频率）"
+  - id: REQ-002
+    reason: "SoC 总线架构锁定"
+  - id: REQ-005
+    reason: "封装/散热锁定"
+  - id: REQ-006
+    reason: "时钟架构锁定"

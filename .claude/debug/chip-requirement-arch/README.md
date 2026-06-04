@@ -15,16 +15,24 @@
 ### 运行基础场景
 
 ```
-/debug chip-requirement-arch basic_dma
+/test-chip-requirement-arch basic_dma
 ```
 
 ### 运行其他场景
 
 ```
-/debug chip-requirement-arch complex_pcie
-/debug chip-requirement-arch vague_input
-/debug chip-requirement-arch edge_cases
+/test-chip-requirement-arch complex_pcie
+/test-chip-requirement-arch vague_input
+/test-chip-requirement-arch edge_cases
 ```
+
+### 运行复杂模块随机场景（40k+ RTL）
+
+```
+/test-chip-requirement-arch complex_random
+```
+
+从 50 个 4 万行以上 RTL 的复杂模块中随机选择一个，覆盖全部测试维度。详见 `scenarios/complex_modules/README.md`。
 
 ---
 
@@ -36,6 +44,7 @@
 | `complex_pcie` | 复杂 PCIe | 高级场景测试 | clear_expert | 45 min |
 | `vague_input` | 模糊输入 | 边界测试 | vague_beginner | 40 min |
 | `edge_cases` | 边界条件 | 异常处理测试 | challenging_reviewer | 50 min |
+| `complex_random` | 复杂模块随机 | 从 50 个 40k+ RTL 模块池随机选择 | 随机（E/C/V） | 50~70 min |
 
 ### 场景说明
 
@@ -218,7 +227,7 @@
 ### Agent 交互
 
 ```
-用户输入: /debug chip-requirement-arch basic_dma
+用户输入: /test-chip-requirement-arch basic_dma
     │
     ▼
 调试协调器
@@ -270,7 +279,12 @@ A: 调试报告保存在 `.claude/debug/chip-requirement-arch/debug_output/{scen
 │   ├── basic_dma.json             # 基础 DMA 场景
 │   ├── complex_pcie.json          # 复杂 PCIe 场景
 │   ├── vague_input.json           # 模糊输入场景
-│   └── edge_cases.json            # 边界测试场景
+│   ├── edge_cases.json            # 边界测试场景
+│   └── complex_modules/           # 50 个 40k+ RTL 复杂模块池
+│       ├── README.md              # 复杂模块说明
+│       ├── module_pool.json       # 模块定义（50 个）
+│       ├── coverage_matrix.json   # 覆盖矩阵
+│       └── select_module.sh       # 随机选择脚本
 ├── user-personas/                 # 用户角色定义
 │   ├── clear_expert.json          # 清晰表达的专家
 │   ├── vague_beginner.json        # 模糊表达的新手

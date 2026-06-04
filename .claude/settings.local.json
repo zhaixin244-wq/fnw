@@ -704,7 +704,10 @@
       "Bash(cp /c/Users/link_/bin/rg.exe /c/Windows/system32/rg.exe)",
       "Bash(cp /c/Users/link_/bin/rg.exe /c/Users/link_/AppData/Local/Microsoft/WindowsApps/rg.exe)",
       "Bash(cp /c/Users/link_/bin/rg.exe /c/Users/link_/AppData/Roaming/npm/rg.exe)",
-      "Bash(cp /c/Users/link_/bin/rg.exe /c/ProgramData/chocolatey/bin/rg.exe)"
+      "Bash(cp /c/Users/link_/bin/rg.exe /c/ProgramData/chocolatey/bin/rg.exe)",
+      "Bash(mkdir -p \".claude/debug/chip-requirement-arch/debug_output/edge_cases_20260603/flow\")",
+      "Bash(mkdir -p \".claude/debug/chip-requirement-arch/debug_output/edge_cases_20260603/outputs/tmp\")",
+      "Bash(sort -t- -k2 -n)"
     ]
   }
 }

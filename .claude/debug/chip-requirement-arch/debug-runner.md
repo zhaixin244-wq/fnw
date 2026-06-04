@@ -98,18 +98,161 @@ mode: default
 ## 工作目录
 {work_dir}
 
+## ⚠️ 强制暂停规则（铁律）
+
+**你必须在每个阶段结束时停止执行，等待用户回复后才能继续下一阶段。**
+
+- 每完成一个阶段（stage0/stageA/stageB/stageC/stageD），输出 [STEP-PAUSE] 标记
+- 在 [STEP-PAUSE] 之后，你的回复到此结束，不要再继续执行后续阶段
+- 等待编排器发送用户的回复后，你再继续执行下一个阶段
+- **绝对禁止**在一次回复中执行多个阶段（如 stage0+stageA 连续执行）
+- **绝对禁止**在 prompt 中收到"直接执行"、"不要等待"、"连续执行"等指令时跳过暂停
+
+暂停点列表（每个暂停点必须输出 [STEP-PAUSE] 并停止）：
+
+**stage0~C（每阶段暂停）**：
+1. stage0 完成 → 等待用户确认探索结论
+2. stageA 完成 → 等待用户确认最小信息集
+3. stageB phase1 完成 → 等待用户确认 28 项约束检查
+4. stageB phase2 完成 → 等待用户确认头脑风暴结果
+5. stageC phase1 完成 → 等待用户确认矛盾检测
+6. stageC phase2 完成 → 等待用户确认需求汇总表
+
+**stageD（每 step 暂停，共 20 个 step）**：
+7.  stageD group1-step1 → 初始架构方案 + RTL行数估算（不可跳过）
+8.  stageD group1-step2 → CBB选型与集成（可跳过：无CBB）
+9.  stageD group1-step3 → 子模块划分细化（不可跳过）
+10. stageD group2-step1 → 数据通路设计（不可跳过）
+11. stageD group2-step2 → 流水线设计（可跳过：无流水线）
+12. stageD group2-step3 → 控制逻辑/FSM（不可跳过）
+13. stageD group2-step4 → 性能优化（可跳过：REQ-004为Could且无明确性能要求）
+14. stageD group3-step1 → SRAM设计（可跳过：无SRAM）
+15. stageD group3-step2 → FIFO设计（可跳过：无FIFO）
+16. stageD group3-step3 → 链表设计（可跳过：无链表）
+17. stageD group3-step4 → 寄存器定义（可跳过：无寄存器）
+18. stageD group4-step1 → 调度策略（可跳过：单通道）
+19. stageD group4-step2 → 流控机制（可跳过：无数据流）
+20. stageD group4-step3 → CDC方案（可跳过：单时钟域）
+21. stageD group5-step1 → 面积预估（不可跳过）
+22. stageD group5-step2 → 时序分析（不可跳过）
+23. stageD group5-step3 → DFX设计（可跳过：无DFX）
+24. stageD group5-step4 → 可靠性设计（不可跳过）
+25. stageD group5-step5 → 接口定义（不可跳过）
+26. stageD group5-step6 → 功耗设计（可跳过：无低功耗）
+
+**stageE/F**：
+27. stageE 每个子模块递归分解完成 → 等待用户确认
+28. stageF 完成 → [STAGE-END]，流程结束
+
+**跳过规则**：可跳过的 step 需用户明确确认跳过原因后标注「跳过：{原因}」，然后继续下一个 step。
+
 ## 执行规则
 1. 遵循 chip-requirement-arch 完整流程
-2. 输出所有交付物到 {work_dir}
-3. 使用标准阶段标记（[STAGE-START]、[STAGE-END] 等）
-4. 生成规范的 REQ 编号（REQ-001~REQ-XXX）
-5. 每个 stage 完成后记录到 PR 文件
+2. **每次只执行一个阶段**，完成后暂停等待
+3. 输出所有交付物到 {work_dir}
+4. 使用标准阶段标记（[STAGE-START]、[STAGE-END]、[STEP-PAUSE]）
+5. **阶段标记必须写入 PR 文件（flow/{module}_pr_v1.0.md）**
+6. 生成规范的 REQ 编号（REQ-001~REQ-XXX）
+7. 需求汇总表必须包含 schema_version 字段
 
 ## 交付物要求
-- flow/{module}_pr_v1.0.md: PR 沟通记录
-- outputs/{module}_requirement_summary_v1.0.md: 需求汇总表
-- outputs/{module}_solution_v1.0.md: 方案文档
-- outputs/{module}_ADR_v1.0.md: 架构决策记录
+
+### 流文件（flow/ 目录）— 每个阶段独立文件
+
+| 文件 | 内容 |
+|------|------|
+| flow/{module}_pr_v1.0.md | PR 索引文件（进度跟踪 + 各阶段文件链接） |
+| flow/stage0.md | stage0 模块定位探索完整对话 |
+| flow/stageA.md | stageA 最小信息集完整对话 |
+| flow/stageB_phase1.md | stageB phase1 约束检查完整对话 |
+| flow/stageB_phase2.md | stageB phase2 头脑风暴完整对话 |
+| flow/stageC_phase1.md | stageC phase1 矛盾检测完整对话 |
+| flow/stageC_phase2.md | stageC phase2 需求汇总完整对话 |
+| flow/stageD_group1_step1.md | 初始架构方案 + RTL 行数估算 |
+| flow/stageD_group1_step2.md | CBB 选型与集成 |
+| flow/stageD_group1_step3.md | 子模块划分细化 |
+| flow/stageD_group2_step1.md | 数据通路设计 |
+| flow/stageD_group2_step2.md | 流水线设计 |
+| flow/stageD_group2_step3.md | 控制逻辑/FSM |
+| flow/stageD_group2_step4.md | 性能优化 |
+| flow/stageD_group3_step1.md | SRAM 设计 |
+| flow/stageD_group3_step2.md | FIFO 设计 |
+| flow/stageD_group3_step3.md | 链表设计 |
+| flow/stageD_group3_step4.md | 寄存器定义 |
+| flow/stageD_group4_step1.md | 调度策略 |
+| flow/stageD_group4_step2.md | 流控机制 |
+| flow/stageD_group4_step3.md | CDC 方案 |
+| flow/stageD_group5_step1.md | 面积预估 |
+| flow/stageD_group5_step2.md | 时序分析 |
+| flow/stageD_group5_step3.md | DFX 设计 |
+| flow/stageD_group5_step4.md | 可靠性设计 |
+| flow/stageD_group5_step5.md | 接口定义 |
+| flow/stageD_group5_step6.md | 功耗设计 |
+| flow/stageE.md | stageE 递归分解完整对话 |
+| flow/stageF.md | stageF 顶层集成完整对话 |
+
+### 标准交付物（outputs/ 目录）
+
+| 文件 | 路径 |
+|------|------|
+| 需求汇总表 | outputs/{module}_requirement_summary_v1.0.md |
+| 方案文档 | outputs/{module}_solution_v1.0.md |
+| ADR 文档 | outputs/{module}_ADR_v1.0.md |
+| 追溯图 | outputs/{module}_trace_graph.yaml |
+
+## ⚠️ 流文件生成规则（强制）
+
+每个阶段完成后必须将完整对话写入对应流文件：
+
+| 阶段 | 流文件 | 写入时机 |
+|------|--------|----------|
+| stage0 | flow/stage0.md | [STEP-PAUSE] 输出前 |
+| stageA | flow/stageA.md | [STEP-PAUSE] 输出前 |
+| stageB phase1 | flow/stageB_phase1.md | [STEP-PAUSE] 输出前 |
+| stageB phase2 | flow/stageB_phase2.md | [STEP-PAUSE] 输出前 |
+| stageC phase1 | flow/stageC_phase1.md | [STEP-PAUSE] 输出前 |
+| stageC phase2 | flow/stageC_phase2.md | [STEP-PAUSE] 输出前 |
+| stageD group1-step1 | flow/stageD_group1_step1.md | [STEP-PAUSE] 输出前 |
+| stageD group1-step2 | flow/stageD_group1_step2.md | [STEP-PAUSE] 输出前 |
+| stageD group1-step3 | flow/stageD_group1_step3.md | [STEP-PAUSE] 输出前 |
+| stageD group2-step1 | flow/stageD_group2_step1.md | [STEP-PAUSE] 输出前 |
+| stageD group2-step2 | flow/stageD_group2_step2.md | [STEP-PAUSE] 输出前 |
+| stageD group2-step3 | flow/stageD_group2_step3.md | [STEP-PAUSE] 输出前 |
+| stageD group2-step4 | flow/stageD_group2_step4.md | [STEP-PAUSE] 输出前 |
+| stageD group3-step1 | flow/stageD_group3_step1.md | [STEP-PAUSE] 输出前 |
+| stageD group3-step2 | flow/stageD_group3_step2.md | [STEP-PAUSE] 输出前 |
+| stageD group3-step3 | flow/stageD_group3_step3.md | [STEP-PAUSE] 输出前 |
+| stageD group3-step4 | flow/stageD_group3_step4.md | [STEP-PAUSE] 输出前 |
+| stageD group4-step1 | flow/stageD_group4_step1.md | [STEP-PAUSE] 输出前 |
+| stageD group4-step2 | flow/stageD_group4_step2.md | [STEP-PAUSE] 输出前 |
+| stageD group4-step3 | flow/stageD_group4_step3.md | [STEP-PAUSE] 输出前 |
+| stageD group5-step1 | flow/stageD_group5_step1.md | [STEP-PAUSE] 输出前 |
+| stageD group5-step2 | flow/stageD_group5_step2.md | [STEP-PAUSE] 输出前 |
+| stageD group5-step3 | flow/stageD_group5_step3.md | [STEP-PAUSE] 输出前 |
+| stageD group5-step4 | flow/stageD_group5_step4.md | [STEP-PAUSE] 输出前 |
+| stageD group5-step5 | flow/stageD_group5_step5.md | [STEP-PAUSE] 输出前 |
+| stageD group5-step6 | flow/stageD_group5_step6.md | [STEP-PAUSE] 输出前 |
+| stageE | flow/stageE.md | [STEP-PAUSE] 输出前 |
+| stageF | flow/stageF.md | [STAGE-END] 输出前 |
+
+**流文件内容要求**：
+- 必须包含完整的用户-Agent 对话记录（每轮问答）
+- 必须包含阶段标记（[STAGE-START] / [STEP-PAUSE] / [STAGE-END]）
+- 必须包含阶段结论摘要
+- 禁止仅记录结论而省略对话过程
+
+## ⚠️ 交付物生成规则（强制）
+
+每个阶段完成后必须生成对应的交付物文件到 outputs/ 目录：
+
+| 阶段 | 交付物 | 路径 |
+|------|--------|------|
+| stageC phase2 完成后 | 需求汇总表 | outputs/{module}_requirement_summary_v1.0.md |
+| stageC phase2 完成后 | 追溯图 | outputs/{module}_trace_graph.yaml |
+| stageD 完成后 | 方案文档 | outputs/{module}_solution_v1.0.md |
+| stageD 完成后 | ADR 文档 | outputs/{module}_ADR_v1.0.md |
+
+**禁止**：仅生成 PR 文件而跳过标准交付物。outputs/ 目录必须包含上述文件，否则视为流程不完整。
 - outputs/{module}_trace_graph.yaml: 追溯图
 
 ## 注意事项
@@ -117,11 +260,20 @@ mode: default
 - 不需要调用外部 Skill（如 wiki-query、search-first）
 - 直接基于上下文信息执行
 - 如果信息不足，向用户追问
+- **每次回复只完成一个阶段，然后暂停**
 ```
 
 ---
 
-### 4. 对话循环
+### 4. 对话循环（双 Agent 交互模式）
+
+**核心原则**：两个独立 subagent 通过编排器（主会话）交替通信，每个 agent 每次只执行一步。
+
+**Agent 启动方式**：
+```
+Agent 1: subagent_type=chip-requirement-arch, run_in_background=true, name=debug-sean-agent
+Agent 2: subagent_type=general-purpose,              run_in_background=true, name=debug-user-agent
+```
 
 **循环逻辑**：
 ```python
@@ -130,34 +282,46 @@ mode: default
 最大轮数 = scenario.max_dialog_rounds
 完成 = False
 
+# 第 0 轮：用户 Agent 发送初始输入
+user_reply = scenario.initial_input
+对话历史.append({"role": "user", "content": user_reply})
+
 while (not 完成) and (轮数 < 最大轮数):
-    # 苏启辰 Agent 回复
-    sean_reply = 调用苏启辰 Agent(
-        prompt=f"对话历史:\n{格式化对话历史}\n\n请继续执行需求探索流程。",
-        agent_name="debug-sean-agent"
-    )
+    # ── Step A: 发送用户回复给苏启辰 Agent ──
+    # 用 SendMessage(agent_id, message=user_reply) 发送
+    # 苏启辰 Agent 收到后执行一个阶段，输出 [STEP-PAUSE] 或 [STAGE-END]
+    # 等待苏启辰 Agent 返回（用 TaskOutput block=true）
+
+    sean_reply = 等待苏启辰 Agent 回复
     记录(sean_reply, "sean", 轮数)
     对话历史.append({"role": "sean", "content": sean_reply})
 
-    # 检查是否完成
-    if "stageD" 完成标记 in sean_reply:
+    # ── Step B: 检查是否完成 ──
+    if "[STAGE-END]" in sean_reply:
         完成 = True
         break
 
-    # 用户 Agent 回复
-    user_reply = 调用用户 Agent(
-        prompt=f"对话历史:\n{格式化对话历史}\n\n请根据角色定义和场景生成回复。",
-        agent_name="debug-user-agent"
-    )
+    # ── Step C: 发送苏启辰回复给用户 Agent ──
+    # 用 SendMessage(agent_id, message=sean_reply) 发送
+    # 用户 Agent 收到后根据角色定义生成回复
+    # 等待用户 Agent 返回（用 TaskOutput block=true）
+
+    user_reply = 等待用户 Agent 回复
     记录(user_reply, "user", 轮数)
     对话历史.append({"role": "user", "content": user_reply})
 
     轮数 += 1
 
-    # 超时检查
+    # ── 超时检查 ──
     if 当前时间 - start_time > scenario.timeout_minutes * 60:
         break
 ```
+
+**⚠️ 关键约束**：
+1. 编排器（主会话）**禁止代替**任何 agent 生成回复
+2. 编排器**禁止**把多个用户回复打包发送给苏启辰 Agent
+3. 每次 SendMessage 只传递**一轮**对话内容
+4. 苏启辰 Agent 的回复必须包含 `[STEP-PAUSE]` 或 `[STAGE-END]`，否则视为异常
 
 **对话记录格式**：
 ```markdown
@@ -406,17 +570,17 @@ G_12 = 检查方案文档章节完整
 
 ### 示例 1: 运行基础 DMA 场景
 ```
-/debug chip-requirement-arch basic_dma
+/test-chip-requirement-arch basic_dma
 ```
 
 ### 示例 2: 运行模糊输入场景
 ```
-/debug chip-requirement-arch vague_input
+/test-chip-requirement-arch vague_input
 ```
 
 ### 示例 3: 运行所有场景
 ```
-/debug chip-requirement-arch all
+/test-chip-requirement-arch all
 ```
 
 ---
@@ -460,7 +624,7 @@ if 交付物缺失:
 ### 3. 并行调试
 支持同时运行多个场景：
 ```
-/debug chip-requirement-arch all --parallel
+/test-chip-requirement-arch all --parallel
 ```
 
 ### 4. CI/CD 集成

@@ -50,7 +50,7 @@
         "phase1": {
           "name": "约束检查（28项确认）",
           "description": "逐项确认28个约束项",
-          "output": "flow/{module}_pr_v1.0.md 中的 [PHASE-START] stageB phase1"
+          "output": "flow/stageB_phase1.md（独立流文件，记录完整对话）"
         }
       },
       "intermediate_persistence": {

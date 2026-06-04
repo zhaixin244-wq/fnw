@@ -22,14 +22,14 @@
       "budget": "~8K tokens（角色+铁律 ~1.5K + 流程定义 ~3K + Skill/对抗/追溯/编码 ~2.5K + 动态摘要 ≤1K）"
     },
     "L1_startup": {
-      "description": "启动层 — 激活后首次 Read，整个会话期间只加载一次",
+      "description": "启动层 — 激活后首次 Read，整个会话期间只加载一次。注意：todo-mechanism.md 已通过 agent includes 自动加载，无需显式 Read",
       "files": [
-        { "path": ".claude/shared/todo-mechanism.md", "tokens": "~1.2K" },
         { "path": ".claude/shared/context-layers.json", "tokens": "~0.5K（本文件）" },
         { "path": ".claude/shared/requirement-template.json", "tokens": "~1.4K" },
-        { "path": ".claude/shared/flow/stage-definition.json", "tokens": "~1.0K" }
+        { "path": ".claude/shared/flow/stage-definition.json", "tokens": "~1.0K" },
+        { "path": ".claude/shared/stage-flow-overview.md", "tokens": "~2.0K", "note": "流程全景图 + 各阶段速查 + 权威源声明" }
       ],
-      "budget": "4K tokens（一次性）"
+      "budget": "~5K tokens（一次性，含流程总览）"
     },
     "L1_5_on_demand": {
       "description": "按需层 — D 阶段 subagent 按需加载，非常驻",
@@ -131,18 +131,19 @@
   },
 
   "loading_sequence": {
-    "description": "agent 激活后的文件加载顺序，按阶段推进",
+    "description": "agent 激活后的文件加载顺序，按阶段推进。includes 中的文件（agent-common-base / todo-mechanism / sdd-spec-traceability）已自动加载，不在此列",
     "sequence": [
-      { "step": "激活", "action": "L0 常驻（内联） + L1 启动层 Read" },
+      { "step": "激活", "action": "L0 常驻（内联） + Read L1 启动层文件（context-layers.json + requirement-template.json + stage-definition.json + stage-flow-overview.md）" },
       { "step": "进入 stage0", "action": "无需额外 Read" },
-      { "step": "进入 stageA", "action": "Read requirement-template.json stageA 章节" },
-      { "step": "进入 stageB phase1", "action": "Read requirement-checklist.json" },
+      { "step": "进入 stageA", "action": "无需额外 Read（requirement-template.json 已在 L1 加载）" },
+      { "step": "进入 stageB phase1", "action": "Read requirement-checklist.json + stageB-detail.json + protocol-mapping.json" },
+      { "step": "进入 stageB phase2", "action": "Read stageB-detail.json（section: post_stageB_brainstorming）" },
       { "step": "进入 stageC phase1", "action": "Read conflict-detection-rules.json + stageC-phase1-detail.json → 基础检测 → 按需 Read conflict-detection-conditional.json（REQ-022~025 激活时）→ 按需 Read conflict-detection-experimental.json（实验检测+反馈收集）" },
       { "step": "stageC phase1 完成", "action": "Read coverage-model.json → 运行覆盖率分析 → Read end-to-end-coverage-report.json → 生成端到端覆盖视图" },
       { "step": "进入 stageC phase2", "action": "Read stageC-detail.json（需求汇总规则）" },
-      { "step": "进入方案设计", "action": "Read stageD-detail.json + solution-template.json → 按 group1-step1~group5-step6 子阶段逐步执行" },
-      { "step": "架构评审", "action": "Read arch-review-rules.json（索引） → 按需 Read 1-2 个类别文件" },
-      { "step": "EDA 反馈", "action": "Read eda-tool-interfaces.json（仅首次），后续按 report_parsing_rules 解析" }
+      { "step": "进入 stageD", "action": "Read stageD-detail.json + solution-template.json → 进入每个 group 时 Read stageD-group{N}.json" },
+      { "step": "进入 stageE", "action": "Read e-stage-detail.json" },
+      { "step": "架构评审", "action": "Read arch-review-rules.json（索引） → 按需 Read 1-2 个类别文件" }
     ]
   }
 }

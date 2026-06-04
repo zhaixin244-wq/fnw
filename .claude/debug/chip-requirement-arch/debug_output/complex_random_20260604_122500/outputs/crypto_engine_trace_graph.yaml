@@ -1,0 +1,475 @@
+# 国密/国际双模加密引擎 需求追溯图
+# 版本：v1.0
+# 日期：2026-06-04
+
+module:
+  name: crypto_engine
+  description: 国密/国际双模加密引擎
+  soc_position: 安全子系统
+
+requirements:
+  - id: REQ-001
+    name: 工艺与频率
+    value: "28nm / 400MHz"
+    priority: Must
+    source: 用户输入
+    confirmation_status: confirmed
+    fs_section: "§13"
+    solution_section: "§6"
+    verification: STA
+
+  - id: REQ-002
+    name: 接口协议
+    value: "AXI4 128bit，上游CPU/DMA，下游密钥存储/安全隔离区"
+    priority: Must
+    source: 用户输入
+    confirmation_status: confirmed
+    fs_section: "§4"
+    solution_section: "§4.2"
+    verification: 接口验证
+
+  - id: REQ-003
+    name: 数据流特征
+    value: "大数据块搬运，突发传输，DMA驱动"
+    priority: Should
+    source: 用户输入
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§5.1"
+    verification: 性能验证
+
+  - id: REQ-004
+    name: 延迟与吞吐
+    value: "安全性优先，性能次之；单次加密延迟待综合评估"
+    priority: Should
+    source: 推断值
+    confirmation_status: pending
+    fs_section: "§8.1"
+    solution_section: "§5.2"
+    verification: 功能验证
+
+  - id: REQ-005
+    name: 面积与功耗
+    value: "安全性优先，面积功耗次之；双引擎面积较大可接受"
+    priority: Should
+    source: 推断值
+    confirmation_status: pending
+    fs_section: "§8.3"
+    solution_section: "§8"
+    verification: 综合验证
+
+  - id: REQ-006
+    name: 时钟与复位
+    value: "单时钟域400MHz，异步复位同步释放，低有效rst_n"
+    priority: Must
+    source: 标准方案
+    confirmation_status: confirmed
+    fs_section: "§7"
+    solution_section: "§7.3"
+    verification: 时钟验证
+
+  - id: REQ-007
+    name: 低功耗
+    value: "使用全局Clock Gating方案，无独立功耗域需求"
+    priority: Could
+    source: 默认值
+    confirmation_status: pending
+    fs_section: "§10.2"
+    solution_section: "§10.2"
+    verification: 功耗验证
+
+  - id: REQ-008
+    name: DFT
+    value: "标准DFT：扫描链、ICG、Boundary Scan"
+    priority: Should
+    source: 标准方案
+    confirmation_status: confirmed
+    fs_section: "§9"
+    solution_section: "§9"
+    verification: DFT验证
+
+  - id: REQ-009
+    name: 可靠性
+    value: "密钥存储ECC保护，寄存器Parity"
+    priority: Should
+    source: 安全需求推断
+    confirmation_status: confirmed
+    fs_section: "§10.1"
+    solution_section: "§10.1.1"
+    verification: 可靠性验证
+
+  - id: REQ-010
+    name: 其他约束
+    value: "商密认证（GM/T 0028/0039），高级抗侧信道（DPA/SPA抵抗）"
+    priority: Must
+    source: 用户输入
+    confirmation_status: confirmed
+    fs_section: "§1"
+    solution_section: "§10.1.2"
+    verification: 安全认证
+
+  - id: REQ-011
+    name: CDC策略
+    value: "单时钟域，无CDC需求"
+    priority: N/A
+    source: 不适用
+    confirmation_status: skipped
+    fs_section: "-"
+    solution_section: "§7.3"
+    verification: "-"
+
+  - id: REQ-012
+    name: 存储器选型
+    value: "密钥缓存SRAM，中间结果寄存器阵列，S盒ROM"
+    priority: Should
+    source: 功能推断
+    confirmation_status: confirmed
+    fs_section: "§11"
+    solution_section: "§11"
+    verification: 存储验证
+
+  - id: REQ-013
+    name: PVT操作条件
+    value: "28nm TT/0.9V/25°C标准条件"
+    priority: Should
+    source: 默认值
+    confirmation_status: pending
+    fs_section: "§13"
+    solution_section: "§8"
+    verification: PVT验证
+
+  - id: REQ-014
+    name: 接口时序约束
+    value: "AXI4标准时序，输入setup≤0.5ns，输出delay≤1ns"
+    priority: Should
+    source: 标准方案
+    confirmation_status: confirmed
+    fs_section: "§4"
+    solution_section: "§6"
+    verification: 接口验证
+
+  - id: REQ-015
+    name: DMA握手接口
+    value: "需要DMA引擎，突发长度16，地址递增模式"
+    priority: Should
+    source: 用户输入推断
+    confirmation_status: confirmed
+    fs_section: "§4"
+    solution_section: "§4.2"
+    verification: DMA验证
+
+  - id: REQ-016
+    name: 中断接口
+    value: "加密完成中断，错误中断，2级优先级，W1C清除"
+    priority: Should
+    source: 默认值
+    confirmation_status: pending
+    fs_section: "§4"
+    solution_section: "§4"
+    verification: 中断验证
+
+  - id: REQ-017
+    name: 调试接口
+    value: "标准JTAG调试接口，性能计数器"
+    priority: Could
+    source: 默认值
+    confirmation_status: pending
+    fs_section: "§9"
+    solution_section: "§9"
+    verification: 调试验证
+
+  - id: REQ-018
+    name: 安全隔离
+    value: "TrustZone安全隔离，地址保护，密钥访问控制"
+    priority: Should
+    source: 安全需求推断
+    confirmation_status: confirmed
+    fs_section: "§10.1"
+    solution_section: "§10.1"
+    verification: 安全验证
+
+  - id: REQ-019
+    name: 软件接口约束
+    value: "寄存器访问模式，中断驱动，APB配置接口"
+    priority: Should
+    source: 标准方案
+    confirmation_status: confirmed
+    fs_section: "§4"
+    solution_section: "§4.3"
+    verification: 寄存器验证
+
+  - id: REQ-020
+    name: 系统级约束
+    value: "安全子系统地址空间，QoS普通级，非Cacheable"
+    priority: Should
+    source: 推断值
+    confirmation_status: pending
+    fs_section: "§4"
+    solution_section: "§7.1"
+    verification: 地址验证
+
+  - id: REQ-021
+    name: 功耗状态机
+    value: "Active/Sleep两态，唤醒延迟≤10cycles"
+    priority: Could
+    source: 默认值
+    confirmation_status: pending
+    fs_section: "§10.2"
+    solution_section: "§10.2"
+    verification: 功耗验证
+
+  - id: REQ-029
+    name: SM2签名验签并行
+    value: "支持签名验签并行处理"
+    priority: Must
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§5.2"
+    verification: SM2验证
+
+  - id: REQ-030
+    name: SM3/SHA哈希流水线
+    value: "4级流水线"
+    priority: Should
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§5.2"
+    verification: 哈希验证
+
+  - id: REQ-031
+    name: AES-GCM模式
+    value: "支持AES-128/192/256-GCM"
+    priority: Must
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§5.2"
+    verification: AES验证
+
+  - id: REQ-032
+    name: 密钥派生函数
+    value: "支持KDF（GM/T 0010）"
+    priority: Must
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§5.2"
+    verification: KDF验证
+
+  - id: REQ-033
+    name: TRNG接口
+    value: "硬件真随机数生成器接口"
+    priority: Must
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§4"
+    solution_section: "§4"
+    verification: 随机数验证
+
+  - id: REQ-034
+    name: 多通道并行
+    value: "4通道并行加密"
+    priority: Should
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§12.1"
+    verification: 并行验证
+
+  - id: REQ-035
+    name: 流水线可配置
+    value: "2/4/8级可配置"
+    priority: Could
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.4"
+    solution_section: "§5.2"
+    verification: 配置验证
+
+  - id: REQ-036
+    name: DMA背压感知
+    value: "AXI流控感知"
+    priority: Must
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§4"
+    solution_section: "§12.2"
+    verification: 流控验证
+
+  - id: REQ-037
+    name: SM4/AES动态切换
+    value: "运行时算法切换"
+    priority: Should
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§5.1"
+    solution_section: "§5.2"
+    verification: 切换验证
+
+  - id: REQ-038
+    name: 错误注入接口
+    value: "故障攻击防护验证接口"
+    priority: Should
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§9"
+    solution_section: "§9.3"
+    verification: 故障验证
+
+  - id: REQ-039
+    name: 加密性能计数器
+    value: "加密次数/延迟统计"
+    priority: Could
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§9"
+    solution_section: "§7.1"
+    verification: 性能验证
+
+  - id: REQ-040
+    name: 密钥使用统计
+    value: "密钥调用次数/错误率"
+    priority: Should
+    source: 头脑风暴
+    confirmation_status: confirmed
+    fs_section: "§9"
+    solution_section: "§7.1"
+    verification: 审计验证
+
+submodules:
+  - name: crypto_engine_top
+    description: 顶层集成
+    estimated_lines: 200
+    related_reqs: []
+
+  - name: axi_slave_if
+    description: AXI从接口
+    estimated_lines: 400
+    related_reqs: [REQ-002, REQ-036]
+
+  - name: apb_reg_ctrl
+    description: APB寄存器配置接口
+    estimated_lines: 300
+    related_reqs: [REQ-019]
+
+  - name: sm2_engine
+    description: SM2非对称加密/签名
+    estimated_lines: 800
+    related_reqs: [REQ-029]
+
+  - name: sm3_engine
+    description: SM3哈希算法
+    estimated_lines: 500
+    related_reqs: [REQ-030]
+
+  - name: sm4_engine
+    description: SM4对称加密
+    estimated_lines: 600
+    related_reqs: [REQ-037]
+
+  - name: aes_engine
+    description: AES对称加密
+    estimated_lines: 600
+    related_reqs: [REQ-031, REQ-037]
+
+  - name: sha_engine
+    description: SHA哈希算法
+    estimated_lines: 500
+    related_reqs: [REQ-030]
+
+  - name: rsa_engine
+    description: RSA非对称加密
+    estimated_lines: 800
+    related_reqs: []
+
+  - name: kdf_engine
+    description: 密钥派生函数
+    estimated_lines: 400
+    related_reqs: [REQ-032]
+
+  - name: trng_if
+    description: TRNG接口
+    estimated_lines: 200
+    related_reqs: [REQ-033]
+
+  - name: key_mgr
+    description: 密钥管理（本地缓存）
+    estimated_lines: 400
+    related_reqs: [REQ-009, REQ-040]
+
+  - name: side_channel_prot
+    description: 抗侧信道防护
+    estimated_lines: 600
+    related_reqs: [REQ-010]
+
+  - name: scheduler
+    description: 多通道调度器
+    estimated_lines: 400
+    related_reqs: [REQ-034]
+
+  - name: irq_ctrl
+    description: 中断控制
+    estimated_lines: 200
+    related_reqs: [REQ-016]
+
+  - name: perf_cnt
+    description: 性能计数器
+    estimated_lines: 150
+    related_reqs: [REQ-039]
+
+conflict_detection:
+  - rule: FREQ-01
+    result: no_conflict
+    description: "28nm典型Fmax 500-800MHz，400MHz在范围内"
+
+  - rule: AREA-01
+    result: attention
+    description: "双引擎+抗侧信道功能复杂，面积会较大，但未明确约束"
+
+  - rule: AREA-02
+    result: attention
+    description: "4通道并行需4套引擎，面积显著增加"
+
+  - rule: IO-02
+    result: attention
+    description: "4通道共享AXI需仲裁"
+
+coverage:
+  total_reqs: 40
+  covered: 35
+  not_covered: 5
+  coverage_rate: "87.5%"
+  not_covered_items: [REQ-011, REQ-022, REQ-023, REQ-026, REQ-027]
+
+adr_decisions:
+  - id: ADR-001
+    title: 双引擎并行架构
+    status: accepted
+    decision: 独立双引擎架构
+
+  - id: ADR-002
+    title: 高级抗侧信道防护策略
+    status: accepted
+    decision: 多层次防护策略
+
+  - id: ADR-003
+    title: 4通道并行调度策略
+    status: accepted
+    decision: Round-Robin调度
+
+  - id: ADR-004
+    title: 密钥存储ECC保护
+    status: accepted
+    decision: SECDED ECC
+
+  - id: ADR-005
+    title: 流水线可配置设计
+    status: accepted
+    decision: 可配置流水线
+
+  - id: ADR-006
+    title: AXI流控感知设计
+    status: accepted
+    decision: ready反压机制

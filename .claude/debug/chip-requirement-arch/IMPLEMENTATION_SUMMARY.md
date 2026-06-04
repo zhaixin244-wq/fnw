@@ -55,7 +55,7 @@
 ## 架构设计
 
 ```
-用户输入：/debug chip-requirement-arch basic_dma
+用户输入：/test-chip-requirement-arch basic_dma
            │
            ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -85,23 +85,23 @@
 ### 基本用法
 
 ```
-/debug chip-requirement-arch [scenario_id]
+/test-chip-requirement-arch [scenario_id]
 ```
 
 ### 示例
 
 ```bash
 # 运行基础 DMA 场景
-/debug chip-requirement-arch basic_dma
+/test-chip-requirement-arch basic_dma
 
 # 运行复杂 PCIe 场景
-/debug chip-requirement-arch complex_pcie
+/test-chip-requirement-arch complex_pcie
 
 # 运行模糊输入场景
-/debug chip-requirement-arch vague_input
+/test-chip-requirement-arch vague_input
 
 # 运行边界条件场景
-/debug chip-requirement-arch edge_cases
+/test-chip-requirement-arch edge_cases
 ```
 
 ---
@@ -192,7 +192,7 @@
 ## 验证方式
 
 ### 功能验证
-1. 运行 `/debug chip-requirement-arch basic_dma`
+1. 运行 `/test-chip-requirement-arch basic_dma`
 2. 确认双 Agent 对话正常进行
 3. 检查生成的交付物
 

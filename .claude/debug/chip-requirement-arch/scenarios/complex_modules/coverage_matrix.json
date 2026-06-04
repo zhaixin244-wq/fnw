@@ -1,0 +1,122 @@
+{
+  "matrix_version": "1.0",
+  "description": "测试维度覆盖矩阵 — 确保 50 个模块组合覆盖全部 D1~D10 评估维度、3 种用户角色、10 个技术领域",
+
+  "dimension_coverage": {
+    "D1_需求采集完整性": {
+      "target_modules": 50,
+      "covered_by": "ALL",
+      "note": "所有模块均测试 stage0/stageA/stageB phase1/phase2"
+    },
+    "D2_需求一致性": {
+      "target_modules": 25,
+      "covered_by": ["CM-01", "CM-02", "CM-04", "CM-07", "CM-09", "CM-12", "CM-13", "CM-16", "CM-18", "CM-20", "CM-21", "CM-25", "CM-27", "CM-28", "CM-33", "CM-34", "CM-48", "CM-49", "CM-50", "CM-31"],
+      "note": "复杂多协议/多约束模块触发矛盾检测"
+    },
+    "D3_需求文档质量": {
+      "target_modules": 50,
+      "covered_by": "ALL",
+      "note": "所有模块检查 REQ 编号、schema_version、规格自检"
+    },
+    "D4_方案细化质量": {
+      "target_modules": 50,
+      "covered_by": "ALL",
+      "note": "所有模块执行 stageD 子阶段、Q&A、RTL 就绪度检查"
+    },
+    "D5_子模块分解质量": {
+      "target_modules": 48,
+      "covered_by": "ALL except CM-10, CM-30",
+      "note": "40k+ 模块全部触发 E 阶段递归分解"
+    },
+    "D6_顶层集成质量": {
+      "target_modules": 18,
+      "covered_by": ["CM-01", "CM-04", "CM-06", "CM-11", "CM-12", "CM-15", "CM-16", "CM-18", "CM-22", "CM-24", "CM-33", "CM-48", "CM-50", "CM-02"],
+      "note": "多子模块复杂互联模块触发 F 阶段"
+    },
+    "D7_ADR文档质量": {
+      "target_modules": 22,
+      "covered_by": ["CM-02", "CM-07", "CM-09", "CM-13", "CM-20", "CM-21", "CM-25", "CM-28", "CM-29", "CM-34", "CM-37", "CM-43", "CM-46", "CM-48", "CM-49", "CM-50", "CM-04", "CM-27"],
+      "note": "有争议选型或复杂约束的模块触发头脑风暴"
+    },
+    "D8_方案验证与评审": {
+      "target_modules": 16,
+      "covered_by": ["CM-02", "CM-04", "CM-09", "CM-12", "CM-13", "CM-16", "CM-18", "CM-21", "CM-25", "CM-27", "CM-28", "CM-33", "CM-46", "CM-48", "CM-50"],
+      "note": "高复杂度/高风险模块触发 devils-advocate 和 Critical 规则检查"
+    },
+    "D9_追溯完整性": {
+      "target_modules": 50,
+      "covered_by": "ALL",
+      "note": "所有模块检查 REQ 编号连续性、trace_graph、RTM"
+    },
+    "D10_过程规范性": {
+      "target_modules": 50,
+      "covered_by": "ALL",
+      "note": "所有模块检查代办清单、文件管理、记忆集成"
+    }
+  },
+
+  "persona_coverage": {
+    "E_clear_expert": {
+      "count": 30,
+      "modules": ["CM-01", "CM-03", "CM-05", "CM-06", "CM-07", "CM-08", "CM-10", "CM-11", "CM-14", "CM-15", "CM-17", "CM-19", "CM-20", "CM-22", "CM-23", "CM-24", "CM-26", "CM-30", "CM-31", "CM-32", "CM-35", "CM-36", "CM-37", "CM-38", "CM-39", "CM-40", "CM-41", "CM-42", "CM-43", "CM-44", "CM-45", "CM-47"]
+    },
+    "C_challenging_reviewer": {
+      "count": 17,
+      "modules": ["CM-02", "CM-04", "CM-09", "CM-12", "CM-13", "CM-16", "CM-18", "CM-21", "CM-25", "CM-27", "CM-28", "CM-29", "CM-33", "CM-34", "CM-46", "CM-48", "CM-49", "CM-50"]
+    },
+    "V_vague_beginner": {
+      "count": 3,
+      "modules": [],
+      "note": "vague_beginner 角色不预分配模块，由随机选择器按 6% 概率替换为 V 角色"
+    }
+  },
+
+  "domain_coverage": {
+    "interconnect": { "count": 9, "modules": ["CM-01", "CM-02", "CM-03", "CM-04", "CM-05", "CM-06", "CM-33", "CM-45", "CM-48"] },
+    "storage": { "count": 7, "modules": ["CM-07", "CM-08", "CM-09", "CM-10", "CM-36", "CM-37", "CM-40"] },
+    "network": { "count": 7, "modules": ["CM-11", "CM-12", "CM-13", "CM-14", "CM-39", "CM-43", "CM-49"] },
+    "compute": { "count": 9, "modules": ["CM-15", "CM-16", "CM-17", "CM-18", "CM-19", "CM-34", "CM-35", "CM-46", "CM-50"] },
+    "security": { "count": 2, "modules": ["CM-20", "CM-21"] },
+    "multimedia": { "count": 4, "modules": ["CM-22", "CM-23", "CM-24", "CM-38"] },
+    "automotive": { "count": 3, "modules": ["CM-25", "CM-26", "CM-43"] },
+    "memory": { "count": 3, "modules": ["CM-27", "CM-28", "CM-44"] },
+    "reconfig": { "count": 2, "modules": ["CM-29", "CM-30"] },
+    "io": { "count": 3, "modules": ["CM-31", "CM-32", "CM-41", "CM-42"] },
+    "soc_infra": { "count": 1, "modules": ["CM-47"] }
+  },
+
+  "complexity_tag_coverage": {
+    "cache_coherency": ["CM-02", "CM-04", "CM-27"],
+    "multi_channel": ["CM-01", "CM-05", "CM-08", "CM-26"],
+    "high_speed": ["CM-01", "CM-03", "CM-11", "CM-45"],
+    "complex_flow_control": ["CM-01", "CM-04", "CM-06", "CM-12"],
+    "CDC_heavy": ["CM-01", "CM-03", "CM-05", "CM-08", "CM-44"],
+    "multi_protocol": ["CM-13", "CM-31", "CM-33", "CM-48"],
+    "programmable_pipeline": ["CM-13", "CM-14", "CM-29"],
+    "systolic_array": ["CM-15", "CM-35"],
+    "out_of_order": ["CM-18"],
+    "safety_critical": ["CM-25", "CM-43"],
+    "ASIL_D": ["CM-25"],
+    "virtualization": ["CM-33", "CM-47", "CM-48"],
+    "hot_plug": ["CM-28", "CM-33", "CM-48"],
+    "multi_host": ["CM-02", "CM-28", "CM-48"],
+    "ECC": ["CM-05", "CM-07", "CM-08", "CM-27", "CM-40"],
+    "QoS": ["CM-06", "CM-12", "CM-28"],
+    "sparsity": ["CM-15", "CM-35", "CM-46"],
+    "mixed_precision": ["CM-35", "CM-50"],
+    "low_latency": ["CM-38", "CM-49"],
+    "zero_copy": ["CM-49"]
+  },
+
+  "test_run_strategy": {
+    "single_run": "随机选择 1 个模块执行完整需求探索流程",
+    "batch_run": "随机选择 N 个模块（默认 5），确保覆盖所有维度",
+    "full_coverage_run": "执行全部 50 个模块，生成覆盖率报告",
+    "persona_balanced_run": "每个角色至少选 2 个模块，确保角色覆盖均衡"
+  },
+
+  "coverage_gaps": {
+    "V_vague_beginner": "当前仅 0 个模块预分配 V 角色，需通过随机替换机制补充。建议：每次 batch_run 时将 10% 的 E/C 角色随机替换为 V",
+    "soc_infra": "仅 1 个 SoC 基础设施模块（CM-47），可考虑补充时钟管理、电源管理等"
+  }
+}
